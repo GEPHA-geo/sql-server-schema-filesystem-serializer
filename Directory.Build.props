@@ -1,0 +1,63 @@
+<Project>
+    <PropertyGroup>
+        <Company>AppifySheets</Company>
+        <AssemblyVersion>1.0.5</AssemblyVersion>
+        <!--<AssemblyVersion>$([System.DateTime]::UtcNow.ToString('yyyy.MM.dd.HHmm'))</AssemblyVersion>-->
+        <FileVersion>$(AssemblyVersion)</FileVersion>
+        <Version>$(AssemblyVersion)</Version>
+    </PropertyGroup>
+
+    <!-- Platform-specific build output directories -->
+    <PropertyGroup>
+        <!-- Automatic platform detection -->
+        <!-- <DetectedPlatform Condition="$([MSBuild]::IsOSPlatform('Windows'))">win</DetectedPlatform>
+        <DetectedPlatform Condition="$([MSBuild]::IsOSPlatform('Linux'))">linux</DetectedPlatform>
+        <DetectedPlatform Condition="$([MSBuild]::IsOSPlatform('OSX'))">macos</DetectedPlatform>
+        <DetectedPlatform Condition="'$(DetectedPlatform)' == ''">unknown</DetectedPlatform>
+         -->
+        <!-- Use BUILD_PLATFORM environment variable if set, otherwise use detected platform -->
+        <!-- <PlatformSuffix Condition="'$(BUILD_PLATFORM)' != ''">$(BUILD_PLATFORM)</PlatformSuffix> -->
+        <!-- <PlatformSuffix>$(DetectedPlatform)</PlatformSuffix> -->
+        
+        <!-- Cross-platform user directory detection -->
+        <UserHomeDir Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(USERPROFILE)</UserHomeDir>
+        <UserHomeDir Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(HOME)</UserHomeDir>
+        
+        <!-- Extract repository name - go up from src to get .git folder containing directory -->
+        <SrcDir>$([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))</SrcDir>
+        <RepoRootDir>$([System.IO.Path]::GetFileName($(SrcDir)))</RepoRootDir>
+        <!-- <SolutionName>$([System.IO.Path]::GetFileName($(RepoRootDir)))</SolutionName> -->
+        
+        <!-- External build directories to avoid Windows/Linux intersection -->
+        <!-- Only use custom paths if UserHomeDir is available -->
+        <BaseOutputPath Condition="'$(UserHomeDir)' != ''">$(UserHomeDir)/repos/builds/$(RepoRootDir)/$(MSBuildProjectName)/bin/</BaseOutputPath>
+        <BaseIntermediateOutputPath Condition="'$(UserHomeDir)' != ''">$(UserHomeDir)/repos/builds/$(RepoRootDir)/$(MSBuildProjectName)/obj/</BaseIntermediateOutputPath>
+        
+        <!-- Prevent duplicate assembly info generation -->
+        <!-- <GenerateAssemblyInfo>false</GenerateAssemblyInfo> -->
+        <!-- <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute> -->
+        <!-- <GenerateApplicationInsightsAssemblyInfo>false</GenerateApplicationInsightsAssemblyInfo> -->
+        <!-- <GenerateRazorAssemblyInfo>false</GenerateRazorAssemblyInfo> -->
+    </PropertyGroup>
+    
+    <!-- Debug message -->
+    <!-- <Target Name="ShowPlatformDetection" BeforeTargets="Build">
+        <Message Text="Platform Detection: Detected=$(DetectedPlatform), BUILD_PLATFORM=$(BUILD_PLATFORM), Result=$(PlatformSuffix)" Importance="high" />
+    </Target> -->
+
+    <PropertyGroup>
+<!--        <Nuget>false</Nuget>-->
+                <Nuget>true</Nuget>
+        <!--        <NoNuget>!$(Nuget)</NoNuget>-->
+        <!--        <DXVersion>24.2.1-alpha-24260</DXVersion>-->
+        <DXVersion>24.2.6</DXVersion>
+        <!--        <NugetVersion>$(DXVersion)02</NugetVersion>-->
+        <!--        <NugetVersion>24.2.107-beta</NugetVersion>-->
+        <NugetVersion>24.2.602</NugetVersion>
+        <EFCoreVersion>9.*</EFCoreVersion>
+        <NpgsqlVersion>9.*</NpgsqlVersion>
+        <!--        <ProjectablesVersion>*</ProjectablesVersion>-->
+        <NugetPath>../../../AppifySheets.NugetPackages/src/appifysheets.common/modules/</NugetPath>
+    </PropertyGroup>
+
+</Project>

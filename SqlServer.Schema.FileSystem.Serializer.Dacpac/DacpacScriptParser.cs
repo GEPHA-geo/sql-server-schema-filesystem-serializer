@@ -373,7 +373,7 @@ public class DacpacScriptParser
         {
             ["CREATE TABLE"] = CountPattern(script, @"CREATE\s+TABLE"),
             ["PRIMARY KEY"] = CountPattern(script, @"PRIMARY\s+KEY"),
-            ["FOREIGN KEY"] = CountPattern(script, @"FOREIGN\s+KEY"),
+            ["FOREIGN KEY"] = CountPattern(script, @"ADD\s+CONSTRAINT\s+\[FK_[^\]]+\]\s+FOREIGN\s+KEY"),
             ["CHECK"] = CountPattern(script, @"WITH\s+CHECK\s+ADD\s+CONSTRAINT.*CHECK\s*\("),
             ["DEFAULT"] = CountPattern(script, @"DEFAULT\s*\("),
             ["INDEX"] = CountPattern(script, @"CREATE\s+(UNIQUE\s+)?(CLUSTERED\s+|NONCLUSTERED\s+)?INDEX"),
@@ -399,7 +399,9 @@ public class DacpacScriptParser
         
         CheckCount("Tables", originalCounts["CREATE TABLE"], 
             parsedCounts.ContainsKey(ObjectType.Table) ? parsedCounts[ObjectType.Table] : 0);
-        CheckCount("Primary Keys", originalCounts["PRIMARY KEY"], 
+        var pkNote = originalCounts["PRIMARY KEY"] > 0 && (!parsedCounts.ContainsKey(ObjectType.PrimaryKey) || parsedCounts[ObjectType.PrimaryKey] == 0) 
+            ? " (inline with tables)" : "";
+        CheckCount("Primary Keys" + pkNote, originalCounts["PRIMARY KEY"], 
             parsedCounts.ContainsKey(ObjectType.PrimaryKey) ? parsedCounts[ObjectType.PrimaryKey] : 0);
         CheckCount("Foreign Keys", originalCounts["FOREIGN KEY"], 
             parsedCounts.ContainsKey(ObjectType.ForeignKey) ? parsedCounts[ObjectType.ForeignKey] : 0);

@@ -115,7 +115,7 @@ public class DacpacScriptParser
         else if (Regex.IsMatch(statementText, @"CREATE\s+.*INDEX", RegexOptions.IgnoreCase))
         {
             statement.Type = ObjectType.Index;
-            var match = Regex.Match(statementText, @"CREATE\s+.*INDEX\s+\[?(\w+)\]?\s+ON\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+            var match = Regex.Match(statementText, @"CREATE\s+.*INDEX\s+\[?([^\]]+)\]?\s+ON\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 statement.Name = match.Groups[1].Value;
@@ -175,7 +175,7 @@ public class DacpacScriptParser
     
     private void ExtractConstraintInfo(string statementText, SqlStatement statement)
     {
-        var match = Regex.Match(statementText, @"ALTER\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?\s+ADD\s+CONSTRAINT\s+\[?(\w+)\]?", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        var match = Regex.Match(statementText, @"ALTER\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?\s+ADD\s+CONSTRAINT\s+\[?([^\]]+)\]?", RegexOptions.IgnoreCase | RegexOptions.Singleline);
         if (match.Success)
         {
             statement.Schema = match.Groups[1].Value;

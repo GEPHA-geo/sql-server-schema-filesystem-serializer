@@ -17,20 +17,41 @@ public class DacpacScriptParser
         var basePath = Path.Combine(outputPath, databaseName);
         _fileSystemManager.CreateDirectory(basePath);
         
+        // Count total GO statements in original script
+        var totalGoStatements = CountGoStatements(script);
+        Console.WriteLine($"Total GO statements in script: {totalGoStatements}");
+        
         // Split script into individual statements
         var statements = SplitIntoStatements(script);
+        Console.WriteLine($"Parsed statements: {statements.Count}");
+        
+        // Verify parsing completeness
+        VerifyParsingCompleteness(script, statements, totalGoStatements);
         
         // Group statements by object
         var objectGroups = GroupStatementsByObject(statements);
+        
+        // Track processed statements
+        var processedCount = 0;
         
         // Process each object group
         foreach (var objectGroup in objectGroups)
         {
             ProcessObjectGroup(objectGroup, basePath);
+            processedCount += objectGroup.Value.Count;
         }
         
         // Create README for empty schemas if needed
         CreateEmptySchemaReadmes(basePath);
+        
+        // Final verification
+        Console.WriteLine($"\nProcessed {processedCount} statements out of {statements.Count} parsed statements");
+        Console.WriteLine($"Created {CountGeneratedFiles(basePath)} SQL files");
+        
+        if (processedCount < statements.Count)
+        {
+            Console.WriteLine($"WARNING: {statements.Count - processedCount} statements were not processed!");
+        }
     }
     
     private List<SqlStatement> SplitIntoStatements(string script)
@@ -331,6 +352,100 @@ public class DacpacScriptParser
                 _fileSystemManager.WriteFile(readmePath, $"# {Path.GetFileName(schemaDir)} Schema\n\nThis schema is currently empty.");
             }
         }
+    }
+
+    
+    private int CountGoStatements(string script)
+    {
+        var lines = script.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        return lines.Count(line => line.Trim().Equals("GO", StringComparison.OrdinalIgnoreCase));
+    }
+    
+    private int CountGeneratedFiles(string basePath)
+    {
+        return Directory.GetFiles(basePath, "*.sql", SearchOption.AllDirectories).Length;
+    }
+    
+    private void VerifyParsingCompleteness(string script, List<SqlStatement> statements, int totalGoStatements)
+    {
+        // Count different statement types in original script
+        var originalCounts = new Dictionary<string, int>
+        {
+            ["CREATE TABLE"] = CountPattern(script, @"CREATE\s+TABLE"),
+            ["PRIMARY KEY"] = CountPattern(script, @"PRIMARY\s+KEY"),
+            ["FOREIGN KEY"] = CountPattern(script, @"FOREIGN\s+KEY"),
+            ["CHECK"] = CountPattern(script, @"WITH\s+CHECK\s+ADD\s+CONSTRAINT.*CHECK\s*\("),
+            ["DEFAULT"] = CountPattern(script, @"DEFAULT\s*\("),
+            ["INDEX"] = CountPattern(script, @"CREATE\s+(UNIQUE\s+)?(CLUSTERED\s+|NONCLUSTERED\s+)?INDEX"),
+            ["TRIGGER"] = CountPattern(script, @"CREATE\s+TRIGGER"),
+            ["VIEW"] = CountPattern(script, @"CREATE\s+VIEW"),
+            ["PROCEDURE"] = CountPattern(script, @"CREATE\s+PROCEDURE"),
+            ["FUNCTION"] = CountPattern(script, @"CREATE\s+FUNCTION")
+        };
+        
+        // Count parsed statement types
+        var parsedCounts = new Dictionary<ObjectType, int>();
+        foreach (var stmt in statements)
+        {
+            if (!parsedCounts.ContainsKey(stmt.Type))
+                parsedCounts[stmt.Type] = 0;
+            parsedCounts[stmt.Type]++;
+        }
+        
+        // Display comparison
+        Console.WriteLine("\n=== Statement Type Verification ===");
+        Console.WriteLine($"{"Type",-20} {"Original",-10} {"Parsed",-10} {"Status",-10}");
+        Console.WriteLine(new string('-', 50));
+        
+        CheckCount("Tables", originalCounts["CREATE TABLE"], 
+            parsedCounts.ContainsKey(ObjectType.Table) ? parsedCounts[ObjectType.Table] : 0);
+        CheckCount("Primary Keys", originalCounts["PRIMARY KEY"], 
+            parsedCounts.ContainsKey(ObjectType.PrimaryKey) ? parsedCounts[ObjectType.PrimaryKey] : 0);
+        CheckCount("Foreign Keys", originalCounts["FOREIGN KEY"], 
+            parsedCounts.ContainsKey(ObjectType.ForeignKey) ? parsedCounts[ObjectType.ForeignKey] : 0);
+        CheckCount("Check Constraints", originalCounts["CHECK"], 
+            parsedCounts.ContainsKey(ObjectType.CheckConstraint) ? parsedCounts[ObjectType.CheckConstraint] : 0);
+        CheckCount("Default Constraints", originalCounts["DEFAULT"], 
+            parsedCounts.ContainsKey(ObjectType.DefaultConstraint) ? parsedCounts[ObjectType.DefaultConstraint] : 0);
+        CheckCount("Indexes", originalCounts["INDEX"], 
+            parsedCounts.ContainsKey(ObjectType.Index) ? parsedCounts[ObjectType.Index] : 0);
+        CheckCount("Triggers", originalCounts["TRIGGER"], 
+            parsedCounts.ContainsKey(ObjectType.Trigger) ? parsedCounts[ObjectType.Trigger] : 0);
+        CheckCount("Views", originalCounts["VIEW"], 
+            parsedCounts.ContainsKey(ObjectType.View) ? parsedCounts[ObjectType.View] : 0);
+        CheckCount("Stored Procedures", originalCounts["PROCEDURE"], 
+            parsedCounts.ContainsKey(ObjectType.StoredProcedure) ? parsedCounts[ObjectType.StoredProcedure] : 0);
+        CheckCount("Functions", originalCounts["FUNCTION"], 
+            parsedCounts.ContainsKey(ObjectType.Function) ? parsedCounts[ObjectType.Function] : 0);
+        
+        // Warn about unparsed statements
+        var totalOriginal = originalCounts.Values.Sum();
+        var totalParsed = statements.Count;
+        var skippedStatements = totalGoStatements - totalParsed;
+        
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine($"{"Total",-20} {totalOriginal,-10} {totalParsed,-10}");
+        
+        if (skippedStatements > 0)
+        {
+            Console.WriteLine($"\nWARNING: {skippedStatements} statements were skipped during parsing!");
+            Console.WriteLine("These might be unsupported statement types or system-generated statements.");
+        }
+    }
+    
+    private int CountPattern(string text, string pattern)
+    {
+        return Regex.Matches(text, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline).Count;
+    }
+    
+    private void CheckCount(string type, int original, int parsed)
+    {
+        var status = original == parsed ? "OK" : "MISMATCH";
+        var color = original == parsed ? ConsoleColor.Green : ConsoleColor.Yellow;
+        
+        Console.ForegroundColor = color;
+        Console.WriteLine($"{type,-20} {original,-10} {parsed,-10} {status,-10}");
+        Console.ResetColor();
     }
 }
 

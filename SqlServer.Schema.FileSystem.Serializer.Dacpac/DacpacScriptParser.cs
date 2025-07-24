@@ -36,7 +36,10 @@ public class DacpacScriptParser
     private List<SqlStatement> SplitIntoStatements(string script)
     {
         var statements = new List<SqlStatement>();
-        var lines = script.Split('\n');
+        var lines = script.Split(new[] { "
+", "
+", "
+" }, StringSplitOptions.None);
         var currentStatement = new List<string>();
         
         foreach (var line in lines)
@@ -45,7 +48,8 @@ public class DacpacScriptParser
             {
                 if (currentStatement.Any())
                 {
-                    var statementText = string.Join("\n", currentStatement);
+                    var statementText = string.Join("
+", currentStatement);
                     var statement = ParseStatement(statementText);
                     if (statement != null)
                     {
@@ -63,7 +67,8 @@ public class DacpacScriptParser
         // Handle last statement if no final GO
         if (currentStatement.Any())
         {
-            var statementText = string.Join("\n", currentStatement);
+            var statementText = string.Join("
+", currentStatement);
             var statement = ParseStatement(statementText);
             if (statement != null)
             {

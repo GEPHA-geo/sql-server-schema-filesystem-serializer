@@ -10,30 +10,34 @@ public class GitDiffAnalyzer
         if (Directory.Exists(gitDir))
         {
             // Ensure the directory is marked as safe (for Docker environments)
-            try
-            {
-                RunGitCommand(path, $"config --global --add safe.directory {path}");
-            }
-            catch
-            {
-                // Ignore if it fails - might already be set
-            }
+            EnsureSafeDirectory(path);
             return true;
         }
         return false;
     }
     
-    public void InitializeRepository(string path)
+    void EnsureSafeDirectory(string path)
     {
-        // Mark directory as safe first (for Docker environments)
+        // Try to add directory to safe list
+        // If it fails with a real error (not just "already exists"), it will throw
         try
         {
             RunGitCommand(path, $"config --global --add safe.directory {path}");
         }
-        catch
+        catch (InvalidOperationException ex)
         {
-            // Ignore if it fails
+            // Only ignore if it's because the entry already exists
+            if (!ex.Message.Contains("already exists") && !ex.Message.Contains("has multiple values"))
+            {
+                throw;
+            }
         }
+    }
+    
+    public void InitializeRepository(string path)
+    {
+        // Mark directory as safe first (for Docker environments)
+        EnsureSafeDirectory(path);
         
         RunGitCommand(path, "init");
         
@@ -56,14 +60,7 @@ generated_script.sql
         var entries = new List<DiffEntry>();
         
         // Mark directory as safe before running Git commands (for Docker environments)
-        try
-        {
-            RunGitCommand(path, $"config --global --add safe.directory {path}");
-        }
-        catch
-        {
-            // Ignore if it fails - might already be set
-        }
+        EnsureSafeDirectory(path);
         
         // Get status of files (including untracked files)
         var statusOutput = RunGitCommand(path, "status --porcelain -u");
@@ -99,14 +96,7 @@ generated_script.sql
     public void CommitChanges(string path, string message)
     {
         // Mark directory as safe before running Git commands (for Docker environments)
-        try
-        {
-            RunGitCommand(path, $"config --global --add safe.directory {path}");
-        }
-        catch
-        {
-            // Ignore if it fails - might already be set
-        }
+        EnsureSafeDirectory(path);
         
         RunGitCommand(path, "add .");
         RunGitCommand(path, $"commit -m \"{message}\"");

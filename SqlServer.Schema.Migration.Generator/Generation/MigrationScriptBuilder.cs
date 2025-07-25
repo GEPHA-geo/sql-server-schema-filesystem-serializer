@@ -1,0 +1,102 @@
+using System.Text;
+using SqlServer.Schema.Migration.Generator.Parsing;
+
+namespace SqlServer.Schema.Migration.Generator.Generation;
+
+public class MigrationScriptBuilder
+{
+    readonly DDLGenerator _ddlGenerator = new();
+    readonly DependencyResolver _dependencyResolver = new();
+
+    public string BuildMigration(List<SchemaChange> changes, string databaseName)
+    {
+        var sb = new StringBuilder();
+        
+        // Add migration header
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+        var migrationId = $"{timestamp}_{GenerateMigrationName(changes)}";
+        
+        sb.AppendLine($"-- Migration: {migrationId}.sql");
+        sb.AppendLine($"-- MigrationId: {migrationId}");
+        sb.AppendLine($"-- Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+        sb.AppendLine($"-- Database: {databaseName}");
+        sb.AppendLine($"-- Changes: {changes.Count} schema modifications");
+        sb.AppendLine();
+        sb.AppendLine("BEGIN TRANSACTION;");
+        sb.AppendLine();
+        
+        try
+        {
+            // Order changes by dependencies
+            var orderedChanges = _dependencyResolver.OrderChanges(changes);
+            
+            // Group changes by type for better organization
+            var dropOperations = orderedChanges.Where(c => c.ChangeType == GitIntegration.ChangeType.Deleted).ToList();
+            var createOperations = orderedChanges.Where(c => c.ChangeType == GitIntegration.ChangeType.Added).ToList();
+            var alterOperations = orderedChanges.Where(c => c.ChangeType == GitIntegration.ChangeType.Modified).ToList();
+            
+            // Process drops first (in reverse dependency order)
+            if (dropOperations.Any())
+            {
+                sb.AppendLine("-- Drop operations");
+                foreach (var change in dropOperations)
+                {
+                    sb.AppendLine(_ddlGenerator.GenerateDDL(change));
+                    sb.AppendLine("GO");
+                    sb.AppendLine();
+                }
+            }
+            
+            // Process modifications
+            if (alterOperations.Any())
+            {
+                sb.AppendLine("-- Modification operations");
+                foreach (var change in alterOperations)
+                {
+                    sb.AppendLine(_ddlGenerator.GenerateDDL(change));
+                    sb.AppendLine("GO");
+                    sb.AppendLine();
+                }
+            }
+            
+            // Process creates last
+            if (createOperations.Any())
+            {
+                sb.AppendLine("-- Create operations");
+                foreach (var change in createOperations)
+                {
+                    Console.WriteLine($"Generating CREATE for: {change.ObjectType} {change.ObjectName}");
+                    sb.AppendLine(_ddlGenerator.GenerateDDL(change));
+                    sb.AppendLine("GO");
+                    sb.AppendLine();
+                }
+            }
+            
+            sb.AppendLine("COMMIT TRANSACTION;");
+        }
+        catch
+        {
+            sb.AppendLine("ROLLBACK TRANSACTION;");
+            throw;
+        }
+        
+        return sb.ToString();
+    }
+
+    string GenerateMigrationName(List<SchemaChange> changes)
+    {
+        var summary = new List<string>();
+        
+        var tables = changes.Where(c => c.ObjectType == "Table").Count();
+        var columns = changes.Where(c => c.ObjectType == "Column").Count();
+        var indexes = changes.Where(c => c.ObjectType == "Index").Count();
+        var others = changes.Count - tables - columns - indexes;
+        
+        if (tables > 0) summary.Add($"{tables}tables");
+        if (columns > 0) summary.Add($"{columns}columns");
+        if (indexes > 0) summary.Add($"{indexes}indexes");
+        if (others > 0) summary.Add($"{others}other");
+        
+        return string.Join("_", summary);
+    }
+}

@@ -16,11 +16,11 @@ public static class SchemaObjectCounter
             ["Functions"] = 0
         };
 
-        using var connection = new SqlConnection(connectionString);
+        await using var connection = new SqlConnection(connectionString);
         await connection.OpenAsync();
 
         // Count tables
-        using (var cmd = new SqlCommand(@"
+        await using (var cmd = new SqlCommand(@"
             SELECT COUNT(*) 
             FROM sys.tables t
             INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
@@ -31,7 +31,7 @@ public static class SchemaObjectCounter
         }
 
         // Count views
-        using (var cmd = new SqlCommand(@"
+        await using (var cmd = new SqlCommand(@"
             SELECT COUNT(*) 
             FROM sys.views v
             INNER JOIN sys.schemas s ON v.schema_id = s.schema_id
@@ -42,7 +42,7 @@ public static class SchemaObjectCounter
         }
 
         // Count stored procedures
-        using (var cmd = new SqlCommand(@"
+        await using (var cmd = new SqlCommand(@"
             SELECT COUNT(*) 
             FROM sys.procedures p
             INNER JOIN sys.schemas s ON p.schema_id = s.schema_id
@@ -53,7 +53,7 @@ public static class SchemaObjectCounter
         }
 
         // Count functions
-        using (var cmd = new SqlCommand(@"
+        await using (var cmd = new SqlCommand(@"
             SELECT COUNT(*) 
             FROM sys.objects o
             INNER JOIN sys.schemas s ON o.schema_id = s.schema_id

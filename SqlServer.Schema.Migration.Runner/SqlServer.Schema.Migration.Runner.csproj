@@ -8,12 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SqlServer.DacFx" Version="*" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="*" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SqlServer.Schema.FileSystem.Serializer.Dacpac.Core\SqlServer.Schema.FileSystem.Serializer.Dacpac.Core.csproj" />
+    <None Update="Scripts\*.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -1,21 +1,16 @@
 using System.Text.RegularExpressions;
 
-namespace SqlServer.Schema.FileSystem.Serializer.Dacpac;
+namespace SqlServer.Schema.FileSystem.Serializer.Dacpac.Core;
 
 public class DacpacScriptParser
 {
-    private readonly FileSystemManager _fileSystemManager;
-    
-    public DacpacScriptParser()
-    {
-        _fileSystemManager = new FileSystemManager();
-    }
-    
+    readonly FileSystemManager _fileSystemManager = new();
+
     public void ParseAndOrganizeScripts(string script, string outputPath, string databaseName)
     {
         // Create base directory
         var basePath = Path.Combine(outputPath, databaseName);
-        _fileSystemManager.CreateDirectory(basePath);
+        FileSystemManager.CreateDirectory(basePath);
         
         // Count total GO statements in original script
         var totalGoStatements = CountGoStatements(script);
@@ -53,8 +48,8 @@ public class DacpacScriptParser
             Console.WriteLine($"WARNING: {statements.Count - processedCount} statements were not processed!");
         }
     }
-    
-    private List<SqlStatement> SplitIntoStatements(string script)
+
+    List<SqlStatement> SplitIntoStatements(string script)
     {
         var statements = new List<SqlStatement>();
         var lines = script.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
@@ -94,8 +89,8 @@ public class DacpacScriptParser
         
         return statements;
     }
-    
-    private SqlStatement? ParseStatement(string statementText)
+
+    SqlStatement? ParseStatement(string statementText)
     {
         if (string.IsNullOrWhiteSpace(statementText))
             return null;
@@ -193,8 +188,8 @@ public class DacpacScriptParser
         
         return statement;
     }
-    
-    private void ExtractConstraintInfo(string statementText, SqlStatement statement)
+
+    void ExtractConstraintInfo(string statementText, SqlStatement statement)
     {
         var match = Regex.Match(statementText, @"ALTER\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?\s+ADD\s+CONSTRAINT\s+\[?([^\]]+)\]?", RegexOptions.IgnoreCase | RegexOptions.Singleline);
         if (match.Success)
@@ -204,8 +199,8 @@ public class DacpacScriptParser
             statement.Name = match.Groups[3].Value;
         }
     }
-    
-    private Dictionary<string, List<SqlStatement>> GroupStatementsByObject(List<SqlStatement> statements)
+
+    Dictionary<string, List<SqlStatement>> GroupStatementsByObject(List<SqlStatement> statements)
     {
         var groups = new Dictionary<string, List<SqlStatement>>();
         
@@ -236,16 +231,16 @@ public class DacpacScriptParser
         
         return groups;
     }
-    
-    private bool IsTableChild(ObjectType type) =>
+
+    bool IsTableChild(ObjectType type) =>
         type == ObjectType.PrimaryKey ||
         type == ObjectType.ForeignKey ||
         type == ObjectType.CheckConstraint ||
         type == ObjectType.DefaultConstraint ||
         type == ObjectType.Index ||
         type == ObjectType.Trigger;
-    
-    private void ProcessObjectGroup(KeyValuePair<string, List<SqlStatement>> objectGroup, string basePath)
+
+    void ProcessObjectGroup(KeyValuePair<string, List<SqlStatement>> objectGroup, string basePath)
     {
         var statements = objectGroup.Value;
         var firstStatement = statements.First();
@@ -267,8 +262,8 @@ public class DacpacScriptParser
             ProcessFunction(firstStatement, basePath);
         }
     }
-    
-    private void ProcessTableGroup(List<SqlStatement> statements, string basePath)
+
+    void ProcessTableGroup(List<SqlStatement> statements, string basePath)
     {
         var tableStatement = statements.FirstOrDefault(s => s.Type == ObjectType.Table);
         if (tableStatement == null) return;
@@ -277,7 +272,7 @@ public class DacpacScriptParser
         var tablesPath = Path.Combine(schemaPath, "Tables");
         var tablePath = Path.Combine(tablesPath, tableStatement.Name);
         
-        _fileSystemManager.CreateDirectory(tablePath);
+        FileSystemManager.CreateDirectory(tablePath);
         
         // Write table definition
         var tableFile = Path.Combine(tablePath, $"TBL_{tableStatement.Name}.sql");
@@ -294,38 +289,38 @@ public class DacpacScriptParser
             _fileSystemManager.WriteFile(filePath, statement.Text);
         }
     }
-    
-    private void ProcessView(SqlStatement statement, string basePath)
+
+    void ProcessView(SqlStatement statement, string basePath)
     {
         var schemaPath = Path.Combine(basePath, statement.Schema);
         var viewsPath = Path.Combine(schemaPath, "Views");
-        _fileSystemManager.CreateDirectory(viewsPath);
+        FileSystemManager.CreateDirectory(viewsPath);
         
         var filePath = Path.Combine(viewsPath, $"{statement.Name}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
-    
-    private void ProcessStoredProcedure(SqlStatement statement, string basePath)
+
+    void ProcessStoredProcedure(SqlStatement statement, string basePath)
     {
         var schemaPath = Path.Combine(basePath, statement.Schema);
         var procsPath = Path.Combine(schemaPath, "StoredProcedures");
-        _fileSystemManager.CreateDirectory(procsPath);
+        FileSystemManager.CreateDirectory(procsPath);
         
         var filePath = Path.Combine(procsPath, $"{statement.Name}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
-    
-    private void ProcessFunction(SqlStatement statement, string basePath)
+
+    void ProcessFunction(SqlStatement statement, string basePath)
     {
         var schemaPath = Path.Combine(basePath, statement.Schema);
         var functionsPath = Path.Combine(schemaPath, "Functions");
-        _fileSystemManager.CreateDirectory(functionsPath);
+        FileSystemManager.CreateDirectory(functionsPath);
         
         var filePath = Path.Combine(functionsPath, $"{statement.Name}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
-    
-    private string GetFilePrefix(ObjectType type) => type switch
+
+    string GetFilePrefix(ObjectType type) => type switch
     {
         ObjectType.PrimaryKey => "PK",
         ObjectType.ForeignKey => "FK",
@@ -335,8 +330,8 @@ public class DacpacScriptParser
         ObjectType.Trigger => "TR",
         _ => ""
     };
-    
-    private void CreateEmptySchemaReadmes(string basePath)
+
+    void CreateEmptySchemaReadmes(string basePath)
     {
         // Get all schema directories
         var schemaDirs = Directory.GetDirectories(basePath);
@@ -354,19 +349,19 @@ public class DacpacScriptParser
         }
     }
 
-    
-    private int CountGoStatements(string script)
+
+    int CountGoStatements(string script)
     {
         var lines = script.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
         return lines.Count(line => line.Trim().Equals("GO", StringComparison.OrdinalIgnoreCase));
     }
-    
-    private int CountGeneratedFiles(string basePath)
+
+    int CountGeneratedFiles(string basePath)
     {
         return Directory.GetFiles(basePath, "*.sql", SearchOption.AllDirectories).Length;
     }
-    
-    private void VerifyParsingCompleteness(string script, List<SqlStatement> statements, int totalGoStatements)
+
+    void VerifyParsingCompleteness(string script, List<SqlStatement> statements, int totalGoStatements)
     {
         // Count different statement types in original script
         var originalCounts = new Dictionary<string, int>
@@ -434,13 +429,13 @@ public class DacpacScriptParser
             Console.WriteLine("These might be unsupported statement types or system-generated statements.");
         }
     }
-    
-    private int CountPattern(string text, string pattern)
+
+    int CountPattern(string text, string pattern)
     {
         return Regex.Matches(text, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline).Count;
     }
-    
-    private void CheckCount(string type, int original, int parsed)
+
+    void CheckCount(string type, int original, int parsed)
     {
         var status = original == parsed ? "OK" : "MISMATCH";
         var color = original == parsed ? ConsoleColor.Green : ConsoleColor.Yellow;

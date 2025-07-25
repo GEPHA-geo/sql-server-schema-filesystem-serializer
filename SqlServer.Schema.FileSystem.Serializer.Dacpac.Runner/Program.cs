@@ -2,7 +2,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.SqlServer.Dac;
 using SqlServer.Schema.FileSystem.Serializer.Dacpac.Core;
 
-namespace SqlServer.Schema.FileSystem.Serializer.Dacpac;
+namespace SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner;
 
 internal static class Program
 {
@@ -63,12 +63,28 @@ internal static class Program
             File.WriteAllText("generated_script.sql", script);
             Console.WriteLine($"Script saved to generated_script.sql ({script.Length} characters)");
             
-            // Clean only the database-specific directory
+            // Clean only the database-specific directory (preserving migrations)
             var databaseOutputDir = Path.Combine(outputPath, databaseName);
             if (Directory.Exists(databaseOutputDir))
             {
-                Console.WriteLine($"Removing existing database directory: {databaseOutputDir}");
-                Directory.Delete(databaseOutputDir, recursive: true);
+                Console.WriteLine($"Cleaning database directory: {databaseOutputDir} (preserving migrations)");
+                
+                // Get all subdirectories except migrations
+                var subdirs = Directory.GetDirectories(databaseOutputDir)
+                    .Where(d => !Path.GetFileName(d).Equals("migrations", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                
+                // Delete each subdirectory
+                foreach (var dir in subdirs)
+                {
+                    Directory.Delete(dir, recursive: true);
+                }
+                
+                // Delete all files in the root (if any)
+                foreach (var file in Directory.GetFiles(databaseOutputDir))
+                {
+                    File.Delete(file);
+                }
             }
             
             // Parse and organize the script into separate files
@@ -83,6 +99,15 @@ internal static class Program
             }
             
             Console.WriteLine($"Database structure generated successfully at: {outputPath}");
+            
+            // Generate migrations
+            Console.WriteLine("\nChecking for schema changes...");
+            var migrationGenerator = new Migration.Generator.MigrationGenerator();
+            var migrationsPath = Path.Combine(outputPath, databaseName, "migrations");
+            
+            var changesDetected = migrationGenerator.GenerateMigrations(outputPath, databaseName, migrationsPath);
+
+            Console.WriteLine(changesDetected ? $"Migration files generated in: {migrationsPath}" : "No schema changes detected.");
         }
         catch (Exception ex)
         {

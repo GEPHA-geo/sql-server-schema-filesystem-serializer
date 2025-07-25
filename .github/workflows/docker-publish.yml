@@ -88,6 +88,24 @@ jobs:
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_NAME }} \
             -p:ContainerImageTag=latest-arm64
+            
+      - name: Make package public
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          # Make the package public using GitHub API
+          echo "Making package public..."
+          PACKAGE_NAME="sqlserver-schema-migrator"
+          
+          # Wait a bit for the package to be fully registered
+          sleep 10
+          
+          # Update package visibility
+          curl -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/orgs/GEPHA-geo/packages/container/${PACKAGE_NAME}" \
+            -d '{"visibility":"public"}' || echo "Failed to make package public - may need manual configuration"
 
   test-image:
     needs: build-and-push
@@ -97,12 +115,10 @@ jobs:
       packages: read
       
     steps:
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Wait for package visibility update
+        run: |
+          echo "Waiting for package to become public..."
+          sleep 30
           
       - name: Test Docker image
         run: |

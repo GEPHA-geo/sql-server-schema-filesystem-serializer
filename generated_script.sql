@@ -77,7 +77,7 @@ ALTER DATABASE [$(DatabaseName)]
 
 GO
 ALTER DATABASE [$(DatabaseName)]
-    ADD FILE (NAME = [INDEX_6C3E771], FILENAME = N'$(DefaultDataPath)$(DefaultFilePrefix)_INDEX_6C3E771.mdf') TO FILEGROUP [INDEX];
+    ADD FILE (NAME = [INDEX_4E581FA7], FILENAME = N'$(DefaultDataPath)$(DefaultFilePrefix)_INDEX_4E581FA7.mdf') TO FILEGROUP [INDEX];
 
 
 GO
@@ -285,158 +285,14 @@ CREATE SCHEMA [test]
 
 
 GO
-PRINT N'Creating Table [new].[z_gas_pl_statusi]...';
+PRINT N'Creating Table [new].[z_kontrol_semowm_pasuxi_koreqtirebulia]...';
 
 
 GO
-CREATE TABLE [new].[z_gas_pl_statusi] (
-    [Id]             TINYINT        NOT NULL,
-    [gas_pl_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_gas_pl_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_davalebis_statusi]...';
-
-
-GO
-CREATE TABLE [new].[z_davalebis_statusi] (
-    [Id]                TINYINT        NOT NULL,
-    [davalebis_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_davalebis_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_vauch_filialis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_vauch_filialis_tipi] (
-    [Id]                  TINYINT        NOT NULL,
-    [vauch_filialis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_vauch_filialis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_kontagentis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_kontagentis_tipi] (
-    [Id]               TINYINT        NOT NULL,
-    [kontagentis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_kontagentis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_angarishsworebis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_angarishsworebis_tipi] (
-    [Id]                    TINYINT        NOT NULL,
-    [angarishsworebis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_angarishsworebis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_Sefutva_stik_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_Sefutva_stik_tipi] (
-    [Id]                TINYINT        NOT NULL,
-    [Sefutva_stik_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_Sefutva_stik_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_ord_aqciis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_ord_aqciis_tipi] (
-    [Id]              TINYINT        NOT NULL,
-    [ord_aqciis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_ord_aqciis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_aft_pac_statusi]...';
-
-
-GO
-CREATE TABLE [new].[z_aft_pac_statusi] (
-    [Id]              TINYINT        NOT NULL,
-    [aft_pac_statusi] NVARCHAR (100) NOT NULL,
-    CONSTRAINT [PK_z_aft_pac_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_PurchaseType]...';
-
-
-GO
-CREATE TABLE [new].[z_PurchaseType] (
-    [Id]               TINYINT        IDENTITY (0, 1) NOT NULL,
-    [PurchaseTypeName] NVARCHAR (100) NULL,
-    CONSTRAINT [PurchaseType_pk] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_sawy_gas_zedm_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_sawy_gas_zedm_tipi] (
-    [Id]                 TINYINT        NOT NULL,
-    [sawy_gas_zedm_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_sawy_gas_zedm_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_med_fasi]...';
-
-
-GO
-CREATE TABLE [new].[z_med_fasi] (
-    [Id]       TINYINT        NOT NULL,
-    [med_fasi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_med_fasi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_saq_das_saqonlis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_saq_das_saqonlis_tipi] (
-    [Id]                    TINYINT        NOT NULL,
-    [saq_das_saqonlis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_saq_das_saqonlis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_rsge_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_rsge_tipi] (
-    [Id]        TINYINT        NOT NULL,
-    [rsge_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_rsge_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_kontrol_semowm_pasuxi_koreqtirebulia] (
+    [Id]                                   TINYINT        NOT NULL,
+    [kontrol_semowm_pasuxi_koreqtirebulia] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_kontrol_semowm_pasuxi_koreqtirebulia] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
@@ -462,338 +318,14 @@ CREATE NONCLUSTERED INDEX [NonClusteredIndex-20250725-004859]
 
 
 GO
-PRINT N'Creating Table [new].[z_daz_gas_tipi]...';
+PRINT N'Creating Table [new].[z_PurchaseType]...';
 
 
 GO
-CREATE TABLE [new].[z_daz_gas_tipi] (
-    [Id]           TINYINT        NOT NULL,
-    [daz_gas_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_daz_gas_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_gas_kategoria]...';
-
-
-GO
-CREATE TABLE [new].[z_gas_kategoria] (
-    [Id]            TINYINT        NOT NULL,
-    [gas_kategoria] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_gas_kategoria] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_qv_pac_statusi]...';
-
-
-GO
-CREATE TABLE [new].[z_qv_pac_statusi] (
-    [Id]             TINYINT        NOT NULL,
-    [qv_pac_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_qv_pac_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_sem_kategoria]...';
-
-
-GO
-CREATE TABLE [new].[z_sem_kategoria] (
-    [Id]            TINYINT        NOT NULL,
-    [sem_kategoria] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_sem_kategoria] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_crm_aqt_gauqm_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_crm_aqt_gauqm_tipi] (
-    [Id]                 TINYINT        NOT NULL,
-    [crm_aqt_gauqm_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_crm_aqt_gauqm_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_nastis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_nastis_tipi] (
-    [Id]       TINYINT        IDENTITY (1, 1) NOT NULL,
-    [TypeName] NVARCHAR (100) NOT NULL,
-    CONSTRAINT [PK_NastiType2] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_aft_gegma_realiz_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_aft_gegma_realiz_tipi] (
-    [Id]                    TINYINT        NOT NULL,
-    [aft_gegma_realiz_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_aft_gegma_realiz_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_kont_kval_ist_kateg]...';
-
-
-GO
-CREATE TABLE [new].[z_kont_kval_ist_kateg] (
-    [Id]                  TINYINT        NOT NULL,
-    [kont_kval_ist_kateg] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_kont_kval_ist_kateg] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_optika_kategoriebi]...';
-
-
-GO
-CREATE TABLE [new].[z_optika_kategoriebi] (
-    [Id]                 TINYINT        NOT NULL,
-    [optika_kategoriebi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_optika_kategoriebi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_saq_semos_statusi]...';
-
-
-GO
-CREATE TABLE [new].[z_saq_semos_statusi] (
-    [Id]                TINYINT        NOT NULL,
-    [saq_semos_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_saq_semos_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_in_out_sb_gauqm_chanaw_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_in_out_sb_gauqm_chanaw_tipi] (
-    [Id]                          TINYINT        NOT NULL,
-    [in_out_sb_gauqm_chanaw_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_in_out_sb_gauqm_chanaw_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_crm_aqt_motx_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_crm_aqt_motx_tipi] (
-    [Id]                TINYINT        NOT NULL,
-    [crm_aqt_motx_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_crm_aqt_motx_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_kontagentis_kvalifikaciis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_kontagentis_kvalifikaciis_tipi] (
-    [Id]                             TINYINT        NOT NULL,
-    [kontagentis_kvalifikaciis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_kontagentis_kvalifikaciis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_bechdebis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_bechdebis_tipi] (
-    [Id]               TINYINT        NOT NULL,
-    [bechdebis_tipebi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_bechdebis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_aft_sab_cvl_motx_sesr_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_aft_sab_cvl_motx_sesr_tipi] (
-    [Id]                         TINYINT        NOT NULL,
-    [aft_sab_cvl_motx_sesr_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_aft_sab_cvl_motx_sesr_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_daz_pac_statusi]...';
-
-
-GO
-CREATE TABLE [new].[z_daz_pac_statusi] (
-    [Id]              TINYINT        NOT NULL,
-    [daz_pac_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_daz_pac_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_gadaxdis_piroba]...';
-
-
-GO
-CREATE TABLE [new].[z_gadaxdis_piroba] (
-    [Id]              TINYINT        NOT NULL,
-    [gadaxdis_piroba] NVARCHAR (100) NOT NULL,
-    CONSTRAINT [PK_z_gadaxdis_piroba] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_pr_04_brunvis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_pr_04_brunvis_tipi] (
-    [Id]                 TINYINT        NOT NULL,
-    [pr_04_brunvis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_pr_04_brunvis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_med_camowera_dasturi]...';
-
-
-GO
-CREATE TABLE [new].[z_med_camowera_dasturi] (
-    [Id]                   TINYINT        NOT NULL,
-    [med_camowera_dasturi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_med_camowera_dasturi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_s_o_nasti_statusi]...';
-
-
-GO
-CREATE TABLE [new].[z_s_o_nasti_statusi] (
-    [Id]                TINYINT        NOT NULL,
-    [s_o_nasti_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_s_o_nasti_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_sabajo_operaciis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_sabajo_operaciis_tipi] (
-    [Id]                    TINYINT        NOT NULL,
-    [sabajo_operaciis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_sabajo_operaciis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_pr_atributikis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_pr_atributikis_tipi] (
-    [Id]                  TINYINT        NOT NULL,
-    [pr_atributikis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_pr_atributikis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_servisis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_servisis_tipi] (
-    [Id]              TINYINT        NOT NULL,
-    [servisis_tipebi] NVARCHAR (100) NOT NULL,
-    CONSTRAINT [PK_z_servisis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_operaciis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_operaciis_tipi] (
-    [Id]             TINYINT        NOT NULL,
-    [operaciis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_operaciis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_momx_parolis_cvl_statusi]...';
-
-
-GO
-CREATE TABLE [new].[z_momx_parolis_cvl_statusi] (
-    [Id]                       TINYINT        NOT NULL,
-    [momx_parolis_cvl_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_momx_parolis_cvl_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_Sefutva_stikeri_semowmebis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_Sefutva_stikeri_semowmebis_tipi] (
-    [Id]                              TINYINT        NOT NULL,
-    [Sefutva_stikeri_semowmebis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_Sefutva_stikeri_semowmebis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_aft_gegma_tanxis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_aft_gegma_tanxis_tipi] (
-    [Id]                    TINYINT        NOT NULL,
-    [aft_gegma_tanxis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_aft_gegma_tanxis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_gadawera_operaciis_etapi]...';
-
-
-GO
-CREATE TABLE [new].[z_gadawera_operaciis_etapi] (
-    [Id]                       TINYINT        NOT NULL,
-    [gadawera_operaciis_etapi] NVARCHAR (100) NOT NULL,
-    CONSTRAINT [PK_z_gadawera_operaciis_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_PurchaseType] (
+    [Id]               TINYINT        IDENTITY (0, 1) NOT NULL,
+    [PurchaseTypeName] NVARCHAR (100) NULL,
+    CONSTRAINT [PurchaseType_pk] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
@@ -810,74 +342,50 @@ CREATE TABLE [new].[z_elfis_tipi] (
 
 
 GO
-PRINT N'Creating Table [new].[z_optika_receptis_tipi]...';
+PRINT N'Creating Table [new].[z_crm_aqt_motx_tipi]...';
 
 
 GO
-CREATE TABLE [new].[z_optika_receptis_tipi] (
-    [Id]                   TINYINT        NOT NULL,
-    [optika_receptis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_optika_receptis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_crm_aqt_motx_tipi] (
+    [Id]                TINYINT        NOT NULL,
+    [crm_aqt_motx_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_crm_aqt_motx_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
 GO
-PRINT N'Creating Table [new].[z_sawy_tipi]...';
+PRINT N'Creating Table [new].[z_kontagentis_kvalifikacia]...';
 
 
 GO
-CREATE TABLE [new].[z_sawy_tipi] (
-    [Id]        TINYINT        NOT NULL,
-    [sawy_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_sawy_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_kontagentis_kvalifikacia] (
+    [Id]                       TINYINT        NOT NULL,
+    [kontagentis_kvalifikacia] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_kontagentis_kvalifikacia] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
 GO
-PRINT N'Creating Table [new].[z_zgarbi_qulebis_motxovnis_statusi]...';
+PRINT N'Creating Table [new].[z_saq_semos_statusi]...';
 
 
 GO
-CREATE TABLE [new].[z_zgarbi_qulebis_motxovnis_statusi] (
-    [Id]                               TINYINT        NOT NULL,
-    [zgarbi_qulebis_motxovnis_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_zgarbi_qulebis_motxovnis_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_saq_semos_statusi] (
+    [Id]                TINYINT        NOT NULL,
+    [saq_semos_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_saq_semos_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
 GO
-PRINT N'Creating Table [new].[z_eqsp_uwysi_operaciis_etapi]...';
+PRINT N'Creating Table [new].[z_aft_gegma_realiz_tipi]...';
 
 
 GO
-CREATE TABLE [new].[z_eqsp_uwysi_operaciis_etapi] (
-    [Id]                         TINYINT        NOT NULL,
-    [eqsp_uwysi_operaciis_etapi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_eqsp_uwysi_operaciis_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_qronik_sms_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_qronik_sms_tipi] (
-    [Id]              TINYINT        NOT NULL,
-    [qronik_sms_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_qronik_sms_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_aft_salaro_gashifvris_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_aft_salaro_gashifvris_tipi] (
-    [Id]                         TINYINT        NOT NULL,
-    [aft_salaro_gashifvris_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_aft_salaro_gashifvris_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_aft_gegma_realiz_tipi] (
+    [Id]                    TINYINT        NOT NULL,
+    [aft_gegma_realiz_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_aft_gegma_realiz_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
@@ -894,146 +402,62 @@ CREATE TABLE [new].[z_filail_aqcia_tipi] (
 
 
 GO
-PRINT N'Creating Table [new].[z_kontrol_semowm_pasuxis_tipi]...';
+PRINT N'Creating Table [new].[z_gasifvra_sem_etapi]...';
 
 
 GO
-CREATE TABLE [new].[z_kontrol_semowm_pasuxis_tipi] (
-    [Id]                          TINYINT        NOT NULL,
-    [kontrol_semowm_pasuxis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_kontrol_semowm_pasuxis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_gasifvra_sem_etapi] (
+    [Id]                 TINYINT        NOT NULL,
+    [gasifvra_sem_etapi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_gasifvra_sem_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
 GO
-PRINT N'Creating Table [new].[z_saw_filialis_tipi]...';
+PRINT N'Creating Table [new].[z_operaciis_etapi]...';
 
 
 GO
-CREATE TABLE [new].[z_saw_filialis_tipi] (
-    [Id]                TINYINT        NOT NULL,
-    [saw_filialis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_saw_filialis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_boca_dx_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_boca_dx_tipi] (
-    [Id]           TINYINT        NOT NULL,
-    [boca_dx_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_boca_dx_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_kontagentis_kvalifikaciis_statusi]...';
-
-
-GO
-CREATE TABLE [new].[z_kontagentis_kvalifikaciis_statusi] (
-    [Id]                                TINYINT        NOT NULL,
-    [kontagentis_kvalifikaciis_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_kontagentis_kvalifikaciis_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_eqsp_uwysi_gashvebis_etapi]...';
-
-
-GO
-CREATE TABLE [new].[z_eqsp_uwysi_gashvebis_etapi] (
-    [Id]                         TINYINT        NOT NULL,
-    [eqsp_uwysi_gashvebis_etapi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_eqsp_uwysi_gashvebis_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_crm_zgarbi_qulebi_ang_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_crm_zgarbi_qulebi_ang_tipi] (
-    [Id]                         TINYINT        NOT NULL,
-    [crm_zgarbi_qulebi_ang_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_crm_zgarbi_qulebi_ang_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_gepha_dazgveva_receptis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_gepha_dazgveva_receptis_tipi] (
-    [Id]                             TINYINT        NOT NULL,
-    [gepha_dazgveva_receptis_tipebi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_gepha_dazgveva_receptis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_tanamsr_avansi_operaciis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_tanamsr_avansi_operaciis_tipi] (
-    [Id]                            TINYINT        NOT NULL,
-    [tanamsr_avansi_operaciis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_tanamsr_avansi_operaciis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_gadacera_micodeba_etapi]...';
-
-
-GO
-CREATE TABLE [new].[z_gadacera_micodeba_etapi] (
-    [Id]                      TINYINT        NOT NULL,
-    [gadacera_micodeba_etapi] NVARCHAR (100) NOT NULL,
-    CONSTRAINT [PK_z_gadacera_micodeba_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_aft_moh_rec_mechingis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_aft_moh_rec_mechingis_tipi] (
-    [Id]                         TINYINT        NOT NULL,
-    [aft_moh_rec_mechingis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_aft_moh_rec_mechingis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_er_pac_bar_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_er_pac_bar_tipi] (
+CREATE TABLE [new].[z_operaciis_etapi] (
     [Id]              TINYINT        NOT NULL,
-    [er_pac_bar_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_er_pac_bar_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+    [operaciis_etapi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_operaciis_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
 GO
-PRINT N'Creating Table [new].[z_med_saitze_gamochenis_piroba]...';
+PRINT N'Creating Table [new].[z_daz_pac_statusi]...';
 
 
 GO
-CREATE TABLE [new].[z_med_saitze_gamochenis_piroba] (
-    [Id]                           TINYINT        NOT NULL,
-    [med_saitze_gamochenis_piroba] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_med_saitze_gamochenis_piroba] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_daz_pac_statusi] (
+    [Id]              TINYINT        NOT NULL,
+    [daz_pac_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_daz_pac_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_eqsp_uwysi_operaciis_etapi]...';
+
+
+GO
+CREATE TABLE [new].[z_eqsp_uwysi_operaciis_etapi] (
+    [Id]                         TINYINT        NOT NULL,
+    [eqsp_uwysi_operaciis_etapi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_eqsp_uwysi_operaciis_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_gasifvra_etapi]...';
+
+
+GO
+CREATE TABLE [new].[z_gasifvra_etapi] (
+    [Id]             TINYINT        NOT NULL,
+    [gasifvra_etapi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_gasifvra_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
@@ -1050,74 +474,86 @@ CREATE TABLE [new].[z_f100_statusi] (
 
 
 GO
-PRINT N'Creating Table [new].[z_saq_gadaxdis_etapi]...';
+PRINT N'Creating Table [new].[z_ord_aqciis_tipi]...';
 
 
 GO
-CREATE TABLE [new].[z_saq_gadaxdis_etapi] (
-    [Id]                 TINYINT        NOT NULL,
-    [saq_gadaxdis_etapi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_saq_gadaxdis_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_rsge_statusi]...';
-
-
-GO
-CREATE TABLE [new].[z_rsge_statusi] (
-    [Id]           TINYINT        NOT NULL,
-    [rsge_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_rsge_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_cup_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_cup_tipi] (
-    [Id]         TINYINT        NOT NULL,
-    [cup_tipebi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_cup_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_zgarbi_qulebis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_zgarbi_qulebis_tipi] (
-    [Id]                    TINYINT        NOT NULL,
-    [zgarbi_qulebis_tipebi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_zgarbi_qulebis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_eqsp_uwysi_operaciis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_eqsp_uwysi_operaciis_tipi] (
-    [Id]                          TINYINT        NOT NULL,
-    [eqsp_uwysi_operaciis_tipebi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_eqsp_uwysi_operaciis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_ord_sed_statusi]...';
-
-
-GO
-CREATE TABLE [new].[z_ord_sed_statusi] (
+CREATE TABLE [new].[z_ord_aqciis_tipi] (
     [Id]              TINYINT        NOT NULL,
-    [ord_sed_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_ord_sed_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+    [ord_aqciis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_ord_aqciis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_qv_pac_statusi]...';
+
+
+GO
+CREATE TABLE [new].[z_qv_pac_statusi] (
+    [Id]             TINYINT        NOT NULL,
+    [qv_pac_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_qv_pac_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_aft_sab_cvl_motx_sesr_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_aft_sab_cvl_motx_sesr_tipi] (
+    [Id]                         TINYINT        NOT NULL,
+    [aft_sab_cvl_motx_sesr_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_aft_sab_cvl_motx_sesr_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_eqsp_uwysi_gashvebis_etapi]...';
+
+
+GO
+CREATE TABLE [new].[z_eqsp_uwysi_gashvebis_etapi] (
+    [Id]                         TINYINT        NOT NULL,
+    [eqsp_uwysi_gashvebis_etapi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_eqsp_uwysi_gashvebis_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_saq_das_saqonlis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_saq_das_saqonlis_tipi] (
+    [Id]                    TINYINT        NOT NULL,
+    [saq_das_saqonlis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_saq_das_saqonlis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_bechdebis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_bechdebis_tipi] (
+    [Id]               TINYINT        NOT NULL,
+    [bechdebis_tipebi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_bechdebis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_zgarbi_qulebis_motxovnis_statusi]...';
+
+
+GO
+CREATE TABLE [new].[z_zgarbi_qulebis_motxovnis_statusi] (
+    [Id]                               TINYINT        NOT NULL,
+    [zgarbi_qulebis_motxovnis_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_zgarbi_qulebis_motxovnis_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
@@ -1134,14 +570,302 @@ CREATE TABLE [new].[z_fasdaklebis_sqeimis_tipi] (
 
 
 GO
-PRINT N'Creating Table [new].[z_gasifvra_sem_etapi]...';
+PRINT N'Creating Table [new].[z_boca_dx_tipi]...';
 
 
 GO
-CREATE TABLE [new].[z_gasifvra_sem_etapi] (
+CREATE TABLE [new].[z_boca_dx_tipi] (
+    [Id]           TINYINT        NOT NULL,
+    [boca_dx_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_boca_dx_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_aft_gegma_tanxis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_aft_gegma_tanxis_tipi] (
+    [Id]                    TINYINT        NOT NULL,
+    [aft_gegma_tanxis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_aft_gegma_tanxis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_er_pac_tanxmoba_statusi]...';
+
+
+GO
+CREATE TABLE [new].[z_er_pac_tanxmoba_statusi] (
+    [Id]                      TINYINT        NOT NULL,
+    [er_pac_tanxmoba_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_er_pac_tanxmoba_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_kontagentis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_kontagentis_tipi] (
+    [Id]               TINYINT        NOT NULL,
+    [kontagentis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_kontagentis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_gas_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_gas_tipi] (
+    [Id]       TINYINT        NOT NULL,
+    [gas_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_gas_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_er_pac_bar_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_er_pac_bar_tipi] (
+    [Id]              TINYINT        NOT NULL,
+    [er_pac_bar_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_er_pac_bar_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_sawy_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_sawy_tipi] (
+    [Id]        TINYINT        NOT NULL,
+    [sawy_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_sawy_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_er_rez_operaciis_statusi]...';
+
+
+GO
+CREATE TABLE [new].[z_er_rez_operaciis_statusi] (
+    [Id]                       TINYINT        NOT NULL,
+    [er_rez_operaciis_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_er_rez_operaciis_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_optika_kategoriebi]...';
+
+
+GO
+CREATE TABLE [new].[z_optika_kategoriebi] (
     [Id]                 TINYINT        NOT NULL,
-    [gasifvra_sem_etapi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_gasifvra_sem_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
+    [optika_kategoriebi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_optika_kategoriebi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_nastis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_nastis_tipi] (
+    [Id]       TINYINT        IDENTITY (1, 1) NOT NULL,
+    [TypeName] NVARCHAR (100) NOT NULL,
+    CONSTRAINT [PK_NastiType2] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_eqsp_uwysi_operaciis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_eqsp_uwysi_operaciis_tipi] (
+    [Id]                          TINYINT        NOT NULL,
+    [eqsp_uwysi_operaciis_tipebi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_eqsp_uwysi_operaciis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_tanamsr_avansi_operaciis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_tanamsr_avansi_operaciis_tipi] (
+    [Id]                            TINYINT        NOT NULL,
+    [tanamsr_avansi_operaciis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_tanamsr_avansi_operaciis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_Sefutva_stikeri_semowmebis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_Sefutva_stikeri_semowmebis_tipi] (
+    [Id]                              TINYINT        NOT NULL,
+    [Sefutva_stikeri_semowmebis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_Sefutva_stikeri_semowmebis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_s_o_nasti_statusi]...';
+
+
+GO
+CREATE TABLE [new].[z_s_o_nasti_statusi] (
+    [Id]                TINYINT        NOT NULL,
+    [s_o_nasti_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_s_o_nasti_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_er_rez_provaideri]...';
+
+
+GO
+CREATE TABLE [new].[z_er_rez_provaideri] (
+    [Id]                TINYINT        NOT NULL,
+    [er_rez_provaideri] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_er_rez_provaideri] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_servisis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_servisis_tipi] (
+    [Id]              TINYINT        NOT NULL,
+    [servisis_tipebi] NVARCHAR (100) NOT NULL,
+    CONSTRAINT [PK_z_servisis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_kontagentis_angarishsworebis_piroba]...';
+
+
+GO
+CREATE TABLE [new].[z_kontagentis_angarishsworebis_piroba] (
+    [Id]                                  TINYINT        NOT NULL,
+    [kontagentis_angarishsworebis_piroba] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_kontagentis_angarishsworebis_piroba] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_crm_zgarbi_qulebi_ang_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_crm_zgarbi_qulebi_ang_tipi] (
+    [Id]                         TINYINT        NOT NULL,
+    [crm_zgarbi_qulebi_ang_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_crm_zgarbi_qulebi_ang_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_sabajo_operaciis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_sabajo_operaciis_tipi] (
+    [Id]                    TINYINT        NOT NULL,
+    [sabajo_operaciis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_sabajo_operaciis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_med_fasi]...';
+
+
+GO
+CREATE TABLE [new].[z_med_fasi] (
+    [Id]       TINYINT        NOT NULL,
+    [med_fasi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_med_fasi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_rsge_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_rsge_tipi] (
+    [Id]        TINYINT        NOT NULL,
+    [rsge_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_rsge_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_aft_salaro_gashifvris_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_aft_salaro_gashifvris_tipi] (
+    [Id]                         TINYINT        NOT NULL,
+    [aft_salaro_gashifvris_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_aft_salaro_gashifvris_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_cup_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_cup_tipi] (
+    [Id]         TINYINT        NOT NULL,
+    [cup_tipebi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_cup_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_er_pac_motx_filialis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_er_pac_motx_filialis_tipi] (
+    [Id]                          TINYINT        NOT NULL,
+    [er_pac_motx_filialis_tipebi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_er_pac_motx_filialis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_er_pac_motx_motxovnis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_er_pac_motx_motxovnis_tipi] (
+    [Id]                           TINYINT        NOT NULL,
+    [er_pac_motx_motxovnis_tipebi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_er_pac_motx_motxovnis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
@@ -1170,98 +894,62 @@ CREATE TABLE [new].[z_er_pac_tanxmoba_brandi] (
 
 
 GO
-PRINT N'Creating Table [new].[z_er_pac_motx_motxovnis_tipi]...';
+PRINT N'Creating Table [new].[z_zgarbi_qulebis_tipi]...';
 
 
 GO
-CREATE TABLE [new].[z_er_pac_motx_motxovnis_tipi] (
-    [Id]                           TINYINT        NOT NULL,
-    [er_pac_motx_motxovnis_tipebi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_er_pac_motx_motxovnis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_zgarbi_qulebis_tipi] (
+    [Id]                    TINYINT        NOT NULL,
+    [zgarbi_qulebis_tipebi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_zgarbi_qulebis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
 GO
-PRINT N'Creating Table [new].[z_er_pac_motx_filialis_tipi]...';
+PRINT N'Creating Table [new].[z_er_pac_barr_qselis_tipi]...';
 
 
 GO
-CREATE TABLE [new].[z_er_pac_motx_filialis_tipi] (
-    [Id]                          TINYINT        NOT NULL,
-    [er_pac_motx_filialis_tipebi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_er_pac_motx_filialis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_er_pac_barr_qselis_tipi] (
+    [Id]                        TINYINT        NOT NULL,
+    [er_pac_barr_qselis_tipebi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_er_pac_barr_qselis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
 GO
-PRINT N'Creating Table [new].[z_er_pac_tanxmoba_statusi]...';
+PRINT N'Creating Table [new].[z_er_pac_barr_provaderis_tipi]...';
 
 
 GO
-CREATE TABLE [new].[z_er_pac_tanxmoba_statusi] (
-    [Id]                      TINYINT        NOT NULL,
-    [er_pac_tanxmoba_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_er_pac_tanxmoba_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_er_pac_barr_provaderis_tipi] (
+    [Id]                            TINYINT        NOT NULL,
+    [er_pac_barr_provaderis_tipebi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_er_pac_barr_provaderis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
 GO
-PRINT N'Creating Table [new].[z_kontrol_semowm_pasuxi_koreqtirebulia]...';
+PRINT N'Creating Table [new].[z_pr_04_brunvis_tipi]...';
 
 
 GO
-CREATE TABLE [new].[z_kontrol_semowm_pasuxi_koreqtirebulia] (
-    [Id]                                   TINYINT        NOT NULL,
-    [kontrol_semowm_pasuxi_koreqtirebulia] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_kontrol_semowm_pasuxi_koreqtirebulia] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_pr_04_brunvis_tipi] (
+    [Id]                 TINYINT        NOT NULL,
+    [pr_04_brunvis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_pr_04_brunvis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
 GO
-PRINT N'Creating Table [new].[z_operaciis_etapi]...';
+PRINT N'Creating Table [new].[z_kontagentis_kvalifikaciis_tipi]...';
 
 
 GO
-CREATE TABLE [new].[z_operaciis_etapi] (
-    [Id]              TINYINT        NOT NULL,
-    [operaciis_etapi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_operaciis_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_uaris_mizezi]...';
-
-
-GO
-CREATE TABLE [new].[z_uaris_mizezi] (
-    [Id]           TINYINT        NOT NULL,
-    [uaris_mizezi] NVARCHAR (100) NOT NULL,
-    CONSTRAINT [PK_z_uaris_mizezi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_aft_tel_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_aft_tel_tipi] (
-    [Id]           TINYINT        NOT NULL,
-    [aft_tel_tipi] NVARCHAR (100) NOT NULL,
-    CONSTRAINT [PK_z_aft_tel_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_sawy_wesi_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_sawy_wesi_tipi] (
-    [Id]             TINYINT        NOT NULL,
-    [sawy_wesi_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_sawy_wesi_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_kontagentis_kvalifikaciis_tipi] (
+    [Id]                             TINYINT        NOT NULL,
+    [kontagentis_kvalifikaciis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_kontagentis_kvalifikaciis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
@@ -1287,6 +975,42 @@ CREATE UNIQUE NONCLUSTERED INDEX [NonClusteredIndex-20250723-1520432]
 
 
 GO
+PRINT N'Creating Table [new].[z_uaris_mizezi]...';
+
+
+GO
+CREATE TABLE [new].[z_uaris_mizezi] (
+    [Id]           TINYINT        NOT NULL,
+    [uaris_mizezi] NVARCHAR (100) NOT NULL,
+    CONSTRAINT [PK_z_uaris_mizezi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_optika_receptis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_optika_receptis_tipi] (
+    [Id]                   TINYINT        NOT NULL,
+    [optika_receptis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_optika_receptis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_buRalt_operaciis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_buRalt_operaciis_tipi] (
+    [Id]                      TINYINT        NOT NULL,
+    [buRalt_operaciis_tipebi] NVARCHAR (100) NOT NULL,
+    CONSTRAINT [PK_z_buRalt_operaciis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
 PRINT N'Creating Table [new].[z_Currency]...';
 
 
@@ -1299,86 +1023,62 @@ CREATE TABLE [new].[z_Currency] (
 
 
 GO
-PRINT N'Creating Table [new].[z_gasifvra_etapi]...';
+PRINT N'Creating Table [new].[z_med_camowera_dasturi]...';
 
 
 GO
-CREATE TABLE [new].[z_gasifvra_etapi] (
+CREATE TABLE [new].[z_med_camowera_dasturi] (
+    [Id]                   TINYINT        NOT NULL,
+    [med_camowera_dasturi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_med_camowera_dasturi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_pr_atributikis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_pr_atributikis_tipi] (
+    [Id]                  TINYINT        NOT NULL,
+    [pr_atributikis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_pr_atributikis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_saw_filialis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_saw_filialis_tipi] (
+    [Id]                TINYINT        NOT NULL,
+    [saw_filialis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_saw_filialis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_kont_kval_ist_kateg]...';
+
+
+GO
+CREATE TABLE [new].[z_kont_kval_ist_kateg] (
+    [Id]                  TINYINT        NOT NULL,
+    [kont_kval_ist_kateg] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_kont_kval_ist_kateg] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_gas_pl_statusi]...';
+
+
+GO
+CREATE TABLE [new].[z_gas_pl_statusi] (
     [Id]             TINYINT        NOT NULL,
-    [gasifvra_etapi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_gasifvra_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_optika_oftal_satv_yidvis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_optika_oftal_satv_yidvis_tipi] (
-    [Id]                            TINYINT        NOT NULL,
-    [optika_oftal_satv_yidvis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_optika_oftal_satv_yidvis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_er_pac_barr_qselis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_er_pac_barr_qselis_tipi] (
-    [Id]                        TINYINT        NOT NULL,
-    [er_pac_barr_qselis_tipebi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_er_pac_barr_qselis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_er_rez_operaciis_statusi]...';
-
-
-GO
-CREATE TABLE [new].[z_er_rez_operaciis_statusi] (
-    [Id]                       TINYINT        NOT NULL,
-    [er_rez_operaciis_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_er_rez_operaciis_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_s_o_oper_statusi]...';
-
-
-GO
-CREATE TABLE [new].[z_s_o_oper_statusi] (
-    [Id]               TINYINT        NOT NULL,
-    [s_o_oper_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_s_o_oper_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_sekv_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_sekv_tipi] (
-    [Id]        TINYINT        NOT NULL,
-    [sekv_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_sekv_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_er_pac_barr_provaderis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_er_pac_barr_provaderis_tipi] (
-    [Id]                            TINYINT        NOT NULL,
-    [er_pac_barr_provaderis_tipebi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_er_pac_barr_provaderis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
+    [gas_pl_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_gas_pl_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
@@ -1395,14 +1095,194 @@ CREATE TABLE [new].[z_saq_br1_statusi] (
 
 
 GO
-PRINT N'Creating Table [new].[z_kontagentis_kvalifikacia]...';
+PRINT N'Creating Table [new].[z_sawy_wesi_tipi]...';
 
 
 GO
-CREATE TABLE [new].[z_kontagentis_kvalifikacia] (
+CREATE TABLE [new].[z_sawy_wesi_tipi] (
+    [Id]             TINYINT        NOT NULL,
+    [sawy_wesi_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_sawy_wesi_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_rsge_statusi]...';
+
+
+GO
+CREATE TABLE [new].[z_rsge_statusi] (
+    [Id]           TINYINT        NOT NULL,
+    [rsge_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_rsge_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_aft_tel_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_aft_tel_tipi] (
+    [Id]           TINYINT        NOT NULL,
+    [aft_tel_tipi] NVARCHAR (100) NOT NULL,
+    CONSTRAINT [PK_z_aft_tel_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_in_out_sb_gauqm_chanaw_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_in_out_sb_gauqm_chanaw_tipi] (
+    [Id]                          TINYINT        NOT NULL,
+    [in_out_sb_gauqm_chanaw_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_in_out_sb_gauqm_chanaw_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_operaciis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_operaciis_tipi] (
+    [Id]             TINYINT        NOT NULL,
+    [operaciis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_operaciis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_momx_parolis_cvl_statusi]...';
+
+
+GO
+CREATE TABLE [new].[z_momx_parolis_cvl_statusi] (
     [Id]                       TINYINT        NOT NULL,
-    [kontagentis_kvalifikacia] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_kontagentis_kvalifikacia] PRIMARY KEY CLUSTERED ([Id] ASC)
+    [momx_parolis_cvl_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_momx_parolis_cvl_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_davalebis_shefaseba]...';
+
+
+GO
+CREATE TABLE [new].[z_davalebis_shefaseba] (
+    [Id]                  TINYINT        NOT NULL,
+    [davalebis_shefaseba] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_davalebis_shefaseba] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_qronik_sms_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_qronik_sms_tipi] (
+    [Id]              TINYINT        NOT NULL,
+    [qronik_sms_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_qronik_sms_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_sekv_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_sekv_tipi] (
+    [Id]        TINYINT        NOT NULL,
+    [sekv_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_sekv_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_saq_gadaxdis_etapi]...';
+
+
+GO
+CREATE TABLE [new].[z_saq_gadaxdis_etapi] (
+    [Id]                 TINYINT        NOT NULL,
+    [saq_gadaxdis_etapi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_saq_gadaxdis_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_gas_kategoria]...';
+
+
+GO
+CREATE TABLE [new].[z_gas_kategoria] (
+    [Id]            TINYINT        NOT NULL,
+    [gas_kategoria] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_gas_kategoria] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_aft_moh_rec_mechingis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_aft_moh_rec_mechingis_tipi] (
+    [Id]                         TINYINT        NOT NULL,
+    [aft_moh_rec_mechingis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_aft_moh_rec_mechingis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_kontagentis_kvalifikaciis_statusi]...';
+
+
+GO
+CREATE TABLE [new].[z_kontagentis_kvalifikaciis_statusi] (
+    [Id]                                TINYINT        NOT NULL,
+    [kontagentis_kvalifikaciis_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_kontagentis_kvalifikaciis_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_vauch_filialis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_vauch_filialis_tipi] (
+    [Id]                  TINYINT        NOT NULL,
+    [vauch_filialis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_vauch_filialis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_kontrol_semowm_pasuxis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_kontrol_semowm_pasuxis_tipi] (
+    [Id]                          TINYINT        NOT NULL,
+    [kontrol_semowm_pasuxis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_kontrol_semowm_pasuxis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_davalebis_statusi]...';
+
+
+GO
+CREATE TABLE [new].[z_davalebis_statusi] (
+    [Id]                TINYINT        NOT NULL,
+    [davalebis_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_davalebis_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
@@ -1419,26 +1299,170 @@ CREATE TABLE [new].[z_s_adg_statusi] (
 
 
 GO
-PRINT N'Creating Table [new].[z_er_rez_provaideri]...';
+PRINT N'Creating Table [new].[z_ord_sed_statusi]...';
 
 
 GO
-CREATE TABLE [new].[z_er_rez_provaideri] (
-    [Id]                TINYINT        NOT NULL,
-    [er_rez_provaideri] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_er_rez_provaideri] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_ord_sed_statusi] (
+    [Id]              TINYINT        NOT NULL,
+    [ord_sed_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_ord_sed_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
 GO
-PRINT N'Creating Table [new].[z_buRalt_operaciis_tipi]...';
+PRINT N'Creating Table [new].[z_gadaxdis_piroba]...';
 
 
 GO
-CREATE TABLE [new].[z_buRalt_operaciis_tipi] (
+CREATE TABLE [new].[z_gadaxdis_piroba] (
+    [Id]              TINYINT        NOT NULL,
+    [gadaxdis_piroba] NVARCHAR (100) NOT NULL,
+    CONSTRAINT [PK_z_gadaxdis_piroba] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_crm_aqt_gauqm_statusi]...';
+
+
+GO
+CREATE TABLE [new].[z_crm_aqt_gauqm_statusi] (
+    [Id]                    TINYINT        NOT NULL,
+    [crm_aqt_gauqm_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_crm_aqt_gauqm_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_s_o_oper_statusi]...';
+
+
+GO
+CREATE TABLE [new].[z_s_o_oper_statusi] (
+    [Id]               TINYINT        NOT NULL,
+    [s_o_oper_statusi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_s_o_oper_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_pr_06_vizitis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_pr_06_vizitis_tipi] (
+    [Id]                 TINYINT        NOT NULL,
+    [pr_06_vizitis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_pr_06_vizitis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_sem_kategoria]...';
+
+
+GO
+CREATE TABLE [new].[z_sem_kategoria] (
+    [Id]            TINYINT        NOT NULL,
+    [sem_kategoria] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_sem_kategoria] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_med_saitze_gamochenis_piroba]...';
+
+
+GO
+CREATE TABLE [new].[z_med_saitze_gamochenis_piroba] (
+    [Id]                           TINYINT        NOT NULL,
+    [med_saitze_gamochenis_piroba] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_med_saitze_gamochenis_piroba] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_gadacera_micodeba_etapi]...';
+
+
+GO
+CREATE TABLE [new].[z_gadacera_micodeba_etapi] (
     [Id]                      TINYINT        NOT NULL,
-    [buRalt_operaciis_tipebi] NVARCHAR (100) NOT NULL,
-    CONSTRAINT [PK_z_buRalt_operaciis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
+    [gadacera_micodeba_etapi] NVARCHAR (100) NOT NULL,
+    CONSTRAINT [PK_z_gadacera_micodeba_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_optika_oftal_satv_yidvis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_optika_oftal_satv_yidvis_tipi] (
+    [Id]                            TINYINT        NOT NULL,
+    [optika_oftal_satv_yidvis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_optika_oftal_satv_yidvis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_angarishsworebis_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_angarishsworebis_tipi] (
+    [Id]                    TINYINT        NOT NULL,
+    [angarishsworebis_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_angarishsworebis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_aft_pac_statusi]...';
+
+
+GO
+CREATE TABLE [new].[z_aft_pac_statusi] (
+    [Id]              TINYINT        NOT NULL,
+    [aft_pac_statusi] NVARCHAR (100) NOT NULL,
+    CONSTRAINT [PK_z_aft_pac_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_sawy_gas_zedm_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_sawy_gas_zedm_tipi] (
+    [Id]                 TINYINT        NOT NULL,
+    [sawy_gas_zedm_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_sawy_gas_zedm_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_crm_aqt_gauqm_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_crm_aqt_gauqm_tipi] (
+    [Id]                 TINYINT        NOT NULL,
+    [crm_aqt_gauqm_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_crm_aqt_gauqm_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+);
+
+
+GO
+PRINT N'Creating Table [new].[z_daz_gas_tipi]...';
+
+
+GO
+CREATE TABLE [new].[z_daz_gas_tipi] (
+    [Id]           TINYINT        NOT NULL,
+    [daz_gas_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_daz_gas_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
@@ -1464,62 +1488,38 @@ CREATE NONCLUSTERED INDEX [NonClusteredIndex-20250725-005422]
 
 
 GO
-PRINT N'Creating Table [new].[z_kontagentis_angarishsworebis_piroba]...';
+PRINT N'Creating Table [new].[z_Sefutva_stik_tipi]...';
 
 
 GO
-CREATE TABLE [new].[z_kontagentis_angarishsworebis_piroba] (
-    [Id]                                  TINYINT        NOT NULL,
-    [kontagentis_angarishsworebis_piroba] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_kontagentis_angarishsworebis_piroba] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_Sefutva_stik_tipi] (
+    [Id]                TINYINT        NOT NULL,
+    [Sefutva_stik_tipi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_Sefutva_stik_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
 GO
-PRINT N'Creating Table [new].[z_davalebis_shefaseba]...';
+PRINT N'Creating Table [new].[z_gadawera_operaciis_etapi]...';
 
 
 GO
-CREATE TABLE [new].[z_davalebis_shefaseba] (
-    [Id]                  TINYINT        NOT NULL,
-    [davalebis_shefaseba] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_davalebis_shefaseba] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_gadawera_operaciis_etapi] (
+    [Id]                       TINYINT        NOT NULL,
+    [gadawera_operaciis_etapi] NVARCHAR (100) NOT NULL,
+    CONSTRAINT [PK_z_gadawera_operaciis_etapi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
 GO
-PRINT N'Creating Table [new].[z_gas_tipi]...';
+PRINT N'Creating Table [new].[z_gepha_dazgveva_receptis_tipi]...';
 
 
 GO
-CREATE TABLE [new].[z_gas_tipi] (
-    [Id]       TINYINT        NOT NULL,
-    [gas_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_gas_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_crm_aqt_gauqm_statusi]...';
-
-
-GO
-CREATE TABLE [new].[z_crm_aqt_gauqm_statusi] (
-    [Id]                    TINYINT        NOT NULL,
-    [crm_aqt_gauqm_statusi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_crm_aqt_gauqm_statusi] PRIMARY KEY CLUSTERED ([Id] ASC)
-);
-
-
-GO
-PRINT N'Creating Table [new].[z_pr_06_vizitis_tipi]...';
-
-
-GO
-CREATE TABLE [new].[z_pr_06_vizitis_tipi] (
-    [Id]                 TINYINT        NOT NULL,
-    [pr_06_vizitis_tipi] NVARCHAR (200) NOT NULL,
-    CONSTRAINT [PK_z_pr_06_vizitis_tipi] PRIMARY KEY CLUSTERED ([Id] ASC)
+CREATE TABLE [new].[z_gepha_dazgveva_receptis_tipi] (
+    [Id]                             TINYINT        NOT NULL,
+    [gepha_dazgveva_receptis_tipebi] NVARCHAR (200) NOT NULL,
+    CONSTRAINT [PK_z_gepha_dazgveva_receptis_tipebi] PRIMARY KEY CLUSTERED ([Id] ASC)
 );
 
 
@@ -13309,17 +13309,9 @@ CREATE TABLE [dbo].[saq_motx] (
     [motx_raod]     DECIMAL (12, 3) NOT NULL,
     [motx_sesr_vin] INT             NULL,
     [motx_sesr_dro] DATETIME        NULL,
+    [testi2]        NCHAR (10)      NULL,
     CONSTRAINT [PK_saq_motx] PRIMARY KEY CLUSTERED ([k] ASC)
 );
-
-
-GO
-PRINT N'Creating Index [dbo].[saq_motx].[IX_saq_motx_1]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_saq_motx_1]
-    ON [dbo].[saq_motx]([saw_kk] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -13341,21 +13333,30 @@ CREATE NONCLUSTERED INDEX [IX_saq_motx_4]
 
 
 GO
-PRINT N'Creating Index [dbo].[saq_motx].[IX_saq_motx_2]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_saq_motx_2]
-    ON [dbo].[saq_motx]([motx_vin] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
 PRINT N'Creating Index [dbo].[saq_motx].[IX_saq_motx_3]...';
 
 
 GO
 CREATE NONCLUSTERED INDEX [IX_saq_motx_3]
     ON [dbo].[saq_motx]([motx_dro] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[saq_motx].[IX_saq_motx_1]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_saq_motx_1]
+    ON [dbo].[saq_motx]([saw_kk] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[saq_motx].[IX_saq_motx_2]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_saq_motx_2]
+    ON [dbo].[saq_motx]([motx_vin] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -13388,24 +13389,6 @@ CREATE TABLE [dbo].[saq_nasti] (
     [saq_na_momx] INT             NOT NULL,
     CONSTRAINT [PK_saq_nasti] PRIMARY KEY CLUSTERED ([saq_na_kk] ASC) WITH (FILLFACTOR = 80)
 );
-
-
-GO
-PRINT N'Creating Index [dbo].[saq_nasti].[IX_saq_nasti_1]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_saq_nasti_1]
-    ON [dbo].[saq_nasti]([saq_na_tar] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
-PRINT N'Creating Index [dbo].[saq_nasti].[IX_saq_nasti_5]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_saq_nasti_5]
-    ON [dbo].[saq_nasti]([saq_na_kavs] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -13463,6 +13446,24 @@ CREATE NONCLUSTERED INDEX [IX_saq_nasti_2]
 
 
 GO
+PRINT N'Creating Index [dbo].[saq_nasti].[IX_saq_nasti_5]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_saq_nasti_5]
+    ON [dbo].[saq_nasti]([saq_na_kavs] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[saq_nasti].[IX_saq_nasti_1]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_saq_nasti_1]
+    ON [dbo].[saq_nasti]([saq_na_tar] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
 PRINT N'Creating Table [dbo].[saq_sawy]...';
 
 
@@ -13482,24 +13483,6 @@ CREATE TABLE [dbo].[saq_sawy] (
     [saq_sawy_fil_momar]       BIT            NOT NULL,
     CONSTRAINT [PK_saq_sawy] PRIMARY KEY CLUSTERED ([saq_sawy_k] ASC) WITH (FILLFACTOR = 80)
 );
-
-
-GO
-PRINT N'Creating Index [dbo].[saq_sawy].[IX_saq_sawy_5]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_saq_sawy_5]
-    ON [dbo].[saq_sawy]([saq_sawy_fil_momar] ASC);
-
-
-GO
-PRINT N'Creating Index [dbo].[saq_sawy].[IX_saq_sawy_2]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_saq_sawy_2]
-    ON [dbo].[saq_sawy]([saq_sawy_ufl_dav_migebis] ASC);
 
 
 GO
@@ -13539,6 +13522,24 @@ CREATE NONCLUSTERED INDEX [IX_saq_sawy]
 
 
 GO
+PRINT N'Creating Index [dbo].[saq_sawy].[IX_saq_sawy_2]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_saq_sawy_2]
+    ON [dbo].[saq_sawy]([saq_sawy_ufl_dav_migebis] ASC);
+
+
+GO
+PRINT N'Creating Index [dbo].[saq_sawy].[IX_saq_sawy_5]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_saq_sawy_5]
+    ON [dbo].[saq_sawy]([saq_sawy_fil_momar] ASC);
+
+
+GO
 PRINT N'Creating Table [dbo].[saq_sem]...';
 
 
@@ -13551,15 +13552,6 @@ CREATE TABLE [dbo].[saq_sem] (
     [saq_sem_sen]  NVARCHAR (255) NOT NULL,
     CONSTRAINT [PK_saq_sem] PRIMARY KEY CLUSTERED ([saq_sem_k] ASC) WITH (FILLFACTOR = 80)
 );
-
-
-GO
-PRINT N'Creating Index [dbo].[saq_sem].[IX_saq_sem_2]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_saq_sem_2]
-    ON [dbo].[saq_sem]([saq_sem_momx] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -13578,6 +13570,15 @@ PRINT N'Creating Index [dbo].[saq_sem].[IX_saq_sem]...';
 GO
 CREATE NONCLUSTERED INDEX [IX_saq_sem]
     ON [dbo].[saq_sem]([saq_sem_kont] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[saq_sem].[IX_saq_sem_2]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_saq_sem_2]
+    ON [dbo].[saq_sem]([saq_sem_momx] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -13601,15 +13602,6 @@ CREATE TABLE [dbo].[saq_semos] (
 
 
 GO
-PRINT N'Creating Index [dbo].[saq_semos].[IX_saq_semos]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_saq_semos]
-    ON [dbo].[saq_semos]([saq_semos_sem_k] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
 PRINT N'Creating Index [dbo].[saq_semos].[IX_saq_semos_2]...';
 
 
@@ -13625,6 +13617,15 @@ PRINT N'Creating Index [dbo].[saq_semos].[IX_saq_semos_1]...';
 GO
 CREATE NONCLUSTERED INDEX [IX_saq_semos_1]
     ON [dbo].[saq_semos]([saq_semos_stat] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[saq_semos].[IX_saq_semos]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_saq_semos]
+    ON [dbo].[saq_semos]([saq_semos_sem_k] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -13653,15 +13654,6 @@ CREATE TABLE [dbo].[saq_vin] (
 
 
 GO
-PRINT N'Creating Index [dbo].[saq_vin].[my_saq_saw_key]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [my_saq_saw_key]
-    ON [dbo].[saq_vin]([saq_saw] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
 PRINT N'Creating Index [dbo].[saq_vin].[my_saq_vin_no_key]...';
 
 
@@ -13680,6 +13672,15 @@ CREATE UNIQUE NONCLUSTERED INDEX [my_saq_vi_pn_key]
 
 
 GO
+PRINT N'Creating Index [dbo].[saq_vin].[my_saq_saw_key]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [my_saq_saw_key]
+    ON [dbo].[saq_vin]([saq_saw] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
 PRINT N'Creating Table [dbo].[saswavlo_centri]...';
 
 
@@ -13695,21 +13696,21 @@ CREATE TABLE [dbo].[saswavlo_centri] (
 
 
 GO
-PRINT N'Creating Index [dbo].[saswavlo_centri].[IX_saswavlo_centri_1]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_saswavlo_centri_1]
-    ON [dbo].[saswavlo_centri]([tipi] ASC);
-
-
-GO
 PRINT N'Creating Index [dbo].[saswavlo_centri].[IX_saswavlo_centri]...';
 
 
 GO
 CREATE NONCLUSTERED INDEX [IX_saswavlo_centri]
     ON [dbo].[saswavlo_centri]([block] ASC);
+
+
+GO
+PRINT N'Creating Index [dbo].[saswavlo_centri].[IX_saswavlo_centri_1]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_saswavlo_centri_1]
+    ON [dbo].[saswavlo_centri]([tipi] ASC);
 
 
 GO
@@ -13806,6 +13807,15 @@ GO
 CREATE NONCLUSTERED INDEX [DA_sawy_sawy_k_das]
     ON [dbo].[sawy]([sawy_k] ASC, [sawy_das] ASC)
     ON [INDEX];
+
+
+GO
+PRINT N'Creating Index [dbo].[sawy].[NonClusteredIndex-20250725-163728]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [NonClusteredIndex-20250725-163728]
+    ON [dbo].[sawy]([sawy_tel] ASC, [sawy_mail] ASC);
 
 
 GO
@@ -14009,15 +14019,6 @@ CREATE NONCLUSTERED INDEX [my_br_in_ind]
 
 
 GO
-PRINT N'Creating Index [dbo].[sb].[my_br_tar_ind]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [my_br_tar_ind]
-    ON [dbo].[sb]([br_tar] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
 PRINT N'Creating Index [dbo].[sb].[my_br_momx_ind]...';
 
 
@@ -14036,12 +14037,12 @@ CREATE NONCLUSTERED INDEX [IX_sb]
 
 
 GO
-PRINT N'Creating Index [dbo].[sb].[IX_sb_1]...';
+PRINT N'Creating Index [dbo].[sb].[my_br_tar_ind]...';
 
 
 GO
-CREATE NONCLUSTERED INDEX [IX_sb_1]
-    ON [dbo].[sb]([br_moh_id] ASC) WITH (FILLFACTOR = 80);
+CREATE NONCLUSTERED INDEX [my_br_tar_ind]
+    ON [dbo].[sb]([br_tar] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -14051,6 +14052,15 @@ PRINT N'Creating Index [dbo].[sb].[my_br_out_ind]...';
 GO
 CREATE NONCLUSTERED INDEX [my_br_out_ind]
     ON [dbo].[sb]([br_out] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[sb].[IX_sb_1]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_sb_1]
+    ON [dbo].[sb]([br_moh_id] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -14071,15 +14081,6 @@ CREATE TABLE [dbo].[sb1] (
 
 
 GO
-PRINT N'Creating Index [dbo].[sb1].[my_br_kod_ind]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [my_br_kod_ind]
-    ON [dbo].[sb1]([br_kod] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
 PRINT N'Creating Index [dbo].[sb1].[my_br_momx_ind]...';
 
 
@@ -14095,6 +14096,15 @@ PRINT N'Creating Index [dbo].[sb1].[my_br_nn_ind]...';
 GO
 CREATE NONCLUSTERED INDEX [my_br_nn_ind]
     ON [dbo].[sb1]([br_nn] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[sb1].[my_br_kod_ind]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [my_br_kod_ind]
+    ON [dbo].[sb1]([br_kod] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -14211,12 +14221,21 @@ CREATE TABLE [dbo].[sem] (
 
 
 GO
-PRINT N'Creating Index [dbo].[sem].[my_sem_kodi_ind]...';
+PRINT N'Creating Index [dbo].[sem].[my_sem_zedm_ind]...';
 
 
 GO
-CREATE NONCLUSTERED INDEX [my_sem_kodi_ind]
-    ON [dbo].[sem]([sem_kodi] ASC) WITH (FILLFACTOR = 80);
+CREATE NONCLUSTERED INDEX [my_sem_zedm_ind]
+    ON [dbo].[sem]([sem_zedmet] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[sem].[my_sem_valuta_ind]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [my_sem_valuta_ind]
+    ON [dbo].[sem]([sem_valuta] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -14238,21 +14257,21 @@ CREATE NONCLUSTERED INDEX [IX_sem_1]
 
 
 GO
-PRINT N'Creating Index [dbo].[sem].[my_sem_kont_ind]...';
+PRINT N'Creating Index [dbo].[sem].[IX_sem]...';
 
 
 GO
-CREATE NONCLUSTERED INDEX [my_sem_kont_ind]
-    ON [dbo].[sem]([sem_kont] ASC) WITH (FILLFACTOR = 80);
+CREATE NONCLUSTERED INDEX [IX_sem]
+    ON [dbo].[sem]([sem_etapi] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
-PRINT N'Creating Index [dbo].[sem].[my_sem_valuta_ind]...';
+PRINT N'Creating Index [dbo].[sem].[my_sem_kodi_ind]...';
 
 
 GO
-CREATE NONCLUSTERED INDEX [my_sem_valuta_ind]
-    ON [dbo].[sem]([sem_valuta] ASC) WITH (FILLFACTOR = 80);
+CREATE NONCLUSTERED INDEX [my_sem_kodi_ind]
+    ON [dbo].[sem]([sem_kodi] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -14265,21 +14284,12 @@ CREATE NONCLUSTERED INDEX [My_sem_tar_index]
 
 
 GO
-PRINT N'Creating Index [dbo].[sem].[IX_sem]...';
+PRINT N'Creating Index [dbo].[sem].[my_sem_kont_ind]...';
 
 
 GO
-CREATE NONCLUSTERED INDEX [IX_sem]
-    ON [dbo].[sem]([sem_etapi] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
-PRINT N'Creating Index [dbo].[sem].[my_sem_zedm_ind]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [my_sem_zedm_ind]
-    ON [dbo].[sem]([sem_zedmet] ASC) WITH (FILLFACTOR = 80);
+CREATE NONCLUSTERED INDEX [my_sem_kont_ind]
+    ON [dbo].[sem]([sem_kont] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -14453,21 +14463,21 @@ CREATE TABLE [dbo].[semmk] (
 
 
 GO
-PRINT N'Creating Index [dbo].[semmk].[my_sem_k_key]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [my_sem_k_key]
-    ON [dbo].[semmk]([semmk_sem_k] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
 PRINT N'Creating Index [dbo].[semmk].[my_semm_k_key]...';
 
 
 GO
 CREATE NONCLUSTERED INDEX [my_semm_k_key]
     ON [dbo].[semmk]([semmk_semm_k] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[semmk].[my_sem_k_key]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [my_sem_k_key]
+    ON [dbo].[semmk]([semmk_sem_k] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -14512,25 +14522,6 @@ CREATE NONCLUSTERED INDEX [my_semos_momx_ind]
 
 
 GO
-PRINT N'Creating Index [dbo].[semos].[DA_semos_semos_seria_semos_moh_rootId]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [DA_semos_semos_seria_semos_moh_rootId]
-    ON [dbo].[semos]([semos_seria] ASC, [semos_moh_rootId] ASC)
-    ON [INDEX];
-
-
-GO
-PRINT N'Creating Index [dbo].[semos].[my_semos_med_kodi_ind]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [my_semos_med_kodi_ind]
-    ON [dbo].[semos]([semos_med_kodi] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
 PRINT N'Creating Index [dbo].[semos].[my_semos_sem_k_ind]...';
 
 
@@ -14549,12 +14540,31 @@ CREATE NONCLUSTERED INDEX [IX_semos]
 
 
 GO
+PRINT N'Creating Index [dbo].[semos].[my_semos_med_kodi_ind]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [my_semos_med_kodi_ind]
+    ON [dbo].[semos]([semos_med_kodi] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
 PRINT N'Creating Index [dbo].[semos].[DA_semos_vada_k]...';
 
 
 GO
 CREATE NONCLUSTERED INDEX [DA_semos_vada_k]
     ON [dbo].[semos]([semos_vada] ASC, [semos_k] ASC)
+    ON [INDEX];
+
+
+GO
+PRINT N'Creating Index [dbo].[semos].[DA_semos_semos_seria_semos_moh_rootId]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [DA_semos_semos_seria_semos_moh_rootId]
+    ON [dbo].[semos]([semos_seria] ASC, [semos_moh_rootId] ASC)
     ON [INDEX];
 
 
@@ -14605,21 +14615,21 @@ CREATE TABLE [dbo].[site_mieci_xma] (
 
 
 GO
-PRINT N'Creating Index [dbo].[site_mieci_xma].[my_med_kk_key]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [my_med_kk_key]
-    ON [dbo].[site_mieci_xma]([med_kod] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
 PRINT N'Creating Index [dbo].[site_mieci_xma].[my_aqc_tve_key]...';
 
 
 GO
 CREATE NONCLUSTERED INDEX [my_aqc_tve_key]
     ON [dbo].[site_mieci_xma]([aqc_tve] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[site_mieci_xma].[my_med_kk_key]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [my_med_kk_key]
+    ON [dbo].[site_mieci_xma]([med_kod] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -14694,12 +14704,21 @@ CREATE TABLE [dbo].[tanamsr_avansi] (
 
 
 GO
-PRINT N'Creating Index [dbo].[tanamsr_avansi].[IX_tanamsr_avansi]...';
+PRINT N'Creating Index [dbo].[tanamsr_avansi].[IX_tanamsr_avansi_4]...';
 
 
 GO
-CREATE NONCLUSTERED INDEX [IX_tanamsr_avansi]
-    ON [dbo].[tanamsr_avansi]([av_pn] ASC) WITH (FILLFACTOR = 80);
+CREATE NONCLUSTERED INDEX [IX_tanamsr_avansi_4]
+    ON [dbo].[tanamsr_avansi]([av_momx] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[tanamsr_avansi].[IX_tanamsr_avansi_2]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_tanamsr_avansi_2]
+    ON [dbo].[tanamsr_avansi]([av_tipi] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -14712,12 +14731,12 @@ CREATE NONCLUSTERED INDEX [IX_tanamsr_avansi_3]
 
 
 GO
-PRINT N'Creating Index [dbo].[tanamsr_avansi].[IX_tanamsr_avansi_4]...';
+PRINT N'Creating Index [dbo].[tanamsr_avansi].[IX_tanamsr_avansi]...';
 
 
 GO
-CREATE NONCLUSTERED INDEX [IX_tanamsr_avansi_4]
-    ON [dbo].[tanamsr_avansi]([av_momx] ASC) WITH (FILLFACTOR = 80);
+CREATE NONCLUSTERED INDEX [IX_tanamsr_avansi]
+    ON [dbo].[tanamsr_avansi]([av_pn] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -14727,15 +14746,6 @@ PRINT N'Creating Index [dbo].[tanamsr_avansi].[IX_tanamsr_avansi_1]...';
 GO
 CREATE NONCLUSTERED INDEX [IX_tanamsr_avansi_1]
     ON [dbo].[tanamsr_avansi]([av_saw] ASC);
-
-
-GO
-PRINT N'Creating Index [dbo].[tanamsr_avansi].[IX_tanamsr_avansi_2]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_tanamsr_avansi_2]
-    ON [dbo].[tanamsr_avansi]([av_tipi] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -14875,21 +14885,21 @@ CREATE TABLE [dbo].[tanamsr_sveb] (
 
 
 GO
-PRINT N'Creating Index [dbo].[tanamsr_sveb].[my_kodi_1c]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [my_kodi_1c]
-    ON [dbo].[tanamsr_sveb]([kodi_1c] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
 PRINT N'Creating Index [dbo].[tanamsr_sveb].[my_weli]...';
 
 
 GO
 CREATE NONCLUSTERED INDEX [my_weli]
     ON [dbo].[tanamsr_sveb]([weli] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[tanamsr_sveb].[my_kodi_1c]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [my_kodi_1c]
+    ON [dbo].[tanamsr_sveb]([kodi_1c] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -14954,6 +14964,24 @@ CREATE TABLE [dbo].[terminal_app_proc] (
 
 
 GO
+PRINT N'Creating Index [dbo].[terminal_app_proc].[IX_terminal_app_proc_3]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_terminal_app_proc_3]
+    ON [dbo].[terminal_app_proc]([file_name] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[terminal_app_proc].[IX_terminal_app_proc]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_terminal_app_proc]
+    ON [dbo].[terminal_app_proc]([med_k] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
 PRINT N'Creating Index [dbo].[terminal_app_proc].[IX_terminal_app_proc_2]...';
 
 
@@ -14978,24 +15006,6 @@ PRINT N'Creating Index [dbo].[terminal_app_proc].[IX_terminal_app_proc_1]...';
 GO
 CREATE NONCLUSTERED INDEX [IX_terminal_app_proc_1]
     ON [dbo].[terminal_app_proc]([momx] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
-PRINT N'Creating Index [dbo].[terminal_app_proc].[IX_terminal_app_proc_3]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_terminal_app_proc_3]
-    ON [dbo].[terminal_app_proc]([file_name] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
-PRINT N'Creating Index [dbo].[terminal_app_proc].[IX_terminal_app_proc]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [IX_terminal_app_proc]
-    ON [dbo].[terminal_app_proc]([med_k] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -15130,21 +15140,21 @@ CREATE TABLE [dbo].[test_testireba_det] (
 
 
 GO
-PRINT N'Creating Index [dbo].[test_testireba_det].[my_k_kx]...';
-
-
-GO
-CREATE NONCLUSTERED INDEX [my_k_kx]
-    ON [dbo].[test_testireba_det]([k_kx] ASC) WITH (FILLFACTOR = 80);
-
-
-GO
 PRINT N'Creating Index [dbo].[test_testireba_det].[my_k_k]...';
 
 
 GO
 CREATE NONCLUSTERED INDEX [my_k_k]
     ON [dbo].[test_testireba_det]([k_k] ASC) WITH (FILLFACTOR = 80);
+
+
+GO
+PRINT N'Creating Index [dbo].[test_testireba_det].[my_k_kx]...';
+
+
+GO
+CREATE NONCLUSTERED INDEX [my_k_kx]
+    ON [dbo].[test_testireba_det]([k_kx] ASC) WITH (FILLFACTOR = 80);
 
 
 GO
@@ -36674,14 +36684,14 @@ PRINT N'Creating Trigger [dbo].[trg_sawy_prevent_sawy_change_or_delete]...';
 
 GO
 CREATE TRIGGER [dbo].[trg_sawy_prevent_sawy_change_or_delete]
-ON dbo.sawy
+ON [dbo].[sawy]
 AFTER UPDATE, DELETE
 AS
 BEGIN
     SET NOCOUNT ON;
 
     IF EXISTS (
-        SELECT 1
+        SELECT 3
         FROM deleted d
         WHERE d.sawy_k = 0
     )
@@ -60624,6 +60634,70 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდ�
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_raod].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რაოდენობა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_raod';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_tar].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თარიღი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_tar';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_saw].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საწყობი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_saw';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_kk].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_kk';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_tipi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი: 1 შემოსვლა, 2 შიდა ბრუნვა გასვლა, 3 შიდა ბრუნვა შემოსვლა, 4 გასვლა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_tipi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_vin].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამშრომელი კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_vin';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_momx].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_momx';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონლის უნიკალური(შემოსვლის) კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_k';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_kavs].[MS_Description]...';
 
 
@@ -60637,94 +60711,6 @@ PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_kod].[MS_Descriptio
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონლის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_kod';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_raod].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რაოდენობა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_raod';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_tipi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი: 1 შემოსვლა, 2 შიდა ბრუნვა გასვლა, 3 შიდა ბრუნვა შემოსვლა, 4 გასვლა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_tipi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_tar].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თარიღი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_tar';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_kk].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_kk';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_momx].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_momx';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_saw].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საწყობი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_saw';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_vin].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამშრომელი კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_vin';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_nasti].[saq_na_k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონლის უნიკალური(შემოსვლის) კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_nasti', @level2type = N'COLUMN', @level2name = N'saq_na_k';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_sawy].[saq_sawy_ufl_dav_migebis].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეუძლია მიიღოს დავალება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_sawy', @level2type = N'COLUMN', @level2name = N'saq_sawy_ufl_dav_migebis';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_sawy].[saq_sawy_sen].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_sawy', @level2type = N'COLUMN', @level2name = N'saq_sawy_sen';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_sawy].[saq_sawy_fil_momar].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მარაგდება ცენტრალური საწყობიდან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_sawy', @level2type = N'COLUMN', @level2name = N'saq_sawy_fil_momar';
 
 
 GO
@@ -60752,19 +60738,19 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საწ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saq_sawy].[saq_sawy_das].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დასახელება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_sawy', @level2type = N'COLUMN', @level2name = N'saq_sawy_das';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[saq_sawy].[saq_sawy_pasux].[MS_Description]...';
 
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პასუხისმგებელი პირი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_sawy', @level2type = N'COLUMN', @level2name = N'saq_sawy_pasux';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_sawy].[saq_sawy_das].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დასახელება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_sawy', @level2type = N'COLUMN', @level2name = N'saq_sawy_das';
 
 
 GO
@@ -60800,11 +60786,27 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თავ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saq_sem].[saq_sem_kont].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saq_sawy].[saq_sawy_sen].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომწოდებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_sem', @level2type = N'COLUMN', @level2name = N'saq_sem_kont';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_sawy', @level2type = N'COLUMN', @level2name = N'saq_sawy_sen';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_sawy].[saq_sawy_ufl_dav_migebis].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეუძლია მიიღოს დავალება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_sawy', @level2type = N'COLUMN', @level2name = N'saq_sawy_ufl_dav_migebis';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_sawy].[saq_sawy_fil_momar].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მარაგდება ცენტრალური საწყობიდან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_sawy', @level2type = N'COLUMN', @level2name = N'saq_sawy_fil_momar';
 
 
 GO
@@ -60840,27 +60842,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თარ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_forma].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saq_sem].[saq_sem_kont].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ფორმა - მაგალითად: თეთრი, ლურჯი, ყვითელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_forma';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_sem_k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პარტიის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_sem_k';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_k';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომწოდებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_sem', @level2type = N'COLUMN', @level2name = N'saq_sem_kont';
 
 
 GO
@@ -60872,43 +60858,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზომ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_dast_tar].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_k].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დადასტურების ან უარყოფის ბოლო დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_dast_tar';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_dast_sen].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დადასტურების, ან უარყოფის კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_dast_sen';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_stat].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სტატუსი, 0-არ არის განსაზღვრული, 1 დადასტურებულია, 2 უარყოფილია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_stat';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_sen].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_sen';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_dast_vin].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ვინ ადასტურებს ან უარყოფს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_dast_vin';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_k';
 
 
 GO
@@ -60920,43 +60874,59 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ფას�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin_ufl_gadax].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_stat].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გადახდის შესრულების უფლება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_vin_ufl_gadax';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სტატუსი, 0-არ არის განსაზღვრული, 1 დადასტურებულია, 2 უარყოფილია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_stat';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_dast_sen].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამშრომელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_vin';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დადასტურების, ან უარყოფის კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_dast_sen';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin_ufl_dav_migebis].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_dast_vin].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'²¯·º»±~ ¢±±¾¤µ ¨~´~»¯¡~', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_vin_ufl_dav_migebis';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ვინ ადასტურებს ან უარყოფს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_dast_vin';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_saw].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_sen].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელ განყოფილებაში მუშაობს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_saw';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_sen';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin_no].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_forma].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აღარ მუშაობს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_vin_no';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ფორმა - მაგალითად: თეთრი, ლურჯი, ყვითელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_forma';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_dast_tar].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დადასტურების ან უარყოფის ბოლო დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_dast_tar';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_semos].[saq_semos_sem_k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პარტიის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_semos', @level2type = N'COLUMN', @level2name = N'saq_semos_sem_k';
 
 
 GO
@@ -60968,11 +60938,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გად�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin_pn].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin_k].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პირადი ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_vin_pn';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_vin_k';
 
 
 GO
@@ -60984,6 +60954,14 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აქვ�
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin_pn].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პირადი ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_vin_pn';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin_mail].[MS_Description]...';
 
 
@@ -60992,19 +60970,19 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მეი�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin_k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_vin_k';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin_ufl_dav_migebis1].[MS_Description]...';
 
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'²¯·º»±~ ¢±±¾¤µ ¨~´~»¯¡~(მიუხედავად იმისა თუ რომელ განყოფილებაში მუშაობს)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_vin_ufl_dav_migebis1';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_tanam].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამდებობა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_tanam';
 
 
 GO
@@ -61032,19 +61010,43 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_tanam].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin_ufl_dav_migebis].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამდებობა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_tanam';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'²¯·º»±~ ¢±±¾¤µ ¨~´~»¯¡~', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_vin_ufl_dav_migebis';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saswavlo_centri].[tipi].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin_no].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saswavlo_centri', @level2type = N'COLUMN', @level2name = N'tipi';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აღარ მუშაობს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_vin_no';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_saw].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელ განყოფილებაში მუშაობს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_saw';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin_ufl_gadax].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გადახდის შესრულების უფლება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_vin_ufl_gadax';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[saq_vin].[saq_vin].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამშრომელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saq_vin', @level2type = N'COLUMN', @level2name = N'saq_vin';
 
 
 GO
@@ -61056,11 +61058,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კონ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saswavlo_centri].[block].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saswavlo_centri].[k].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაბლოკილია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saswavlo_centri', @level2type = N'COLUMN', @level2name = N'block';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saswavlo_centri', @level2type = N'COLUMN', @level2name = N'k';
 
 
 GO
@@ -61072,315 +61074,67 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[saswavlo_centri].[k].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saswavlo_centri].[tipi].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saswavlo_centri', @level2type = N'COLUMN', @level2name = N'k';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saswavlo_centri', @level2type = N'COLUMN', @level2name = N'tipi';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_semos].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[saswavlo_centri].[block].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'იგზავნება ინფორმაცია შემოსვლების შესახებ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_semos';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაბლოკილია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'saswavlo_centri', @level2type = N'COLUMN', @level2name = N'block';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_partia].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_dabr_zedd].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საცალო გაყიდვის დროს რომელ რეალიზატორთან ფიქსირდება პარტია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_partia';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'იგზავნება ინფორმაცია დაუბრუნებელი ზედნადებების შესახებ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_dabr_zedd';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_kv].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_sen].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კვადრატული მეტრი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_kv';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_sen';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_terminal].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_saat].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ბანკის ტერმინალები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_terminal';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სამუშაო საათები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_saat';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_dal_web].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_salaro].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საიტზე როგორ დალაგდეს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_dal_web';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სალარო აპარატები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_salaro';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[not_send].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_bolo_kod_tar].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'არ გაიგზავნოს ფილიალებში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'not_send';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სერვერზე ბოლო კოდის შექმნის დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_bolo_kod_tar';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_ganlag_grafic].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_macivari].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონლის გრაფიკული განლაგება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_ganlag_grafic';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_ord].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეკვეთის მიწოდება ქსელისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_ord';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_aslis_faili].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'xml ფაილში ფილიალის ბაზის საჭირო ცხრილები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_aslis_faili';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_fasd_interv].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საცალოში ფასდაკლების ინტერვალი შეტყობინებისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_fasd_interv';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_das].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დასახელება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_das';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_qulebi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზღარბი ქულის კოეფიციენტი კვირის დღეებით', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_qulebi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_surat].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სასაჩუქრე საქონლის რომელი სურათებია გაგზავნილი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_surat';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_sxva_k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელ სხვა საწყობის ნაშთებს უყურებენ ფილიალებში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_sxva_k';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[progr_versia].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პროგრამის ვერსია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'progr_versia';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_tipi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი: 0-ჩვეულებრივი, 2-საბითუმო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_tipi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[gpc_kavs].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კავშირი ჯიპისის საწყობთან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'gpc_kavs';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_kontr].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელი მეორე დონე ან რომელი კონტრაგენტები გამოჩნდეს ამ საწყობთან მიბმულ საცალოში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_kontr';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[send_sp_f_larSi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'იგზავნება თუ არა ფილიალებში სპეც ფასები ლარში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'send_sp_f_larSi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_CRM].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'CRM ჩართულია თუ არა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_CRM';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_k';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[mim_nav].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რა ივაჭრა მიმდინარე მომენტისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'mim_nav';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_motx].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ბოლო რამდენი დღის ნაშთის შევსების მოთხოვნები იგზავნება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_motx';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[rar].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'განახლებულია თუ არა პროგრამის ვერსია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'rar';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_qula].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ქულის კოეფიციენტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_qula';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[filial_tipi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0 არ არის განსაზღვრული, 1 დეპო, 2 ჯიპისი, 3 პარტნიორი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'filial_tipi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[moh_user].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჯანდაცვის სამინისტროს მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'moh_user';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_tel].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტელეფონი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_tel';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[minda_kodi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¢¤›™¤´£~ «¤¨±µ ¦~¦¿~´£±µ ²¯µ~™¯¡', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'minda_kodi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_ub].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'უბანი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_ub';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sent_aqcia].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გაგზავნილი აქციების მაქსიმალური კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sent_aqcia';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[ertjer_lock].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაიბლოკოს ერთჯერადი მოთხოვნები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'ertjer_lock';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[ehealth_moh_user].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჯანდაცვის სამინისტროს მომხმარებელი(ელექტრონული ფარმაცია)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'ehealth_moh_user';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_Camow].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ბოლო რამდენი თვის ჩამოწერა გაიგზავნოს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_Camow';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_pas_farmac].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პასუხისმგებელი ფარმაცევტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_pas_farmac';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_lock].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N' არ მუშაობს - საიტისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_lock';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_sb_zedd].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჭირდება თუ არა შიდა ბრუნვის ზედდებული', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_sb_zedd';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_misamarti].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მისამართი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_misamarti';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რა ადგილები შეესაბამება მაცივარს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_macivari';
 
 
 GO
@@ -61400,22 +61154,6 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სალ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_macivari].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რა ადგილები შეესაბამება მაცივარს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_macivari';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_bolo_kod_tar].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სერვერზე ბოლო კოდის შექმნის დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_bolo_kod_tar';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[sawy].[saw_num_secv].[MS_Description]...';
 
 
@@ -61424,35 +61162,59 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საჭ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[real_gagz].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_motx].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ბოლო რამდენი დღის რეალიზაციის თანხები იგზავნება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'real_gagz';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ბოლო რამდენი დღის ნაშთის შევსების მოთხოვნები იგზავნება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_motx';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[qvg].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_k].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ქვეგანყოფილება ფინანსურში ექსპორტისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'qvg';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_k';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_sen].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy].[filial_tipi].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_sen';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0 არ არის განსაზღვრული, 1 დეპო, 2 ჯიპისი, 3 პარტნიორი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'filial_tipi';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[fil_karatn].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_qula].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ფილიალში ინახება კარანტინში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'fil_karatn';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ქულის კოეფიციენტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_qula';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[rar].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'განახლებულია თუ არა პროგრამის ვერსია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'rar';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[send_sp_f_larSi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'იგზავნება თუ არა ფილიალებში სპეც ფასები ლარში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'send_sp_f_larSi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_kontr].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელი მეორე დონე ან რომელი კონტრაგენტები გამოჩნდეს ამ საწყობთან მიბმულ საცალოში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_kontr';
 
 
 GO
@@ -61464,59 +61226,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დეპ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_salaro].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy].[fil_karatn].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სალარო აპარატები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_salaro';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_saat].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სამუშაო საათები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_saat';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_dabr_zedd].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'იგზავნება ინფორმაცია დაუბრუნებელი ზედნადებების შესახებ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_dabr_zedd';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_mail].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მეილი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_mail';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_sac_pr_mis].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ბაზის მისამართი საცალოს პროგრამაში შესასვლელად', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_sac_pr_mis';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_agcera].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ბოლო რამდენი თვის აღწერების შედეგები გაიგზავნოს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_agcera';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[mim_stock].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მიმდინარე ნაშთი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'mim_stock';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ფილიალში ინახება კარანტინში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'fil_karatn';
 
 
 GO
@@ -61525,70 +61239,6 @@ PRINT N'Creating Extended Property [dbo].[sawy].[sawy_fasebi].[MS_Description]..
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ფასდაკლების სქემა ან ფასების სტრუქტურა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_fasebi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[exp_kl].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'არის ექპრეს კლინიკა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'exp_kl';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_reg].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რეგიონი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_reg';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[moh_passw].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჯანდაცვის სამინისტროს პაროლი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'moh_passw';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[sawy_navawri_max].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საცალო რეალიზაციის მაქსიმალური კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_navawri_max';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[ehealth_moh_passw].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჯანდაცვის სამინისტროს პაროლი(ელექტრონული ფარმაცია)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'ehealth_moh_passw';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[f_d].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეიძლება თუ არა ამ ობიექტზე ფასდაკლება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'f_d';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[ehealth_ID].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ელექტრონული ჯანდაცვის საიტზე აფთიაქის უნიკალური ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'ehealth_ID';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_aqcia].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აქცია ფილიალებში ზედდებულში შემავალი გარკვეული საქონლის ჯამური თანხის მიხედვით', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_aqcia';
 
 
 GO
@@ -61608,6 +61258,126 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დამ�
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_aqcia].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აქცია ფილიალებში ზედდებულში შემავალი გარკვეული საქონლის ჯამური თანხის მიხედვით', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_aqcia';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_agcera].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ბოლო რამდენი თვის აღწერების შედეგები გაიგზავნოს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_agcera';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_navawri_max].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საცალო რეალიზაციის მაქსიმალური კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_navawri_max';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[f_d].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეიძლება თუ არა ამ ობიექტზე ფასდაკლება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'f_d';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_sac_pr_mis].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ბაზის მისამართი საცალოს პროგრამაში შესასვლელად', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_sac_pr_mis';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[exp_kl].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'არის ექპრეს კლინიკა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'exp_kl';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_misamarti].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მისამართი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_misamarti';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[qvg].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ქვეგანყოფილება ფინანსურში ექსპორტისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'qvg';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[moh_passw].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჯანდაცვის სამინისტროს პაროლი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'moh_passw';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_reg].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რეგიონი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_reg';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_sb_zedd].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჭირდება თუ არა შიდა ბრუნვის ზედდებული', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_sb_zedd';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[ehealth_moh_passw].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჯანდაცვის სამინისტროს პაროლი(ელექტრონული ფარმაცია)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'ehealth_moh_passw';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_sefasebis_kodi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საწყობის შეფასების კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_sefasebis_kodi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[ehealth_ID].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ელექტრონული ჯანდაცვის საიტზე აფთიაქის უნიკალური ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'ehealth_ID';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[real_gagz].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ბოლო რამდენი დღის რეალიზაციის თანხები იგზავნება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'real_gagz';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[sawy].[saw_TBS_id].[MS_Description]...';
 
 
@@ -61624,11 +61394,267 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საც�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy].[saw_sefasebis_kodi].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_sxva_k].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საწყობის შეფასების კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_sefasebis_kodi';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელ სხვა საწყობის ნაშთებს უყურებენ ფილიალებში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_sxva_k';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_das].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დასახელება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_das';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_tipi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი: 0-ჩვეულებრივი, 2-საბითუმო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_tipi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_kv].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კვადრატული მეტრი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_kv';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_surat].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სასაჩუქრე საქონლის რომელი სურათებია გაგზავნილი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_surat';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_ord].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეკვეთის მიწოდება ქსელისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_ord';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_semos].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'იგზავნება ინფორმაცია შემოსვლების შესახებ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_semos';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_terminal].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ბანკის ტერმინალები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_terminal';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_mail].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მეილი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_mail';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[mim_stock].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მიმდინარე ნაშთი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'mim_stock';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_qulebi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზღარბი ქულის კოეფიციენტი კვირის დღეებით', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_qulebi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_fasd_interv].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საცალოში ფასდაკლების ინტერვალი შეტყობინებისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_fasd_interv';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[gpc_kavs].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კავშირი ჯიპისის საწყობთან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'gpc_kavs';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[progr_versia].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პროგრამის ვერსია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'progr_versia';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_tel].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტელეფონი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_tel';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_CRM].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'CRM ჩართულია თუ არა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_CRM';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_Camow].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ბოლო რამდენი თვის ჩამოწერა გაიგზავნოს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_Camow';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[mim_nav].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რა ივაჭრა მიმდინარე მომენტისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'mim_nav';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_partia].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საცალო გაყიდვის დროს რომელ რეალიზატორთან ფიქსირდება პარტია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_partia';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_aslis_faili].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'xml ფაილში ფილიალის ბაზის საჭირო ცხრილები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_aslis_faili';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_dal_web].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საიტზე როგორ დალაგდეს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_dal_web';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[moh_user].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჯანდაცვის სამინისტროს მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'moh_user';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[sawy_ganlag_grafic].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონლის გრაფიკული განლაგება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sawy_ganlag_grafic';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[ehealth_moh_user].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჯანდაცვის სამინისტროს მომხმარებელი(ელექტრონული ფარმაცია)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'ehealth_moh_user';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[sent_aqcia].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გაგზავნილი აქციების მაქსიმალური კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'sent_aqcia';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[minda_kodi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¢¤›™¤´£~ «¤¨±µ ¦~¦¿~´£±µ ²¯µ~™¯¡', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'minda_kodi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[not_send].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'არ გაიგზავნოს ფილიალებში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'not_send';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_ub].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'უბანი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_ub';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_lock].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N' არ მუშაობს - საიტისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_lock';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[ertjer_lock].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაიბლოკოს ერთჯერადი მოთხოვნები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'ertjer_lock';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy].[saw_pas_farmac].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პასუხისმგებელი ფარმაცევტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy', @level2type = N'COLUMN', @level2name = N'saw_pas_farmac';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy_add].[misamarti].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მისამართი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_add', @level2type = N'COLUMN', @level2name = N'misamarti';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy_add].[tipi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დეპო, ჯიპისი, სხვა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_add', @level2type = N'COLUMN', @level2name = N'tipi';
 
 
 GO
@@ -61680,14 +61706,6 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'´±£ ¢¤
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy_add].[momx1].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'´±£ ²¯½¢£~', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_add', @level2type = N'COLUMN', @level2name = N'momx1';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[sawy_add].[sevseba].[MS_Description]...';
 
 
@@ -61696,19 +61714,51 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შევ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy_add].[tipi].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy_add].[momx1].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დეპო, ჯიპისი, სხვა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_add', @level2type = N'COLUMN', @level2name = N'tipi';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'´±£ ²¯½¢£~', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_add', @level2type = N'COLUMN', @level2name = N'momx1';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy_add].[misamarti].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[sawy].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მისამართი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_add', @level2type = N'COLUMN', @level2name = N'misamarti';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საიდან გავიდა ზედმეტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'sawy';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[tipi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'1 დარჩეს, 2 წამოვიდეს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'tipi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[momx].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'momx';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'k';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[sesr_dro].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შესრულების დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'sesr_dro';
 
 
 GO
@@ -61728,19 +61778,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[k].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[raod].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'k';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[sawy].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საიდან გავიდა ზედმეტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'sawy';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რაოდენობა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'raod';
 
 
 GO
@@ -61752,35 +61794,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ფილ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[raod].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რაოდენობა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'raod';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[sesr_dro].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შესრულების დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'sesr_dro';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[dro].[MS_Description]...';
 
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაფიქსირების დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'dro';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[sesr_tipi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შესრულების ტიპი - 1 დარჩეს, 2 წამოვიდეს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'sesr_tipi';
 
 
 GO
@@ -61792,27 +61810,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[momx].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[sesr_tipi].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'momx';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy_gas_zedm].[tipi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'1 დარჩეს, 2 წამოვიდეს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'tipi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy_region].[regioni].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რეგიონი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_region', @level2type = N'COLUMN', @level2name = N'regioni';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შესრულების ტიპი - 1 დარჩეს, 2 წამოვიდეს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_gas_zedm', @level2type = N'COLUMN', @level2name = N'sesr_tipi';
 
 
 GO
@@ -61824,11 +61826,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რეგ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy_region].[reg_k].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sawy_region].[regioni].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_region', @level2type = N'COLUMN', @level2name = N'reg_k';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რეგიონი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_region', @level2type = N'COLUMN', @level2name = N'regioni';
 
 
 GO
@@ -61837,6 +61839,14 @@ PRINT N'Creating Extended Property [dbo].[sawy_region].[regioni_eng].[MS_Descrip
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რეგიონი ინგლისურად', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_region', @level2type = N'COLUMN', @level2name = N'regioni_eng';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy_region].[reg_k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_region', @level2type = N'COLUMN', @level2name = N'reg_k';
 
 
 GO
@@ -61864,14 +61874,6 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[senisvna].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'senisvna';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[mwar_geo].[MS_Description]...';
 
 
@@ -61888,6 +61890,46 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საწ�
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[senisvna].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'senisvna';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[inn].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეკვეთა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'inn';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[kont_ob].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომწოდებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'kont_ob';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[med_k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონლის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'med_k';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[na].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ნაშთი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'na';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[min_mar].[MS_Description]...';
 
 
@@ -61901,54 +61943,6 @@ PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[fasi].[MS_Description]
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ფასი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'fasi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[med_k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონლის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'med_k';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[kont_ob].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომწოდებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'kont_ob';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[inn].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეკვეთა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'inn';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[na].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ნაშთი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'na';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[med_geo].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'med_geo';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[sawy_k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საწყობის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'sawy_k';
 
 
 GO
@@ -61976,6 +61970,30 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდ�
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[sawy_k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საწყობის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'sawy_k';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy_sevs_old].[med_geo].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_sevs_old', @level2type = N'COLUMN', @level2name = N'med_geo';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sawy_ubani].[ubani].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'უბანი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_ubani', @level2type = N'COLUMN', @level2name = N'ubani';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[sawy_ubani].[ubani_eng].[MS_Description]...';
 
 
@@ -61992,27 +62010,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sawy_ubani].[ubani].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'უბანი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_ubani', @level2type = N'COLUMN', @level2name = N'ubani';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[sawy_ubani].[ub_rigi].[MS_Description]...';
 
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რეგიონის დალაგება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_ubani', @level2type = N'COLUMN', @level2name = N'ub_rigi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy_wesi].[vin].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი: 0-ფილიალები, 1-ბაზა, 2-ყველა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_wesi', @level2type = N'COLUMN', @level2name = N'vin';
 
 
 GO
@@ -62024,19 +62026,19 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სათ�
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[sawy_wesi].[vin].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი: 0-ფილიალები, 1-ბაზა, 2-ყველა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_wesi', @level2type = N'COLUMN', @level2name = N'vin';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[sawy_wesi].[wesi].[MS_Description]...';
 
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'წესი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_wesi', @level2type = N'COLUMN', @level2name = N'wesi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sawy_wesi].[k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_wesi', @level2type = N'COLUMN', @level2name = N'k';
 
 
 GO
@@ -62048,6 +62050,14 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რიგ�
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[sawy_wesi].[k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sawy_wesi', @level2type = N'COLUMN', @level2name = N'k';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[sawy_wesi].[lock].[MS_Description]...';
 
 
@@ -62056,43 +62066,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაბ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sb].[br_evr].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ევროს კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_evr';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sb].[br_provizori].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პროვიზორი, ვინც მოამზადა შიდა ბრუნვა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_provizori';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[sb].[br_tipi].[MS_Description]...';
 
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი: 0 ძირითადი ფასიდან, 1 თვითღირებულებიდან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_tipi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sb].[br_in].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელ საწყობში შემოვიდა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_in';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sb].[br_momx].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_momx';
 
 
 GO
@@ -62108,11 +62086,83 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0-ოპე
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[sb].[br_provizori].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პროვიზორი, ვინც მოამზადა შიდა ბრუნვა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_provizori';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[sb].[yut].[MS_Description]...';
 
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეკვეთის მოცულობა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'yut';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sb].[br_in].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელ საწყობში შემოვიდა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_in';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sb].[br_evr].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ევროს კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_evr';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sb].[br_momx].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_momx';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sb].[br_sesr].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შესრულდა თუ არა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_sesr';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sb].[yut_detal].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ყუთების ნომრები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'yut_detal';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sb].[br_dabr].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაბრუნდა თუ არა ზედდებული', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_dabr';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sb].[saboloo].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საბოლოოდ სად იწერება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'saboloo';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sb].[br_sb_zedd].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჭირდება ოფიციალური ზედდებული', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_sb_zedd';
 
 
 GO
@@ -62132,43 +62182,35 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sb].[br_sesr].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sb].[br_lar].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შესრულდა თუ არა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_sesr';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ლარის კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_lar';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sb].[br_sb_zedd].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sb].[br_n].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჭირდება ოფიციალური ზედდებული', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_sb_zedd';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზედდებულის ნომერი შიდა ბრუნვისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_n';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sb].[br_dabr].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sb].[br_eqs].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაბრუნდა თუ არა ზედდებული', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_dabr';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ექსპედიტორი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_eqs';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sb].[yut_detal].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sb].[br_kodebi].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ყუთების ნომრები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'yut_detal';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sb].[saboloo].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საბოლოოდ სად იწერება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'saboloo';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მიღებული კოდები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_kodebi';
 
 
 GO
@@ -62193,35 +62235,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0-დამ
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sb].[br_kodebi].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sb1].[br_sen].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მიღებული კოდები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_kodebi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sb].[br_n].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზედდებულის ნომერი შიდა ბრუნვისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_n';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sb].[br_lar].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ლარის კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_lar';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sb].[br_eqs].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ექსპედიტორი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb', @level2type = N'COLUMN', @level2name = N'br_eqs';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb1', @level2type = N'COLUMN', @level2name = N'br_sen';
 
 
 GO
@@ -62233,19 +62251,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sb1].[br_fasi].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sb1].[br_k].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რეალიზაციის ფასი ლარში(შიდა ბრუნვის დროს ფიქსირდება და შემდეგ არ იცვლება)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb1', @level2type = N'COLUMN', @level2name = N'br_fasi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sb1].[br_sen].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb1', @level2type = N'COLUMN', @level2name = N'br_sen';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb1', @level2type = N'COLUMN', @level2name = N'br_k';
 
 
 GO
@@ -62254,14 +62264,6 @@ PRINT N'Creating Extended Property [dbo].[sb1].[br_momx].[MS_Description]...';
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb1', @level2type = N'COLUMN', @level2name = N'br_momx';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sb1].[br_k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb1', @level2type = N'COLUMN', @level2name = N'br_k';
 
 
 GO
@@ -62278,6 +62280,14 @@ PRINT N'Creating Extended Property [dbo].[sb1].[br_tvitr].[MS_Description]...';
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თვითღირებულება ლარში(დაფიქსირდება უშუალოდ შიდა ბრუნვის და შემდეგ არ იცვლება)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb1', @level2type = N'COLUMN', @level2name = N'br_tvitr';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sb1].[br_fasi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რეალიზაციის ფასი ლარში(შიდა ბრუნვის დროს ფიქსირდება და შემდეგ არ იცვლება)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sb1', @level2type = N'COLUMN', @level2name = N'br_fasi';
 
 
 GO
@@ -62313,19 +62323,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კონ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[Sefutva_stikeri].[kk].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[Sefutva_stikeri].[semos_kk].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Sefutva_stikeri', @level2type = N'COLUMN', @level2name = N'kk';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[Sefutva_stikeri].[sef_sen].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეფუთვის შემოწმების კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Sefutva_stikeri', @level2type = N'COLUMN', @level2name = N'sef_sen';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კავშირი შემოსვლის კოდთან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Sefutva_stikeri', @level2type = N'COLUMN', @level2name = N'semos_kk';
 
 
 GO
@@ -62340,27 +62342,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სტი�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[Sefutva_stikeri].[semos_kk].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კავშირი შემოსვლის კოდთან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Sefutva_stikeri', @level2type = N'COLUMN', @level2name = N'semos_kk';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[Sefutva_stikeri].[stick_sen].[MS_Description]...';
 
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სტიკერის შემოწმების კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Sefutva_stikeri', @level2type = N'COLUMN', @level2name = N'stick_sen';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[Sefutva_stikeri].[momx].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Sefutva_stikeri', @level2type = N'COLUMN', @level2name = N'momx';
 
 
 GO
@@ -62377,67 +62363,27 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეფ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sekv].[sekv_k].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[Sefutva_stikeri].[momx].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'sekv_k';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Sefutva_stikeri', @level2type = N'COLUMN', @level2name = N'momx';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sekv].[sekv_eqsp].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[Sefutva_stikeri].[kk].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ექსპედიტორი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'sekv_eqsp';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Sefutva_stikeri', @level2type = N'COLUMN', @level2name = N'kk';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sekv].[zn].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[Sefutva_stikeri].[sef_sen].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'µ~±¶±µ ¢±¯° ¢±£±š¯¡·»± ¿¯¨¨¯¡·»±µ £¤¢¯°±', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'zn';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sekv].[tr_damt].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტრანსპორტირების დამთავრება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'tr_damt';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sekv].[saq].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონელი, რაოდენობა, ფასი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'saq';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sekv].[sekv_sesr].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შესრულება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'sekv_sesr';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sekv].[tipi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0 ¢¤¦´~½´µ, 1 ¢±¦´~½´µ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'tipi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sekv].[sekv_tar].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თარიღი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'sekv_tar';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეფუთვის შემოწმების კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Sefutva_stikeri', @level2type = N'COLUMN', @level2name = N'sef_sen';
 
 
 GO
@@ -62446,6 +62392,14 @@ PRINT N'Creating Extended Property [dbo].[sekv].[momxx_k].[MS_Description]...';
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'momxx_k';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sekv].[sekv_tar].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თარიღი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'sekv_tar';
 
 
 GO
@@ -62465,19 +62419,19 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ავტ�
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[sekv].[tr_gadav].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტრანსპორტირების გადავადება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'tr_gadav';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[sekv].[sekv_momw].[MS_Description]...';
 
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კონტრაგენტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'sekv_momw';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sekv].[tr_daw].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტრანსპორტირების დაწყება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'tr_daw';
 
 
 GO
@@ -62489,19 +62443,220 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'µ~±¶±µ
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sekv].[tr_gadav].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sekv].[tr_daw].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტრანსპორტირების გადავადება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'tr_gadav';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტრანსპორტირების დაწყება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'tr_daw';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_gad_pir].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sekv].[zn].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გადახდის პირობა: 0-ნაღდი, 1-უნაღდო, 2-გაცვლა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_gad_pir';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'µ~±¶±µ ¢±¯° ¢±£±š¯¡·»± ¿¯¨¨¯¡·»±µ £¤¢¯°±', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'zn';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sekv].[tr_damt].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტრანსპორტირების დამთავრება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'tr_damt';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sekv].[sekv_eqsp].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ექსპედიტორი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'sekv_eqsp';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sekv].[saq].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონელი, რაოდენობა, ფასი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'saq';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sekv].[sekv_k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'sekv_k';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sekv].[tipi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0 ¢¤¦´~½´µ, 1 ¢±¦´~½´µ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'tipi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sekv].[sekv_sesr].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შესრულება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sekv', @level2type = N'COLUMN', @level2name = N'sekv_sesr';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_vat].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დღგ–ს თანხა არ ემატება მომწოდებლის მიმართ არსებულ ვალს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_vat';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_kursi_evro].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'!!!  ევროს კურსი ზედდებულზე', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kursi_evro';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_valuta].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელ ვალუტაშია დაფიქსირებული ვალი – 0-დოლარი, 1-ლარი, 2-ევრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_valuta';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_kont].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კონტრაგენტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kont';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_momx].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_momx';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_etapi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0-დამუშავების პროცესშია
+1-არ არის საჭირო საწყობზე გადაცემა
+2-გადაეცა საწყობს
+3-მუშავდება საწყობში
+4-დასრულებულია
+5-არ არის განსაზღვრული(ძველი)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_etapi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_nom_zed].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზედდებულზე აღნიშნული ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_nom_zed';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_provizori].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პროვიზორი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_provizori';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_pr].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თვითღირებულების პროცენტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_pr';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_sen].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_sen';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_kursi_lari_zed].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'!!!  ლარის სამუშაო კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kursi_lari_zed';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_kont1].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კონტრაგენტის სახელის შეცვლის შემთხვევაში აქ შეიძლება დაფიქსირდეს ადრე არსებული მონაცემები(დასახელება, საიდენთიფიკაციო ნომერი და მისამართი)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kont1';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_dab].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თუ არის გასულის დაბრუნება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_dab';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_vat_s].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დღგ ზედდებულის სერია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_vat_s';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_vat_n].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დღგ ზედდებულის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_vat_n';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_tar].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თარიღი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_tar';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_droebi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0-ოპერაციის დაწყების დრო
+1-საწყობზე გადაცემის დრო
+2-საწყობის მიერ დამუშავების დაწყება
+3-დასრულების დრო
+4-მიტანის დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_droebi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_tvit].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დამატებითი ხარჯი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_tvit';
 
 
 GO
@@ -62521,59 +62676,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კრე�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_tar_zed].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem].[sem_gad_pir].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზედდებულის გამოწერის თარიღი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_tar_zed';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_vat_s].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დღგ ზედდებულის სერია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_vat_s';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_zveli].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0ჩვეულებრივი,1ავანსი,2ავანსი რომელზეც უკვე შემოვიდა საქონელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_zveli';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_kursi_evro_zed].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'!!!  ევროს სამუშაო კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kursi_evro_zed';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_tvit].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დამატებითი ხარჯი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_tvit';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_cn].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კრედიტ ნოტა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_cn';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_zedmet].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზედმეტობის ან ნაშთის შემოყვანა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_zedmet';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გადახდის პირობა: 0-ნაღდი, 1-უნაღდო, 2-გაცვლა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_gad_pir';
 
 
 GO
@@ -62585,172 +62692,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_kursi_lari].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem].[sem_cn].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'!!!  ლარის კურსი ზედდებულზე', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kursi_lari';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_dekl_nom].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დეკლარაციის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_dekl_nom';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_nom_zed].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზედდებულზე აღნიშნული ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_nom_zed';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_sqema].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გადახდის სქემა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_sqema';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_pr].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თვითღირებულების პროცენტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_pr';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_gad_t].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ამ პარტიის ჯამურად რა თანხაა გადახდილი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_gad_t';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_tvit_valuta].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელ ვალუტაშია დაფიქსირებული თვითღირებულება _ 0-დოლარი, 1-ლარი, 2-ევრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_tvit_valuta';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_t].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჯამური თანხა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_t';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_kursi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კურსების ნამრავლი: 1 თუ დოლარშია პარტია, 1/ლარის კურზე თუ პარტია ლარშია და 1/ევროს კურსზე თუ პარტია ევროშია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kursi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_kodi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი: 0-შემოსვლა კონსიგნაციით, 1-გაცვლა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kodi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_tt].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჯამური თანხა ბუღალტერიისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_tt';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_vat].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დღგ–ს თანხა არ ემატება მომწოდებლის მიმართ არსებულ ვალს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_vat';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_momx].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_momx';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_valuta].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელ ვალუტაშია დაფიქსირებული ვალი – 0-დოლარი, 1-ლარი, 2-ევრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_valuta';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_etapi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0-დამუშავების პროცესშია
-1-არ არის საჭირო საწყობზე გადაცემა
-2-გადაეცა საწყობს
-3-მუშავდება საწყობში
-4-დასრულებულია
-5-არ არის განსაზღვრული(ძველი)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_etapi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_tar].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თარიღი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_tar';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_provizori].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პროვიზორი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_provizori';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_kont].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კონტრაგენტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kont';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_kursi_evro].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'!!!  ევროს კურსი ზედდებულზე', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kursi_evro';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_droebi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0-ოპერაციის დაწყების დრო
-1-საწყობზე გადაცემის დრო
-2-საწყობის მიერ დამუშავების დაწყება
-3-დასრულების დრო
-4-მიტანის დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_droebi';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კრედიტ ნოტა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_cn';
 
 
 GO
@@ -62762,91 +62708,107 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გად�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_kont1].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem].[sem_kursi_evro_zed].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კონტრაგენტის სახელის შეცვლის შემთხვევაში აქ შეიძლება დაფიქსირდეს ადრე არსებული მონაცემები(დასახელება, საიდენთიფიკაციო ნომერი და მისამართი)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kont1';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'!!!  ევროს სამუშაო კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kursi_evro_zed';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_kursi_lari_zed].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem].[sem_zveli].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'!!!  ლარის სამუშაო კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kursi_lari_zed';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0ჩვეულებრივი,1ავანსი,2ავანსი რომელზეც უკვე შემოვიდა საქონელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_zveli';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_vat_n].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem].[sem_zedmet].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დღგ ზედდებულის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_vat_n';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზედმეტობის ან ნაშთის შემოყვანა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_zedmet';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_sen].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem].[sem_kodi].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_sen';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი: 0-შემოსვლა კონსიგნაციით, 1-გაცვლა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kodi';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem].[sem_dab].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem].[sem_kursi_lari].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თუ არის გასულის დაბრუნება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_dab';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'!!!  ლარის კურსი ზედდებულზე', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kursi_lari';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_cnn].[sem_kk].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem].[sem_sqema].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კავშირი შემოსვლის პარტიასთან - თუ მინუსია ეს იქნება კონტრაგენტის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_cnn', @level2type = N'COLUMN', @level2name = N'sem_kk';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გადახდის სქემა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_sqema';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_cnn].[k].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem].[sem_gad_t].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_cnn', @level2type = N'COLUMN', @level2name = N'k';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ამ პარტიის ჯამურად რა თანხაა გადახდილი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_gad_t';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_cnn].[cn].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem].[sem_kursi].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანხა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_cnn', @level2type = N'COLUMN', @level2name = N'cn';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კურსების ნამრავლი: 1 თუ დოლარშია პარტია, 1/ლარის კურზე თუ პარტია ლარშია და 1/ევროს კურსზე თუ პარტია ევროშია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_kursi';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_cnn].[tar].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem].[sem_t].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაფიქსირების დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_cnn', @level2type = N'COLUMN', @level2name = N'tar';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჯამური თანხა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_t';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_cnn].[sen].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem].[sem_tar_zed].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_cnn', @level2type = N'COLUMN', @level2name = N'sen';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზედდებულის გამოწერის თარიღი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_tar_zed';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_cnn].[val].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem].[sem_tt].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ვალუტა თუ არ არის კავშირი ზედდებულთან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_cnn', @level2type = N'COLUMN', @level2name = N'val';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჯამური თანხა ბუღალტერიისთვის', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_tt';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_tvit_valuta].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელ ვალუტაშია დაფიქსირებული თვითღირებულება _ 0-დოლარი, 1-ლარი, 2-ევრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_tvit_valuta';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem].[sem_dekl_nom].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დეკლარაციის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem', @level2type = N'COLUMN', @level2name = N'sem_dekl_nom';
 
 
 GO
@@ -62858,67 +62820,75 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დად�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_dasturi].[temp_trans].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem_cnn].[k].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტემპერატურა დაცული იყო ტრანსპორტირების დროს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'temp_trans';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_cnn', @level2type = N'COLUMN', @level2name = N'k';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_dasturi].[k].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem_cnn].[val].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'უნიკალური კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'k';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ვალუტა თუ არ არის კავშირი ზედდებულთან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_cnn', @level2type = N'COLUMN', @level2name = N'val';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_dasturi].[ser_sertif_aris].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem_cnn].[tar].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რამდენ საქონელზე არის ანალიზის სერტიფიკატი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'ser_sertif_aris';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაფიქსირების დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_cnn', @level2type = N'COLUMN', @level2name = N'tar';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_dasturi].[saq_suftaa].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem_cnn].[sem_kk].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ვუზუალურად სუფთაა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'saq_suftaa';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კავშირი შემოსვლის პარტიასთან - თუ მინუსია ეს იქნება კონტრაგენტის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_cnn', @level2type = N'COLUMN', @level2name = N'sem_kk';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_dasturi].[sem_kont_kod].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem_cnn].[sen].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კონტრაგენტის კოდი მიღების დროს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'sem_kont_kod';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_cnn', @level2type = N'COLUMN', @level2name = N'sen';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_dasturi].[regist_tanx].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem_cnn].[cn].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რეგისტრაციის მონაცემები თანხვედრაშია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'regist_tanx';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანხა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_cnn', @level2type = N'COLUMN', @level2name = N'cn';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_dasturi].[sem_kk].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem_dasturi].[ser_forma_sen].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კავშირი შემოსვლის კოდთან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'sem_kk';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სერიული აღნუსხვის ფორმა - კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'ser_forma_sen';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_dasturi].[sesr_dro].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem_dasturi].[dast_dro].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შესრულების დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'sesr_dro';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დასტურის დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'dast_dro';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem_dasturi].[sesr_momx].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შემსრულებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'sesr_momx';
 
 
 GO
@@ -62930,27 +62900,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სერ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_dasturi].[sesr_sen].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem_dasturi].[ser_sertif_aris].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შემსრულებლის კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'sesr_sen';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem_dasturi].[ser_forma].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'არის სერიული აღნუსხვის ფორმა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'ser_forma';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[sem_dasturi].[dast_dro].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დასტურის დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'dast_dro';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რამდენ საქონელზე არის ანალიზის სერტიფიკატი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'ser_sertif_aris';
 
 
 GO
@@ -62970,19 +62924,75 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რამ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_dasturi].[sesr_momx].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem_dasturi].[regist_tanx].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შემსრულებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'sesr_momx';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რეგისტრაციის მონაცემები თანხვედრაშია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'regist_tanx';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[sem_dasturi].[ser_forma_sen].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[sem_dasturi].[sem_kk].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სერიული აღნუსხვის ფორმა - კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'ser_forma_sen';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კავშირი შემოსვლის კოდთან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'sem_kk';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem_dasturi].[saq_suftaa].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ვუზუალურად სუფთაა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'saq_suftaa';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem_dasturi].[temp_trans].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტემპერატურა დაცული იყო ტრანსპორტირების დროს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'temp_trans';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem_dasturi].[k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'უნიკალური კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'k';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem_dasturi].[sesr_dro].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შესრულების დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'sesr_dro';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem_dasturi].[ser_forma].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'არის სერიული აღნუსხვის ფორმა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'ser_forma';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem_dasturi].[sem_kont_kod].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კონტრაგენტის კოდი მიღების დროს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'sem_kont_kod';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[sem_dasturi].[sesr_sen].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შემსრულებლის კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'sem_dasturi', @level2type = N'COLUMN', @level2name = N'sesr_sen';
 
 
 GO
@@ -62994,19 +63004,19 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'1 - შე�
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[semm].[semm_sen].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semm', @level2type = N'COLUMN', @level2name = N'semm_sen';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[semm].[semm_k].[MS_Description]...';
 
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semm', @level2type = N'COLUMN', @level2name = N'semm_k';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[semm].[semm_kont].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომწოდებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semm', @level2type = N'COLUMN', @level2name = N'semm_kont';
 
 
 GO
@@ -63018,19 +63028,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გან�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[semm].[semm_kursi_evro].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[semm].[semm_kont].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ევროს კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semm', @level2type = N'COLUMN', @level2name = N'semm_kursi_evro';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[semm].[semm_t].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¨¯«»~°~ª±±µ თანხა(მხოლოდ ის, რაც საწყობში მიღებულ საქონელს შეეხება)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semm', @level2type = N'COLUMN', @level2name = N'semm_t';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომწოდებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semm', @level2type = N'COLUMN', @level2name = N'semm_kont';
 
 
 GO
@@ -63042,11 +63044,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[semm].[semm_kursi_lari].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[semm].[semm_t].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ლარის კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semm', @level2type = N'COLUMN', @level2name = N'semm_kursi_lari';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¨¯«»~°~ª±±µ თანხა(მხოლოდ ის, რაც საწყობში მიღებულ საქონელს შეეხება)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semm', @level2type = N'COLUMN', @level2name = N'semm_t';
 
 
 GO
@@ -63058,35 +63060,19 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¨¯«»~°
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[semm].[semm_sen].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[semm].[semm_kursi_lari].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semm', @level2type = N'COLUMN', @level2name = N'semm_sen';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ლარის კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semm', @level2type = N'COLUMN', @level2name = N'semm_kursi_lari';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[semmk].[semmk_sem_k].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[semm].[semm_kursi_evro].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'«~´²±°± ²¯¢¤µ´»±µ ¥~°¶±~µ›~£', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semmk', @level2type = N'COLUMN', @level2name = N'semmk_sem_k';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[semmk].[semmk_tvit].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დამატებითი ხარჯი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semmk', @level2type = N'COLUMN', @level2name = N'semmk_tvit';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[semmk].[semmk_vat_n].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დღგ ზედდებულის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semmk', @level2type = N'COLUMN', @level2name = N'semmk_vat_n';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ევროს კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semm', @level2type = N'COLUMN', @level2name = N'semm_kursi_evro';
 
 
 GO
@@ -63130,67 +63116,27 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დღგ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[semos].[semos_k].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[semmk].[semmk_sem_k].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_k';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'«~´²±°± ²¯¢¤µ´»±µ ¥~°¶±~µ›~£', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semmk', @level2type = N'COLUMN', @level2name = N'semmk_sem_k';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[semos].[semos_fasi].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[semmk].[semmk_tvit].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შემოსვლის ფასი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_fasi';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დამატებითი ხარჯი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semmk', @level2type = N'COLUMN', @level2name = N'semmk_tvit';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[semos].[semos_vada].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[semmk].[semmk_vat_n].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ვარგისიანობის ვადა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_vada';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[semos].[semos_seria].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სერია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_seria';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[semos].[semos_vat].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დღგ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_vat';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[semos].[semos_momx].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_momx';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[semos].[semos_sem_k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პარტიის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_sem_k';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[semos].[semos_sawy].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელ საწყობში შემოვიდა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_sawy';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დღგ ზედდებულის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semmk', @level2type = N'COLUMN', @level2name = N'semmk_vat_n';
 
 
 GO
@@ -63202,6 +63148,14 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქ�
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[semos].[semos_sawy].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელ საწყობში შემოვიდა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_sawy';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[semos].[semos_real_fasi].[MS_Description]...';
 
 
@@ -63210,11 +63164,59 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ძირ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[senax].[senax_piroba].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[semos].[semos_seria].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შენახვის პირობა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'senax', @level2type = N'COLUMN', @level2name = N'senax_piroba';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სერია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_seria';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[semos].[semos_fasi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შემოსვლის ფასი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_fasi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[semos].[semos_momx].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_momx';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[semos].[semos_vada].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ვარგისიანობის ვადა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_vada';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[semos].[semos_k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_k';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[semos].[semos_sem_k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პარტიის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_sem_k';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[semos].[semos_vat].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დღგ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'semos', @level2type = N'COLUMN', @level2name = N'semos_vat';
 
 
 GO
@@ -63226,19 +63228,19 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[senisvna].[sen_vin].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[senax].[senax_piroba].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ვინ დაავალა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'senisvna', @level2type = N'COLUMN', @level2name = N'sen_vin';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შენახვის პირობა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'senax', @level2type = N'COLUMN', @level2name = N'senax_piroba';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[senisvna].[sen_dav].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[senisvna].[sen_gauqm].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0 შენიშვნა, 1 დავალება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'senisvna', @level2type = N'COLUMN', @level2name = N'sen_dav';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გაუქმება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'senisvna', @level2type = N'COLUMN', @level2name = N'sen_gauqm';
 
 
 GO
@@ -63266,11 +63268,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[senisvna].[sen_gauqm].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[senisvna].[sen_sesr].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გაუქმება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'senisvna', @level2type = N'COLUMN', @level2name = N'sen_gauqm';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შესრულება დეტალურად', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'senisvna', @level2type = N'COLUMN', @level2name = N'sen_sesr';
 
 
 GO
@@ -63282,11 +63284,43 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ვის �
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[senisvna].[sen_sesr].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[senisvna].[sen_vin].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შესრულება დეტალურად', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'senisvna', @level2type = N'COLUMN', @level2name = N'sen_sesr';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ვინ დაავალა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'senisvna', @level2type = N'COLUMN', @level2name = N'sen_vin';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[senisvna].[sen_dav].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0 შენიშვნა, 1 დავალება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'senisvna', @level2type = N'COLUMN', @level2name = N'sen_dav';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[site_mieci_xma].[aqc_aqt].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თუ მოხდა აქტივაცია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'site_mieci_xma', @level2type = N'COLUMN', @level2name = N'aqc_aqt';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[site_mieci_xma].[med_kod].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონლის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'site_mieci_xma', @level2type = N'COLUMN', @level2name = N'med_kod';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[site_mieci_xma].[k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'site_mieci_xma', @level2type = N'COLUMN', @level2name = N'k';
 
 
 GO
@@ -63311,30 +63345,6 @@ PRINT N'Creating Extended Property [dbo].[site_mieci_xma].[aqc_tve].[MS_Descript
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აქტივაციის თვე', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'site_mieci_xma', @level2type = N'COLUMN', @level2name = N'aqc_tve';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[site_mieci_xma].[med_kod].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონლის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'site_mieci_xma', @level2type = N'COLUMN', @level2name = N'med_kod';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[site_mieci_xma].[aqc_aqt].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თუ მოხდა აქტივაცია', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'site_mieci_xma', @level2type = N'COLUMN', @level2name = N'aqc_aqt';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[site_mieci_xma].[k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'site_mieci_xma', @level2type = N'COLUMN', @level2name = N'k';
 
 
 GO
@@ -63386,46 +63396,6 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დად�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[tanamsr].[kk].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'kk';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr].[ganyofileba_k1].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'განყოფილების კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'ganyofileba_k1';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr].[ganyofileba1].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'განყოფილება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'ganyofileba1';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr].[ganyofileba2].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დეპარტამენტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'ganyofileba2';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr].[kodi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამშრომლის უნიკალური კოდი 1C-ში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'kodi';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[tanamsr].[ganyofileba].[MS_Description]...';
 
 
@@ -63442,19 +63412,19 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მიმ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[tanamsr].[banki].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საბანკო ანგარიშის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'banki';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[tanamsr].[gasveba].[MS_Description]...';
 
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სამსახურიდან გაშვების თარიღი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'gasveba';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr].[banki].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საბანკო ანგარიშის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'banki';
 
 
 GO
@@ -63498,6 +63468,14 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სახ�
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[tanamsr].[tanamdeboba].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამდებობა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'tanamdeboba';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[tanamsr].[nomeri].[MS_Description]...';
 
 
@@ -63506,11 +63484,107 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პირ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[tanamsr].[tanamdeboba].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[tanamsr].[kk].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამდებობა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'tanamdeboba';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'kk';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr].[ganyofileba1].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'განყოფილება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'ganyofileba1';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr].[ganyofileba2].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დეპარტამენტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'ganyofileba2';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr].[kodi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამშრომლის უნიკალური კოდი 1C-ში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'kodi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr].[ganyofileba_k1].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'განყოფილების კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr', @level2type = N'COLUMN', @level2name = N'ganyofileba_k1';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_tipi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ოპერაციის ტიპი - 0 საცალო, 1 საბითუმო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_tipi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'k';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_momx].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ფარმაცვვტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_momx';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_dro].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაფიქსირების დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_dro';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_kont_kod].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კონტრაგენტის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_kont_kod';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_zn].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზედდებულის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_zn';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_tanx].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანხა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_tanx';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_saw].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საწყობის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_saw';
 
 
 GO
@@ -63530,83 +63604,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'1ც კო
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[k].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[tanamsr_cvl].[type].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'k';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_dro].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაფიქსირების დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_dro';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_momx].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ფარმაცვვტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_momx';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_zn].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზედდებულის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_zn';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_tipi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ოპერაციის ტიპი - 0 საცალო, 1 საბითუმო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_tipi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_saw].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საწყობის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_saw';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_tanx].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანხა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_tanx';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_avansi].[av_kont_kod].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კონტრაგენტის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_avansi', @level2type = N'COLUMN', @level2name = N'av_kont_kod';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_cvl].[kodi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამშრომლის უნიკალური კოდი 1C-ში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_cvl', @level2type = N'COLUMN', @level2name = N'kodi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_cvl].[ganyofileba_k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'განყოფილება – კო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_cvl', @level2type = N'COLUMN', @level2name = N'ganyofileba_k';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'1 iqneba danishvna 2 gadaadgileba da 3 gashveba', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_cvl', @level2type = N'COLUMN', @level2name = N'type';
 
 
 GO
@@ -63618,11 +63620,19 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_cvl].[type].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[tanamsr_cvl].[tar].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'1 iqneba danishvna 2 gadaadgileba da 3 gashveba', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_cvl', @level2type = N'COLUMN', @level2name = N'type';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ცვლილების თარიღი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_cvl', @level2type = N'COLUMN', @level2name = N'tar';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_cvl].[ganyofileba_k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'განყოფილება – კო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_cvl', @level2type = N'COLUMN', @level2name = N'ganyofileba_k';
 
 
 GO
@@ -63634,11 +63644,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თან�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_cvl].[tar].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[tanamsr_cvl].[kodi].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ცვლილების თარიღი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_cvl', @level2type = N'COLUMN', @level2name = N'tar';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამშრომლის უნიკალური კოდი 1C-ში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_cvl', @level2type = N'COLUMN', @level2name = N'kodi';
 
 
 GO
@@ -63658,30 +63668,6 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გან�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_monitor].[internet_ip].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებლი სახელი(არასწორი შესვლის შემთხვევაში)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_monitor', @level2type = N'COLUMN', @level2name = N'internet_ip';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_monitor].[naxva].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რა მონაცემები ნახეს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_monitor', @level2type = N'COLUMN', @level2name = N'naxva';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_monitor].[dro].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზუსტი დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_monitor', @level2type = N'COLUMN', @level2name = N'dro';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[tanamsr_monitor].[nomm].[MS_Description]...';
 
 
@@ -63698,27 +63684,27 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_paroli].[tel].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[tanamsr_monitor].[dro].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტელეფონის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_paroli', @level2type = N'COLUMN', @level2name = N'tel';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზუსტი დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_monitor', @level2type = N'COLUMN', @level2name = N'dro';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_paroli].[paroli].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[tanamsr_monitor].[internet_ip].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პაროლი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_paroli', @level2type = N'COLUMN', @level2name = N'paroli';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებლი სახელი(არასწორი შესვლის შემთხვევაში)', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_monitor', @level2type = N'COLUMN', @level2name = N'internet_ip';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_paroli].[gauq].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[tanamsr_monitor].[naxva].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გაუქმების მოთხოვნა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_paroli', @level2type = N'COLUMN', @level2name = N'gauq';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რა მონაცემები ნახეს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_monitor', @level2type = N'COLUMN', @level2name = N'naxva';
 
 
 GO
@@ -63746,6 +63732,38 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პირ�
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_paroli].[tel].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტელეფონის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_paroli', @level2type = N'COLUMN', @level2name = N'tel';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_paroli].[paroli].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პაროლი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_paroli', @level2type = N'COLUMN', @level2name = N'paroli';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_paroli].[gauq].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'გაუქმების მოთხოვნა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_paroli', @level2type = N'COLUMN', @level2name = N'gauq';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_sq].[kk].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sq', @level2type = N'COLUMN', @level2name = N'kk';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[tanamsr_sq].[kodi].[MS_Description]...';
 
 
@@ -63759,30 +63777,6 @@ PRINT N'Creating Extended Property [dbo].[tanamsr_sq].[sq].[MS_Description]...';
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'0 განუსაზღვრელი, 1 კაცი, 2 ქალი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sq', @level2type = N'COLUMN', @level2name = N'sq';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_sq].[kk].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sq', @level2type = N'COLUMN', @level2name = N'kk';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_superv].[fost].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ფოსტის მისამართი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_superv', @level2type = N'COLUMN', @level2name = N'fost';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_superv].[sup_kodi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სუპერვაიზერის 1C კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_superv', @level2type = N'COLUMN', @level2name = N'sup_kodi';
 
 
 GO
@@ -63802,43 +63796,19 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[tipi].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[tanamsr_superv].[fost].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი – 0კუთვნილი, 1უხელფასო, 2ბიულეტენი, 3დეკრეტი, 4დეკრეტი უხელფასო, 5 წინა წლის, 6 დამატ. ანაზ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'tipi';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ფოსტის მისამართი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_superv', @level2type = N'COLUMN', @level2name = N'fost';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[tar2].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[tanamsr_superv].[sup_kodi].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დადასტურების დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'tar2';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[tarr].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დეტალურად მოთხოვნლი დღეები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'tarr';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[comm].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მოთხოვნის კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'comm';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[tar1].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მოთხოვნის დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'tar1';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სუპერვაიზერის 1C კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_superv', @level2type = N'COLUMN', @level2name = N'sup_kodi';
 
 
 GO
@@ -63847,30 +63817,6 @@ PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[ramd].[MS_Description].
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რამდენი დღე არის მოთხოვნილი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'ramd';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[kodi_1c].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამშრომლის 1C კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'kodi_1c';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[comm1].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი ვინც ადასტურებს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'comm1';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[weli].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელი წლის არის ეს შვებულება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'weli';
 
 
 GO
@@ -63890,6 +63836,70 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ვინ �
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[tar2].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დადასტურების დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'tar2';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[weli].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რომელი წლის არის ეს შვებულება', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'weli';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[comm].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მოთხოვნის კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'comm';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[tipi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი – 0კუთვნილი, 1უხელფასო, 2ბიულეტენი, 3დეკრეტი, 4დეკრეტი უხელფასო, 5 წინა წლის, 6 დამატ. ანაზ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'tipi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[tarr].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დეტალურად მოთხოვნლი დღეები', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'tarr';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[comm1].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი ვინც ადასტურებს', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'comm1';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[kodi_1c].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამშრომლის 1C კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'kodi_1c';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_sveb].[tar1].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მოთხოვნის დრო', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_sveb', @level2type = N'COLUMN', @level2name = N'tar1';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[tanamsr_tanam].[tanamdeboba].[MS_Description]...';
 
 
@@ -63903,6 +63913,14 @@ PRINT N'Creating Extended Property [dbo].[tanamsr_tanam].[tanamdeboba_k].[MS_Des
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'განყოფილების კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_tanam', @level2type = N'COLUMN', @level2name = N'tanamdeboba_k';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[tanamsr_xelf].[tar].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თარიღი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_xelf', @level2type = N'COLUMN', @level2name = N'tar';
 
 
 GO
@@ -63935,14 +63953,6 @@ PRINT N'Creating Extended Property [dbo].[tanamsr_xelf].[tan_kodi].[MS_Descripti
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანამშრომლის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_xelf', @level2type = N'COLUMN', @level2name = N'tan_kodi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[tanamsr_xelf].[tar].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თარიღი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'tanamsr_xelf', @level2type = N'COLUMN', @level2name = N'tar';
 
 
 GO
@@ -64034,11 +64044,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაფ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[terminal_contr].[saq_raod].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[terminal_contr].[momx].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონლის რაოდენობა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'terminal_contr', @level2type = N'COLUMN', @level2name = N'saq_raod';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¢¤¢™¢~°¯¡¯»±', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'terminal_contr', @level2type = N'COLUMN', @level2name = N'momx';
 
 
 GO
@@ -64050,11 +64060,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კონ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[terminal_contr].[momx].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[terminal_contr].[oper_k].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¢¤¢™¢~°¯¡¯»±', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'terminal_contr', @level2type = N'COLUMN', @level2name = N'momx';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზედდებულის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'terminal_contr', @level2type = N'COLUMN', @level2name = N'oper_k';
 
 
 GO
@@ -64074,11 +64084,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაფ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[terminal_contr].[oper_k].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[terminal_contr].[saq_raod].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ზედდებულის ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'terminal_contr', @level2type = N'COLUMN', @level2name = N'oper_k';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საქონლის რაოდენობა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'terminal_contr', @level2type = N'COLUMN', @level2name = N'saq_raod';
 
 
 GO
@@ -64090,6 +64100,14 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¿·µ¶± 
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[test_sakitxebi].[swori].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სწორი პასუხი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_sakitxebi', @level2type = N'COLUMN', @level2name = N'swori';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[test_sakitxebi].[sek].[MS_Description]...';
 
 
@@ -64098,11 +64116,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეკ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[test_sakitxebi].[koef].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[test_sakitxebi].[k].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოეფიციენტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_sakitxebi', @level2type = N'COLUMN', @level2name = N'koef';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_sakitxebi', @level2type = N'COLUMN', @level2name = N'k';
 
 
 GO
@@ -64111,14 +64129,6 @@ PRINT N'Creating Extended Property [dbo].[test_sakitxebi].[tema].[MS_Description
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თემა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_sakitxebi', @level2type = N'COLUMN', @level2name = N'tema';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[test_sakitxebi].[swori].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სწორი პასუხი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_sakitxebi', @level2type = N'COLUMN', @level2name = N'swori';
 
 
 GO
@@ -64138,11 +64148,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პას�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[test_sakitxebi].[k].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[test_sakitxebi].[koef].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_sakitxebi', @level2type = N'COLUMN', @level2name = N'k';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოეფიციენტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_sakitxebi', @level2type = N'COLUMN', @level2name = N'koef';
 
 
 GO
@@ -64151,6 +64161,14 @@ PRINT N'Creating Extended Property [dbo].[test_sakitxebi].[sen].[MS_Description]
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კომენტარი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_sakitxebi', @level2type = N'COLUMN', @level2name = N'sen';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[test_tema].[dast].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჭირდება სუპერვაიზერის დასტური', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_tema', @level2type = N'COLUMN', @level2name = N'dast';
 
 
 GO
@@ -64170,6 +64188,38 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'საკ�
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[test_tema].[momx].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_tema', @level2type = N'COLUMN', @level2name = N'momx';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[test_tema].[stop].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეუძლია თავად შეწყვეტა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_tema', @level2type = N'COLUMN', @level2name = N'stop';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[test_tema].[aqt].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აქტიურია თუ არა თემა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_tema', @level2type = N'COLUMN', @level2name = N'aqt';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[test_tema].[sat].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თემა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_tema', @level2type = N'COLUMN', @level2name = N'sat';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[test_tema].[sedeg_nax].[MS_Description]...';
 
 
@@ -64186,38 +64236,6 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[test_tema].[stop].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'შეუძლია თავად შეწყვეტა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_tema', @level2type = N'COLUMN', @level2name = N'stop';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[test_tema].[dast].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ჭირდება სუპერვაიზერის დასტური', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_tema', @level2type = N'COLUMN', @level2name = N'dast';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[test_tema].[momx].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მომხმარებელი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_tema', @level2type = N'COLUMN', @level2name = N'momx';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[test_tema].[sat].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თემა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_tema', @level2type = N'COLUMN', @level2name = N'sat';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[test_tema].[xang].[MS_Description]...';
 
 
@@ -64226,19 +64244,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტეს�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[test_tema].[aqt].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[test_testireba].[sat].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აქტიურია თუ არა თემა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_tema', @level2type = N'COLUMN', @level2name = N'aqt';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[test_testireba].[pir_n].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'11 ნიშნა პირადი ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba', @level2type = N'COLUMN', @level2name = N'pir_n';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თემა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba', @level2type = N'COLUMN', @level2name = N'sat';
 
 
 GO
@@ -64258,22 +64268,6 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'მიმ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[test_testireba].[sat].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თემა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba', @level2type = N'COLUMN', @level2name = N'sat';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[test_testireba].[gv_sax].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სახელი, გვარი რს.გე–დან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba', @level2type = N'COLUMN', @level2name = N'gv_sax';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[test_testireba].[kx].[MS_Description]...';
 
 
@@ -64290,11 +64284,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაწ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[test_testireba].[ip].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[test_testireba].[gv_sax].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'IP', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba', @level2type = N'COLUMN', @level2name = N'ip';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'სახელი, გვარი რს.გე–დან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba', @level2type = N'COLUMN', @level2name = N'gv_sax';
 
 
 GO
@@ -64306,19 +64300,19 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თან�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[test_testireba_det].[koeff].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[test_testireba].[pir_n].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოეფიციენტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba_det', @level2type = N'COLUMN', @level2name = N'koeff';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'11 ნიშნა პირადი ნომერი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba', @level2type = N'COLUMN', @level2name = N'pir_n';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[test_testireba_det].[k_k].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[test_testireba].[ip].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კავშირი საკითხის კოდთან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba_det', @level2type = N'COLUMN', @level2name = N'k_k';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'IP', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba', @level2type = N'COLUMN', @level2name = N'ip';
 
 
 GO
@@ -64327,6 +64321,14 @@ PRINT N'Creating Extended Property [dbo].[test_testireba_det].[kkk].[MS_Descript
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba_det', @level2type = N'COLUMN', @level2name = N'kkk';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[test_testireba_det].[k_k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კავშირი საკითხის კოდთან', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba_det', @level2type = N'COLUMN', @level2name = N'k_k';
 
 
 GO
@@ -64362,11 +64364,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'პას�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[test_testireba_tanxmoba].[dast].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[test_testireba_det].[koeff].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაµ¶·°±', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba_tanxmoba', @level2type = N'COLUMN', @level2name = N'dast';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოეფიციენტი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba_det', @level2type = N'COLUMN', @level2name = N'koeff';
 
 
 GO
@@ -64386,35 +64388,11 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[valuta].[valuta_dolari].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[test_testireba_tanxmoba].[dast].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დოლარის კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta', @level2type = N'COLUMN', @level2name = N'valuta_dolari';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[valuta].[valuta_mimd_dRe].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¢±¢¨±£~°¯ ¨¾¯', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta', @level2type = N'COLUMN', @level2name = N'valuta_mimd_dRe';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[valuta].[tvis_daxurva].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'›´±µ ¨~™·°´~', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta', @level2type = N'COLUMN', @level2name = N'tvis_daxurva';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[valuta].[valuta_evro1].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¯´°¤µ «·°µ±?', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta', @level2type = N'COLUMN', @level2name = N'valuta_evro1';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დაµ¶·°±', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'test_testireba_tanxmoba', @level2type = N'COLUMN', @level2name = N'dast';
 
 
 GO
@@ -64450,19 +64428,43 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¨¤»~°±
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[valuta1].[USD].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[valuta].[valuta_dolari].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¨¤»~°±µ «·°µ±', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta1', @level2type = N'COLUMN', @level2name = N'USD';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'დოლარის კურსი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta', @level2type = N'COLUMN', @level2name = N'valuta_dolari';
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[valuta1].[k].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[valuta].[valuta_evro1].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta1', @level2type = N'COLUMN', @level2name = N'k';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¯´°¤µ «·°µ±?', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta', @level2type = N'COLUMN', @level2name = N'valuta_evro1';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[valuta].[valuta_mimd_dRe].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¢±¢¨±£~°¯ ¨¾¯', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta', @level2type = N'COLUMN', @level2name = N'valuta_mimd_dRe';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[valuta].[tvis_daxurva].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'›´±µ ¨~™·°´~', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta', @level2type = N'COLUMN', @level2name = N'tvis_daxurva';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[valuta1].[EUR].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¯´°¤µ «·°µ±', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta1', @level2type = N'COLUMN', @level2name = N'EUR';
 
 
 GO
@@ -64474,11 +64476,19 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თარ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[valuta1].[EUR].[MS_Description]...';
+PRINT N'Creating Extended Property [dbo].[valuta1].[k].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¯´°¤µ «·°µ±', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta1', @level2type = N'COLUMN', @level2name = N'EUR';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta1', @level2type = N'COLUMN', @level2name = N'k';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[valuta1].[USD].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'¨¤»~°±µ «·°µ±', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'valuta1', @level2type = N'COLUMN', @level2name = N'USD';
 
 
 GO
@@ -64519,14 +64529,6 @@ PRINT N'Creating Extended Property [dbo].[xelsekruleba].[tipi].[MS_Description].
 
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'ტიპი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'xelsekruleba', @level2type = N'COLUMN', @level2name = N'tipi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[!nashti_problem].[MS_DiagramPaneCount]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'!nashti_problem';
 
 
 GO
@@ -64642,6 +64644,14 @@ Begin DesignProperties =
    End
 End
 ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'!nashti_problem';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[!nashti_problem].[MS_DiagramPaneCount]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'!nashti_problem';
 
 
 GO
@@ -66009,6 +66019,14 @@ End
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[GPC_Customers].[MS_DiagramPaneCount]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'GPC_Customers';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[GPC_Customers].[MS_DiagramPane1]...';
 
 
@@ -66135,14 +66153,6 @@ End
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[GPC_Customers].[MS_DiagramPaneCount]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'GPC_Customers';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[GPC_Customers_all].[MS_DiagramPaneCount]...';
 
 
@@ -66266,6 +66276,14 @@ End
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[GPC_Customers_bar_istoria].[MS_DiagramPaneCount]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'GPC_Customers_bar_istoria';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[GPC_Customers_bar_istoria].[MS_DiagramPane1]...';
 
 
@@ -66378,14 +66396,6 @@ Begin DesignProperties =
    End
 End
 ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'GPC_Customers_bar_istoria';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[GPC_Customers_bar_istoria].[MS_DiagramPaneCount]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'GPC_Customers_bar_istoria';
 
 
 GO
@@ -69252,14 +69262,6 @@ End
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[msg_sent].[MS_DiagramPaneCount]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'msg_sent';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[msg_sent].[MS_DiagramPane1]...';
 
 
@@ -69384,6 +69386,14 @@ Begin DesignProperties =
    End
 End
 ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'msg_sent';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[msg_sent].[MS_DiagramPaneCount]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'msg_sent';
 
 
 GO
@@ -69589,6 +69599,14 @@ Begin DesignProperties =
 
 
 GO
+PRINT N'Creating Extended Property [dbo].[QR_ERROR].[MS_DiagramPaneCount]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'QR_ERROR';
+
+
+GO
 PRINT N'Creating Extended Property [dbo].[QR_ERROR].[MS_DiagramPane1]...';
 
 
@@ -69701,14 +69719,6 @@ Begin DesignProperties =
    End
 End
 ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'QR_ERROR';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[QR_ERROR].[MS_DiagramPaneCount]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'QR_ERROR';
 
 
 GO
@@ -71226,86 +71236,6 @@ End
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[saqoneli_raod].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რამდენი დასახელების საქონელი არის აფთიაქში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'saqoneli_raod';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[raion].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რაიონი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'raion';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[tipi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აფთიაქის ტიპი - iafi+Zviri=ნაკლები ნულზე იაფი აფთიაქის, მეტი ნულზე ძვირი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'tipi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[misam].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აფთიაქის მისამართი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'misam';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[iafi].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რამდენი საქონელია საშუალო ფასზე იაფი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'iafi';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[af_kk].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აფთიაქის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'af_kk';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[region].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რეგიონი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'region';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[nasti].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანხა რეალიზაციის ფასით', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'nasti';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[k].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'k';
-
-
-GO
-PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[fosta].[MS_Description]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აფთიაქის ელ-ფოსტა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'fosta';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[tel].[MS_Description]...';
 
 
@@ -71330,11 +71260,83 @@ EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აფთ�
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[w_aversi_saqoneli].[MS_DiagramPaneCount]...';
+PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[saqoneli_raod].[MS_Description]...';
 
 
 GO
-EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_saqoneli';
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რამდენი დასახელების საქონელი არის აფთიაქში', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'saqoneli_raod';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[iafi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რამდენი საქონელია საშუალო ფასზე იაფი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'iafi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[raion].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რაიონი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'raion';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[misam].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აფთიაქის მისამართი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'misam';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[fosta].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აფთიაქის ელ-ფოსტა', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'fosta';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[af_kk].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აფთიაქის კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'af_kk';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[tipi].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'აფთიაქის ტიპი - iafi+Zviri=ნაკლები ნულზე იაფი აფთიაქის, მეტი ნულზე ძვირი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'tipi';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[nasti].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'თანხა რეალიზაციის ფასით', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'nasti';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[k].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'კოდი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'k';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[w_aversi_aft].[region].[MS_Description]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_Description', @value = N'რეგიონი', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_aft', @level2type = N'COLUMN', @level2name = N'region';
 
 
 GO
@@ -71450,6 +71452,14 @@ Begin DesignProperties =
    End
 End
 ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_saqoneli';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[w_aversi_saqoneli].[MS_DiagramPaneCount]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'w_aversi_saqoneli';
 
 
 GO
@@ -71576,14 +71586,6 @@ End
 
 
 GO
-PRINT N'Creating Extended Property [dbo].[x_error].[MS_DiagramPaneCount]...';
-
-
-GO
-EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'x_error';
-
-
-GO
 PRINT N'Creating Extended Property [dbo].[x_error].[MS_DiagramPane1]...';
 
 
@@ -71696,6 +71698,14 @@ Begin DesignProperties =
    End
 End
 ', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'x_error';
+
+
+GO
+PRINT N'Creating Extended Property [dbo].[x_error].[MS_DiagramPaneCount]...';
+
+
+GO
+EXECUTE sp_addextendedproperty @name = N'MS_DiagramPaneCount', @value = 1, @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'x_error';
 
 
 GO

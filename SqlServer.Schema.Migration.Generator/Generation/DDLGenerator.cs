@@ -16,6 +16,7 @@ public class DDLGenerator
             "Column" => _tableGenerator.GenerateColumnDDL(change),
             "Index" => _indexGenerator.GenerateIndexDDL(change),
             "Constraint" => GenerateConstraintDDL(change),
+            "Trigger" => GenerateTriggerDDL(change),
             "View" => GenerateViewDDL(change),
             "StoredProcedure" => GenerateStoredProcedureDDL(change),
             "Function" => GenerateFunctionDDL(change),
@@ -111,6 +112,24 @@ public class DDLGenerator
                 
             default:
                 return $"-- Unknown change type for function: {change.ObjectName}";
+        }
+    }
+
+    string GenerateTriggerDDL(SchemaChange change)
+    {
+        switch (change.ChangeType)
+        {
+            case ChangeType.Added:
+                return change.NewDefinition;
+                
+            case ChangeType.Deleted:
+                return $"DROP TRIGGER [{change.Schema}].[{change.ObjectName}];";
+                
+            case ChangeType.Modified:
+                return $"DROP TRIGGER [{change.Schema}].[{change.ObjectName}];\nGO\n\n{change.NewDefinition}";
+                
+            default:
+                return $"-- Unknown change type for trigger: {change.ObjectName}";
         }
     }
 }

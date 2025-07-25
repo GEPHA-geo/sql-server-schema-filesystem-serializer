@@ -116,7 +116,7 @@ public class TableChangeParser
     (string Schema, string TableName)? ExtractTableInfo(string filePath, string content)
     {
         // Extract from file path
-        var pathMatch = Regex.Match(filePath, @"([^/]+)/([^/]+)/Tables/([^/]+)/TBL_");
+        var pathMatch = Regex.Match(filePath, @"([^/]+)/schemas/([^/]+)/Tables/([^/]+)/TBL_");
         if (pathMatch.Success)
         {
             var schema = pathMatch.Groups[2].Value;

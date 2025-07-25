@@ -39,6 +39,12 @@ public class SqlFileChangeDetector
                         changes.Add(constraintChange);
                     break;
                     
+                case "Trigger":
+                    var triggerChange = ParseTriggerChange(entry);
+                    if (triggerChange != null)
+                        changes.Add(triggerChange);
+                    break;
+                    
                 case "View":
                 case "StoredProcedure":
                 case "Function":
@@ -60,6 +66,8 @@ public class SqlFileChangeDetector
             return "Index";
         if (filePath.Contains("/Tables/") && (filePath.Contains("/FK_") || filePath.Contains("/PK_") || filePath.Contains("/DF_") || filePath.Contains("/CHK_")))
             return "Constraint";
+        if (filePath.Contains("/Tables/") && filePath.Contains("/trg_"))
+            return "Trigger";
         if (filePath.Contains("/Views/"))
             return "View";
         if (filePath.Contains("/StoredProcedures/"))
@@ -86,6 +94,23 @@ public class SqlFileChangeDetector
         };
     }
 
+    SchemaChange? ParseTriggerChange(DiffEntry entry)
+    {
+        var triggerInfo = ExtractTriggerInfo(entry.Path);
+        if (triggerInfo == null) return null;
+        
+        return new SchemaChange
+        {
+            ObjectType = "Trigger",
+            Schema = triggerInfo.Value.Schema,
+            ObjectName = triggerInfo.Value.TriggerName,
+            TableName = triggerInfo.Value.TableName,
+            ChangeType = entry.ChangeType,
+            OldDefinition = entry.OldContent,
+            NewDefinition = entry.NewContent
+        };
+    }
+
     SchemaChange? ParseObjectChange(DiffEntry entry, string objectType)
     {
         var schemaObjectName = ExtractSchemaAndObjectName(entry.Path);
@@ -104,8 +129,8 @@ public class SqlFileChangeDetector
 
     (string Schema, string ObjectName)? ExtractSchemaAndObjectName(string filePath)
     {
-        // Extract schema from path (e.g., "database/dbo/Tables/...")
-        var match = Regex.Match(filePath, @"[^/]+/([^/]+)/[^/]+/(.+)\.sql$");
+        // Extract schema from path (e.g., "database/schemas/dbo/Tables/...")
+        var match = Regex.Match(filePath, @"[^/]+/schemas/([^/]+)/[^/]+/(.+)\.sql$");
         if (match.Success)
         {
             var schema = match.Groups[1].Value;
@@ -125,6 +150,21 @@ public class SqlFileChangeDetector
             }
             
             return (schema, objectName);
+        }
+        
+        return null;
+    }
+
+    (string Schema, string TableName, string TriggerName)? ExtractTriggerInfo(string filePath)
+    {
+        // Extract from file path (e.g., "database/schemas/dbo/Tables/Customer/trg_Customer_audit.sql")
+        var match = Regex.Match(filePath, @"[^/]+/schemas/([^/]+)/Tables/([^/]+)/(trg_[^.]+)\.sql$");
+        if (match.Success)
+        {
+            var schema = match.Groups[1].Value;
+            var tableName = match.Groups[2].Value;
+            var triggerName = match.Groups[3].Value;
+            return (schema, tableName, triggerName);
         }
         
         return null;

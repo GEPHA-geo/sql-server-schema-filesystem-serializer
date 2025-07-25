@@ -268,7 +268,7 @@ public class DacpacScriptParser
         var tableStatement = statements.FirstOrDefault(s => s.Type == ObjectType.Table);
         if (tableStatement == null) return;
         
-        var schemaPath = Path.Combine(basePath, tableStatement.Schema);
+        var schemaPath = Path.Combine(basePath, "schemas", tableStatement.Schema);
         var tablesPath = Path.Combine(schemaPath, "Tables");
         var tablePath = Path.Combine(tablesPath, tableStatement.Name);
         
@@ -292,7 +292,7 @@ public class DacpacScriptParser
 
     void ProcessView(SqlStatement statement, string basePath)
     {
-        var schemaPath = Path.Combine(basePath, statement.Schema);
+        var schemaPath = Path.Combine(basePath, "schemas", statement.Schema);
         var viewsPath = Path.Combine(schemaPath, "Views");
         FileSystemManager.CreateDirectory(viewsPath);
         
@@ -302,7 +302,7 @@ public class DacpacScriptParser
 
     void ProcessStoredProcedure(SqlStatement statement, string basePath)
     {
-        var schemaPath = Path.Combine(basePath, statement.Schema);
+        var schemaPath = Path.Combine(basePath, "schemas", statement.Schema);
         var procsPath = Path.Combine(schemaPath, "StoredProcedures");
         FileSystemManager.CreateDirectory(procsPath);
         
@@ -312,7 +312,7 @@ public class DacpacScriptParser
 
     void ProcessFunction(SqlStatement statement, string basePath)
     {
-        var schemaPath = Path.Combine(basePath, statement.Schema);
+        var schemaPath = Path.Combine(basePath, "schemas", statement.Schema);
         var functionsPath = Path.Combine(schemaPath, "Functions");
         FileSystemManager.CreateDirectory(functionsPath);
         
@@ -334,7 +334,10 @@ public class DacpacScriptParser
     void CreateEmptySchemaReadmes(string basePath)
     {
         // Get all schema directories
-        var schemaDirs = Directory.GetDirectories(basePath);
+        var schemasPath = Path.Combine(basePath, "schemas");
+        if (!Directory.Exists(schemasPath)) return;
+        
+        var schemaDirs = Directory.GetDirectories(schemasPath);
         
         foreach (var schemaDir in schemaDirs)
         {

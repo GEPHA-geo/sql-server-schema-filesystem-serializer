@@ -109,6 +109,12 @@ generated_script.sql
 
     string RunGitCommand(string workingDirectory, string arguments)
     {
+        // Ensure the working directory exists
+        if (!Directory.Exists(workingDirectory))
+        {
+            throw new InvalidOperationException($"Working directory does not exist: {workingDirectory}");
+        }
+        
         var startInfo = new ProcessStartInfo
         {
             FileName = "git",
@@ -117,25 +123,33 @@ generated_script.sql
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
-            CreateNoWindow = true
+            CreateNoWindow = true,
+            Environment = { ["PATH"] = Environment.GetEnvironmentVariable("PATH") ?? "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" }
         };
         
-        using var process = Process.Start(startInfo);
-        if (process == null)
+        try
         {
-            throw new InvalidOperationException("Failed to start git process");
+            using var process = Process.Start(startInfo);
+            if (process == null)
+            {
+                throw new InvalidOperationException("Failed to start git process");
+            }
+        
+            var output = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
+            
+            process.WaitForExit();
+            
+            if (process.ExitCode != 0 && !string.IsNullOrWhiteSpace(error))
+            {
+                throw new InvalidOperationException($"Git command failed: {error}");
+            }
+            
+            return output;
         }
-        
-        var output = process.StandardOutput.ReadToEnd();
-        var error = process.StandardError.ReadToEnd();
-        
-        process.WaitForExit();
-        
-        if (process.ExitCode != 0 && !string.IsNullOrWhiteSpace(error))
+        catch (System.ComponentModel.Win32Exception ex)
         {
-            throw new InvalidOperationException($"Git command failed: {error}");
+            throw new InvalidOperationException($"Failed to execute git command. Make sure git is installed and in PATH. Error: {ex.Message}", ex);
         }
-        
-        return output;
     }
 }

@@ -9,8 +9,14 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Verify Git installation
-RUN git --version
+# Verify Git installation and set up Git
+RUN git --version && \
+    git config --global user.email "docker@sqlserver-migrator.local" && \
+    git config --global user.name "SQL Server Migrator" && \
+    git config --global init.defaultBranch main && \
+    git config --global --add safe.directory /workspace && \
+    git config --global --add safe.directory /output && \
+    git config --global --add safe.directory '*'
 
 # Label for identification
 LABEL org.opencontainers.image.description="NET 9.0 Runtime with Git"

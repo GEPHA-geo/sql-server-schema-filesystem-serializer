@@ -14,9 +14,9 @@ RUN git --version && \
     git config --global user.email "docker@sqlserver-migrator.local" && \
     git config --global user.name "SQL Server Migrator" && \
     git config --global init.defaultBranch main && \
-    git config --global safe.directory '*' && \
-    git config --global safe.directory /workspace && \
-    git config --global safe.directory /output
+    git config --global --add safe.directory /workspace && \
+    git config --global --add safe.directory /output && \
+    git config --global --add safe.directory '*'
 
 # Label for identification
 LABEL org.opencontainers.image.description="NET 9.0 Runtime with Git"

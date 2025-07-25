@@ -7,38 +7,11 @@ public class GitDiffAnalyzer
     public bool IsGitRepository(string path)
     {
         var gitDir = Path.Combine(path, ".git");
-        if (Directory.Exists(gitDir))
-        {
-            // Ensure the directory is marked as safe (for Docker environments)
-            EnsureSafeDirectory(path);
-            return true;
-        }
-        return false;
-    }
-    
-    void EnsureSafeDirectory(string path)
-    {
-        // Try to add directory to safe list
-        // If it fails with a real error (not just "already exists"), it will throw
-        try
-        {
-            RunGitCommand(path, $"config --global --add safe.directory {path}");
-        }
-        catch (InvalidOperationException ex)
-        {
-            // Only ignore if it's because the entry already exists
-            if (!ex.Message.Contains("already exists") && !ex.Message.Contains("has multiple values"))
-            {
-                throw;
-            }
-        }
+        return Directory.Exists(gitDir);
     }
     
     public void InitializeRepository(string path)
     {
-        // Mark directory as safe first (for Docker environments)
-        EnsureSafeDirectory(path);
-        
         RunGitCommand(path, "init");
         
         // Create .gitignore
@@ -58,9 +31,6 @@ generated_script.sql
     public List<DiffEntry> GetUncommittedChanges(string path, string databaseName)
     {
         var entries = new List<DiffEntry>();
-        
-        // Mark directory as safe before running Git commands (for Docker environments)
-        EnsureSafeDirectory(path);
         
         // Get status of files (including untracked files)
         var statusOutput = RunGitCommand(path, "status --porcelain -u");
@@ -95,9 +65,6 @@ generated_script.sql
     
     public void CommitChanges(string path, string message)
     {
-        // Mark directory as safe before running Git commands (for Docker environments)
-        EnsureSafeDirectory(path);
-        
         RunGitCommand(path, "add .");
         RunGitCommand(path, $"commit -m \"{message}\"");
     }

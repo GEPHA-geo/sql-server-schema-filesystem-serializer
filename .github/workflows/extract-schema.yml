@@ -1,0 +1,112 @@
+name: Extract Database Schema
+
+on:
+  workflow_dispatch:
+    inputs:
+      database_name:
+        description: 'Target database name'
+        required: true
+        type: string
+      connection_string_secret:
+        description: 'Name of the secret containing connection string'
+        required: true
+        type: string
+        default: 'DB_CONNECTION_STRING'
+      output_branch:
+        description: 'Branch to commit schema files'
+        required: false
+        type: string
+        default: 'schema-updates'
+      create_pr:
+        description: 'Create a pull request'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/sqlserver-schema-migrator
+
+jobs:
+  extract-schema:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: read
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Create output directory
+        run: mkdir -p ./db_output
+        
+      - name: Run DACPAC extraction
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/db_output:/output \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            "${{ secrets[inputs.connection_string_secret] }}" \
+            "/output"
+            
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [ -n "$(find ./db_output -name '*.sql' -type f)" ]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "Found SQL files in extraction"
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "No SQL files found"
+          fi
+          
+      - name: Create branch
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          BRANCH_NAME="${{ inputs.output_branch }}-${{ inputs.database_name }}-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b $BRANCH_NAME
+          
+          # Copy extracted files to repository
+          cp -r ./db_output/* ./
+          
+          # Add and commit changes
+          git add .
+          git commit -m "Extract schema for ${{ inputs.database_name }}
+
+          Database: ${{ inputs.database_name }}
+          Extracted at: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          # Push branch
+          git push origin $BRANCH_NAME
+          
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.changes == 'true' && inputs.create_pr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ env.BRANCH_NAME }}
+          title: "Schema update for ${{ inputs.database_name }}"
+          body: |
+            ## Database Schema Extraction
+            
+            **Database:** ${{ inputs.database_name }}  
+            **Extracted:** ${{ steps.current_time.outputs.time }}  
+            **Workflow:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+            ### Summary
+            This PR contains the extracted database schema for `${{ inputs.database_name }}`.
+            
+            Please review the changes and migrations before merging.
+          labels: |
+            database-schema
+            automated
+          assignees: ${{ github.actor }}

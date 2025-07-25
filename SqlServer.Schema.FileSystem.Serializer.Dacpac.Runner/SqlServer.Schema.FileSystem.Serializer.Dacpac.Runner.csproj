@@ -5,6 +5,18 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    
+    <!-- Container configuration -->
+    <EnableSdkContainerSupport>true</EnableSdkContainerSupport>
+    <ContainerBaseImage>mcr.microsoft.com/dotnet/runtime:9.0</ContainerBaseImage>
+    <ContainerRepository>sqlserver-schema-migrator</ContainerRepository>
+    <ContainerImageName>sqlserver-schema-migrator</ContainerImageName>
+    <ContainerImageTags>latest;$(Version)</ContainerImageTags>
+    
+    <!-- Assembly info for versioning -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,6 +27,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.SqlServer.DacFx" Version="*" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="*" />
+    <PackageReference Include="Microsoft.NET.Build.Containers" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

@@ -16,7 +16,23 @@ env:
   IMAGE_NAME: gepha-geo/sqlserver-schema-migrator
 
 jobs:
+  ensure-base-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check if base image exists
+        run: |
+          if docker manifest inspect ghcr.io/gepha-geo/dotnet-runtime-git:9.0 > /dev/null 2>&1; then
+            echo "Base image exists"
+          else
+            echo "Base image not found. Please run base-image workflow first."
+            exit 1
+          fi
+
   build-and-push:
+    needs: ensure-base-image
     runs-on: ubuntu-latest
     permissions:
       contents: read

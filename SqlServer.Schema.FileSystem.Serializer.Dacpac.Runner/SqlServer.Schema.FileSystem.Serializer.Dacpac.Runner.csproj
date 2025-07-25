@@ -8,7 +8,7 @@
     
     <!-- Container configuration -->
     <EnableSdkContainerSupport>true</EnableSdkContainerSupport>
-    <ContainerBaseImage>mcr.microsoft.com/dotnet/runtime:9.0</ContainerBaseImage>
+    <ContainerBaseImage>ghcr.io/gepha-geo/dotnet-runtime-git:9.0</ContainerBaseImage>
     <ContainerRepository>sqlserver-schema-migrator</ContainerRepository>
     
     <!-- Assembly info for versioning -->

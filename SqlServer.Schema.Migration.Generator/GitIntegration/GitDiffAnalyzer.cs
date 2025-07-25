@@ -7,11 +7,34 @@ public class GitDiffAnalyzer
     public bool IsGitRepository(string path)
     {
         var gitDir = Path.Combine(path, ".git");
-        return Directory.Exists(gitDir);
+        if (Directory.Exists(gitDir))
+        {
+            // Ensure the directory is marked as safe (for Docker environments)
+            try
+            {
+                RunGitCommand(path, $"config --global --add safe.directory {path}");
+            }
+            catch
+            {
+                // Ignore if it fails - might already be set
+            }
+            return true;
+        }
+        return false;
     }
     
     public void InitializeRepository(string path)
     {
+        // Mark directory as safe first (for Docker environments)
+        try
+        {
+            RunGitCommand(path, $"config --global --add safe.directory {path}");
+        }
+        catch
+        {
+            // Ignore if it fails
+        }
+        
         RunGitCommand(path, "init");
         
         // Create .gitignore
@@ -31,6 +54,16 @@ generated_script.sql
     public List<DiffEntry> GetUncommittedChanges(string path, string databaseName)
     {
         var entries = new List<DiffEntry>();
+        
+        // Mark directory as safe before running Git commands (for Docker environments)
+        try
+        {
+            RunGitCommand(path, $"config --global --add safe.directory {path}");
+        }
+        catch
+        {
+            // Ignore if it fails - might already be set
+        }
         
         // Get status of files (including untracked files)
         var statusOutput = RunGitCommand(path, "status --porcelain -u");
@@ -65,6 +98,16 @@ generated_script.sql
     
     public void CommitChanges(string path, string message)
     {
+        // Mark directory as safe before running Git commands (for Docker environments)
+        try
+        {
+            RunGitCommand(path, $"config --global --add safe.directory {path}");
+        }
+        catch
+        {
+            // Ignore if it fails - might already be set
+        }
+        
         RunGitCommand(path, "add .");
         RunGitCommand(path, $"commit -m \"{message}\"");
     }

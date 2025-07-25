@@ -77,7 +77,7 @@ ALTER DATABASE [$(DatabaseName)]
 
 GO
 ALTER DATABASE [$(DatabaseName)]
-    ADD FILE (NAME = [INDEX_4E581FA7], FILENAME = N'$(DefaultDataPath)$(DefaultFilePrefix)_INDEX_4E581FA7.mdf') TO FILEGROUP [INDEX];
+    ADD FILE (NAME = [INDEX_199E32D1], FILENAME = N'$(DefaultDataPath)$(DefaultFilePrefix)_INDEX_199E32D1.mdf') TO FILEGROUP [INDEX];
 
 
 GO

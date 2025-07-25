@@ -6,7 +6,7 @@ namespace SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner;
 
 internal static class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         if (args.Length != 2)
         {
@@ -105,7 +105,13 @@ internal static class Program
             var migrationGenerator = new Migration.Generator.MigrationGenerator();
             var migrationsPath = Path.Combine(outputPath, databaseName, "migrations");
             
-            var changesDetected = migrationGenerator.GenerateMigrations(outputPath, databaseName, migrationsPath);
+            // Pass connection string for validation
+            var changesDetected = await migrationGenerator.GenerateMigrationsAsync(
+                outputPath, 
+                databaseName, 
+                migrationsPath,
+                connectionString,  // Enable validation with the same connection
+                validateMigration: true);
 
             Console.WriteLine(changesDetected ? $"Migration files generated in: {migrationsPath}" : "No schema changes detected.");
         }

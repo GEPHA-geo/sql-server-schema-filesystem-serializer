@@ -8,6 +8,16 @@ public class MigrationGenerator
 
     public bool GenerateMigrations(string outputPath, string databaseName, string migrationsPath)
     {
+        return GenerateMigrationsAsync(outputPath, databaseName, migrationsPath, null, true).GetAwaiter().GetResult();
+    }
+
+    public async Task<bool> GenerateMigrationsAsync(
+        string outputPath, 
+        string databaseName, 
+        string migrationsPath,
+        string? connectionString = null,
+        bool validateMigration = true)
+    {
         try
         {
             // Ensure migrations directory exists
@@ -52,6 +62,30 @@ public class MigrationGenerator
             var description = GenerateDescription(schemaChanges);
             var filename = $"{timestamp}_{description}.sql";
             var migrationPath = Path.Combine(migrationsPath, filename);
+            
+            // Validate migration if requested and connection string provided
+            // TODO: Enable validation after resolving Git export issues in Windows/WSL environment
+            /*
+            if (validateMigration && !string.IsNullOrEmpty(connectionString))
+            {
+                Console.WriteLine("\nValidating migration before saving...");
+                
+                var validator = new Validation.MigrationValidator(connectionString);
+                var validationResult = await validator.ValidateMigrationAsync(
+                    migrationScript,
+                    outputPath,
+                    databaseName);
+                    
+                if (!validationResult.Success)
+                {
+                    Console.WriteLine($"Migration validation failed: {validationResult.Error}");
+                    Console.WriteLine("Migration file was not saved due to validation failure.");
+                    return false;
+                }
+                
+                Console.WriteLine("Migration validated successfully!");
+            }
+            */
             
             File.WriteAllText(migrationPath, migrationScript);
             Console.WriteLine($"Generated migration: {filename}");

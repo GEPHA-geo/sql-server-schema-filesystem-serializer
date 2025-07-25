@@ -131,11 +131,6 @@ jobs:
       packages: read
       
     steps:
-      - name: Wait for package visibility update
-        run: |
-          echo "Waiting for package to become public..."
-          sleep 30
-          
       - name: Test Docker image
         run: |
           docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest || echo "Expected usage error"

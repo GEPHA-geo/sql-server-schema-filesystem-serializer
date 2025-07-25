@@ -398,27 +398,27 @@ public class DacpacScriptParser
         Console.WriteLine(new string('-', 50));
         
         CheckCount("Tables", originalCounts["CREATE TABLE"], 
-            parsedCounts.ContainsKey(ObjectType.Table) ? parsedCounts[ObjectType.Table] : 0);
+            parsedCounts.GetValueOrDefault(ObjectType.Table, 0));
         var pkNote = originalCounts["PRIMARY KEY"] > 0 && (!parsedCounts.ContainsKey(ObjectType.PrimaryKey) || parsedCounts[ObjectType.PrimaryKey] == 0) 
             ? " (inline with tables)" : "";
         CheckCount("Primary Keys" + pkNote, originalCounts["PRIMARY KEY"], 
-            parsedCounts.ContainsKey(ObjectType.PrimaryKey) ? parsedCounts[ObjectType.PrimaryKey] : 0);
+            parsedCounts.GetValueOrDefault(ObjectType.PrimaryKey, 0));
         CheckCount("Foreign Keys", originalCounts["FOREIGN KEY"], 
-            parsedCounts.ContainsKey(ObjectType.ForeignKey) ? parsedCounts[ObjectType.ForeignKey] : 0);
+            parsedCounts.GetValueOrDefault(ObjectType.ForeignKey, 0));
         CheckCount("Check Constraints", originalCounts["CHECK"], 
-            parsedCounts.ContainsKey(ObjectType.CheckConstraint) ? parsedCounts[ObjectType.CheckConstraint] : 0);
+            parsedCounts.GetValueOrDefault(ObjectType.CheckConstraint, 0));
         CheckCount("Default Constraints", originalCounts["DEFAULT"], 
-            parsedCounts.ContainsKey(ObjectType.DefaultConstraint) ? parsedCounts[ObjectType.DefaultConstraint] : 0);
+            parsedCounts.GetValueOrDefault(ObjectType.DefaultConstraint, 0));
         CheckCount("Indexes", originalCounts["INDEX"], 
-            parsedCounts.ContainsKey(ObjectType.Index) ? parsedCounts[ObjectType.Index] : 0);
+            parsedCounts.GetValueOrDefault(ObjectType.Index, 0));
         CheckCount("Triggers", originalCounts["TRIGGER"], 
-            parsedCounts.ContainsKey(ObjectType.Trigger) ? parsedCounts[ObjectType.Trigger] : 0);
+            parsedCounts.GetValueOrDefault(ObjectType.Trigger, 0));
         CheckCount("Views", originalCounts["VIEW"], 
-            parsedCounts.ContainsKey(ObjectType.View) ? parsedCounts[ObjectType.View] : 0);
+            parsedCounts.GetValueOrDefault(ObjectType.View, 0));
         CheckCount("Stored Procedures", originalCounts["PROCEDURE"], 
-            parsedCounts.ContainsKey(ObjectType.StoredProcedure) ? parsedCounts[ObjectType.StoredProcedure] : 0);
+            parsedCounts.GetValueOrDefault(ObjectType.StoredProcedure, 0));
         CheckCount("Functions", originalCounts["FUNCTION"], 
-            parsedCounts.ContainsKey(ObjectType.Function) ? parsedCounts[ObjectType.Function] : 0);
+            parsedCounts.GetValueOrDefault(ObjectType.Function, 0));
         
         // Warn about unparsed statements
         var totalOriginal = originalCounts.Values.Sum();

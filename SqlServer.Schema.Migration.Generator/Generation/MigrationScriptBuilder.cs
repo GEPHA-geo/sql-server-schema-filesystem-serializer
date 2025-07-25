@@ -22,7 +22,17 @@ public class MigrationScriptBuilder
         sb.AppendLine($"-- Database: {databaseName}");
         sb.AppendLine($"-- Changes: {changes.Count} schema modifications");
         sb.AppendLine();
+        sb.AppendLine("SET XACT_ABORT ON;");
         sb.AppendLine("BEGIN TRANSACTION;");
+        sb.AppendLine();
+        
+        // Check if migration already applied
+        sb.AppendLine("-- Check if migration already applied");
+        sb.AppendLine($"IF EXISTS (SELECT 1 FROM [dbo].[DatabaseMigrationHistory] WHERE [MigrationId] = '{migrationId}')");
+        sb.AppendLine("BEGIN");
+        sb.AppendLine("    PRINT 'Migration already applied. Skipping.';");
+        sb.AppendLine("    RETURN;");
+        sb.AppendLine("END");
         sb.AppendLine();
         
         try
@@ -72,7 +82,15 @@ public class MigrationScriptBuilder
                 }
             }
             
+            // Record migration in history table BEFORE committing
+            sb.AppendLine("-- Record this migration as applied");
+            sb.AppendLine($"INSERT INTO [dbo].[DatabaseMigrationHistory] ([MigrationId], [Filename], [Checksum], [Status])");
+            sb.AppendLine($"VALUES ('{migrationId}', '{migrationId}.sql', HASHBYTES('SHA2_256', CAST('{migrationId}' AS NVARCHAR(MAX))), 'Success');");
+            sb.AppendLine("GO");
+            sb.AppendLine();
+            
             sb.AppendLine("COMMIT TRANSACTION;");
+            sb.AppendLine("PRINT 'Migration applied successfully.'");
         }
         catch
         {

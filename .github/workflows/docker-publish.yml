@@ -66,6 +66,8 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
+            type=raw,value=1.0.0,enable={{is_default_branch}}
+            type=raw,value=latest,enable={{is_default_branch}}
             type=sha
             
       - name: Build and push Docker image
@@ -73,13 +75,17 @@ jobs:
           # Restore dependencies
           dotnet restore
           
-          # Get the first tag from metadata (or use 'latest' for main branch)
+          # Get the version from VERSION file for main branch
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            CONTAINER_TAG="latest"
+            VERSION=$(cat VERSION)
+            CONTAINER_TAGS="-p:ContainerImageTags=\"${VERSION};latest\""
           elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            CONTAINER_TAG="${{ github.ref_name }}"
+            # For tags, use the tag name without 'v' prefix
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"  # Remove 'v' prefix if present
+            CONTAINER_TAGS="-p:ContainerImageTag=${VERSION}"
           else
-            CONTAINER_TAG="pr-${{ github.event.pull_request.number }}"
+            CONTAINER_TAGS="-p:ContainerImageTag=pr-${{ github.event.pull_request.number }}"
           fi
           
           # Build and publish container
@@ -90,7 +96,7 @@ jobs:
             /t:PublishContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_NAME }} \
-            -p:ContainerImageTag=${CONTAINER_TAG}
+            ${CONTAINER_TAGS}
             
       - name: Build and push multi-arch image (main branch only)
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

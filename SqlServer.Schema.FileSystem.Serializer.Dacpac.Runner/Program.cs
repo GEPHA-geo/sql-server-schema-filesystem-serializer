@@ -17,6 +17,9 @@ internal static class Program
         var connectionString = args[0];
         var outputPath = args[1];
 
+        // Configure Git safe directory for Docker environments
+        ConfigureGitSafeDirectory(outputPath);
+
         try
         {
             // Extract database to DACPAC
@@ -119,6 +122,39 @@ internal static class Program
         {
             Console.WriteLine($"Error: {ex.Message}");
             Environment.Exit(1);
+        }
+    }
+    
+    static void ConfigureGitSafeDirectory(string path)
+    {
+        try
+        {
+            // Configure Git to trust the output directory and common Docker mount points
+            var directories = new[] { path, "/workspace", "/output", "." };
+            
+            foreach (var dir in directories)
+            {
+                var process = new System.Diagnostics.Process
+                {
+                    StartInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "git",
+                        Arguments = $"config --global --add safe.directory {dir}",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                
+                process.Start();
+                process.WaitForExit();
+            }
+        }
+        catch
+        {
+            // Ignore Git configuration errors - it's not critical for DACPAC extraction
+            // This is just to help with migration generation later
         }
     }
 }

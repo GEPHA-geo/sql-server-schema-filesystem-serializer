@@ -1,0 +1,22 @@
+# Test commands to run with Docker
+
+# 1. First, check what's in the Docker image's Git config:
+docker run --rm ghcr.io/gepha-geo/sqlserver-schema-migrator:latest sh -c "git config --global --get-all safe.directory"
+
+# 2. Test running with a simple workspace:
+mkdir -p test-workspace
+cd test-workspace
+git init
+echo "test" > test.txt
+git add .
+git commit -m "test"
+cd ..
+
+# 3. Run the container with the test workspace:
+docker run --rm -v $(pwd)/test-workspace:/workspace ghcr.io/gepha-geo/sqlserver-schema-migrator:latest sh -c "cd /workspace && git status"
+
+# 4. If that fails, try adding safe directory inside the container:
+docker run --rm -v $(pwd)/test-workspace:/workspace ghcr.io/gepha-geo/sqlserver-schema-migrator:latest sh -c "git config --global --add safe.directory /workspace && cd /workspace && git status"
+
+# 5. Check the actual error when running the full application:
+docker run --rm -v $(pwd)/test-workspace:/workspace ghcr.io/gepha-geo/sqlserver-schema-migrator:latest "Server=dummy;Database=TestDB;User Id=sa;Password=test" "/workspace"

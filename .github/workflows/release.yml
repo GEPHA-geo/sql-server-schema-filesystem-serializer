@@ -1,0 +1,83 @@
+name: Release New Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.1)'
+        required: true
+        type: string
+      update_base_image:
+        description: 'Also update base image version'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Update VERSION file
+        run: |
+          echo "${{ inputs.version }}" > VERSION
+          
+      - name: Update project version
+        run: |
+          # Update .csproj version
+          sed -i 's/<Version>.*<\/Version>/<Version>${{ inputs.version }}<\/Version>/' SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner/SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.csproj
+          sed -i 's/<AssemblyVersion>.*<\/AssemblyVersion>/<AssemblyVersion>${{ inputs.version }}.0<\/AssemblyVersion>/' SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner/SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.csproj
+          sed -i 's/<FileVersion>.*<\/FileVersion>/<FileVersion>${{ inputs.version }}.0<\/FileVersion>/' SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner/SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.csproj
+          
+      - name: Update base image version in workflows
+        if: inputs.update_base_image
+        run: |
+          # Extract major.minor from version
+          MAJOR_MINOR=$(echo "${{ inputs.version }}" | cut -d. -f1,2)
+          
+          # Update base image workflow
+          sed -i "s/type=raw,value=9.0.[0-9]\+/type=raw,value=9.0.${{ inputs.version }}/" .github/workflows/base-image.yml
+          
+          # Update reference in .csproj
+          sed -i "s/dotnet-runtime-git:9.0.[0-9]\+/dotnet-runtime-git:9.0.${{ inputs.version }}/" SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner/SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.csproj
+          
+      - name: Commit version changes
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add .
+          git commit -m "Release version ${{ inputs.version }}"
+          
+      - name: Create and push tag
+        run: |
+          git tag -a "v${{ inputs.version }}" -m "Release version ${{ inputs.version }}"
+          git push origin main
+          git push origin "v${{ inputs.version }}"
+          
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ inputs.version }}
+          release_name: Release v${{ inputs.version }}
+          body: |
+            ## SQL Server Schema Migrator v${{ inputs.version }}
+            
+            ### Docker Images
+            - Main image: `ghcr.io/gepha-geo/sqlserver-schema-migrator:${{ inputs.version }}`
+            - Base image: `ghcr.io/gepha-geo/dotnet-runtime-git:9.0.${{ inputs.version }}`
+            
+            ### Usage
+            ```bash
+            docker run --rm -v $(pwd):/workspace \
+              ghcr.io/gepha-geo/sqlserver-schema-migrator:${{ inputs.version }} \
+              "connection-string" "/workspace"
+            ```
+          draft: false
+          prerelease: false

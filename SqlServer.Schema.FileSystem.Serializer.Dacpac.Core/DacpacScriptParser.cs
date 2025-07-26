@@ -370,7 +370,7 @@ public class DacpacScriptParser
         var originalCounts = new Dictionary<string, int>
         {
             ["CREATE TABLE"] = CountPattern(script, @"CREATE\s+TABLE"),
-            ["PRIMARY KEY"] = CountPattern(script, @"PRIMARY\s+KEY"),
+            ["PRIMARY KEY"] = CountPattern(script, @"ALTER\s+TABLE\s+[^\s]+\s+ADD\s+CONSTRAINT\s+[^\s]+\s+PRIMARY\s+KEY"),
             ["FOREIGN KEY"] = CountPattern(script, @"ADD\s+CONSTRAINT\s+\[FK_[^\]]+\]\s+FOREIGN\s+KEY"),
             ["CHECK"] = CountPattern(script, @"WITH\s+CHECK\s+ADD\s+CONSTRAINT.*CHECK\s*\("),
             ["DEFAULT"] = CountPattern(script, @"DEFAULT\s*\("),
@@ -378,15 +378,15 @@ public class DacpacScriptParser
             ["TRIGGER"] = CountPattern(script, @"CREATE\s+TRIGGER"),
             ["VIEW"] = CountPattern(script, @"CREATE\s+VIEW"),
             ["PROCEDURE"] = CountPattern(script, @"CREATE\s+PROCEDURE"),
-            ["FUNCTION"] = CountPattern(script, @"CREATE\s+FUNCTION")
+            ["FUNCTION"] = CountPattern(script, @"CREATE\s+FUNCTION"),
+            ["INLINE PRIMARY KEY"] = CountPattern(script, @"CONSTRAINT\s+\[[^\]]+\]\s+PRIMARY\s+KEY")
         };
         
         // Count parsed statement types
         var parsedCounts = new Dictionary<ObjectType, int>();
         foreach (var stmt in statements)
         {
-            if (!parsedCounts.ContainsKey(stmt.Type))
-                parsedCounts[stmt.Type] = 0;
+            parsedCounts.TryAdd(stmt.Type, 0);
             parsedCounts[stmt.Type]++;
         }
         

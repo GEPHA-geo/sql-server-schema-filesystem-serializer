@@ -95,6 +95,12 @@ internal static class Program
             var parser = new DacpacScriptParser();
             parser.ParseAndOrganizeScripts(script, outputPath, databaseName);
             
+            // Clean up temporary script file
+            if (File.Exists("generated_script.sql"))
+            {
+                File.Delete("generated_script.sql");
+            }
+            
             // Clean up temp DACPAC file
             if (File.Exists(dacpacPath))
             {

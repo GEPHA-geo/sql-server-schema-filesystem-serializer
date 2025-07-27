@@ -6,15 +6,16 @@ public class MigrationGenerator
     readonly Parsing.SqlFileChangeDetector _changeDetector = new();
     readonly Generation.MigrationScriptBuilder _scriptBuilder = new();
 
-    public bool GenerateMigrations(string outputPath, string databaseName, string migrationsPath)
+    public bool GenerateMigrations(string outputPath, string databaseName, string migrationsPath, string? actor = null)
     {
-        return GenerateMigrationsAsync(outputPath, databaseName, migrationsPath, null, true).GetAwaiter().GetResult();
+        return GenerateMigrationsAsync(outputPath, databaseName, migrationsPath, actor, null, true).GetAwaiter().GetResult();
     }
 
     public async Task<bool> GenerateMigrationsAsync(
         string outputPath, 
         string databaseName, 
         string migrationsPath,
+        string? actor = null,
         string? connectionString = null,
         bool validateMigration = true)
     {
@@ -55,12 +56,16 @@ public class MigrationGenerator
             }
             
             // Generate migration script
-            var migrationScript = _scriptBuilder.BuildMigration(schemaChanges, databaseName);
+            var migrationScript = _scriptBuilder.BuildMigration(schemaChanges, databaseName, actor);
             
             // Save migration file
             var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
             var description = GenerateDescription(schemaChanges);
-            var filename = $"{timestamp}_{description}.sql";
+            
+            // Sanitize actor name for filename (remove special characters)
+            var sanitizedActor = string.IsNullOrEmpty(actor) ? "unknown" : SanitizeForFilename(actor);
+            
+            var filename = $"{timestamp}_{sanitizedActor}_{description}.sql";
             var migrationPath = Path.Combine(migrationsPath, filename);
             
             // Validate migration if requested and connection string provided
@@ -104,8 +109,9 @@ public class MigrationGenerator
 
     void CreateBootstrapMigration(string migrationsPath)
     {
-        var bootstrapScript = @"-- Migration: 00000000_000000_create_migration_history_table.sql
+        var bootstrapScript = @"-- Migration: 00000000_000000_system_create_migration_history_table.sql
 -- MigrationId: 00000000_000000_create_migration_history_table
+-- Actor: system
 -- Description: Bootstrap migration - creates the migration tracking table
 -- Author: System
 -- Date: System Bootstrap
@@ -135,7 +141,7 @@ BEGIN
 END
 GO";
         
-        var bootstrapPath = Path.Combine(migrationsPath, "00000000_000000_create_migration_history_table.sql");
+        var bootstrapPath = Path.Combine(migrationsPath, "00000000_000000_system_create_migration_history_table.sql");
         if (!File.Exists(bootstrapPath))
         {
             File.WriteAllText(bootstrapPath, bootstrapScript);
@@ -160,5 +166,47 @@ GO";
             summary.Add($"{otherChanges.Count}_other");
             
         return string.Join("_", summary).Replace(" ", "_").ToLower();
+    }
+    
+    string SanitizeForFilename(string input)
+    {
+        // Replace invalid filename characters with underscores
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var sanitized = input;
+        
+        foreach (var c in invalidChars)
+        {
+            sanitized = sanitized.Replace(c, '_');
+        }
+        
+        // Also replace common problematic characters
+        sanitized = sanitized
+            .Replace(' ', '_')
+            .Replace('.', '_')
+            .Replace('@', '_')
+            .Replace('-', '_');
+            
+        // Remove consecutive underscores
+        while (sanitized.Contains("__"))
+        {
+            sanitized = sanitized.Replace("__", "_");
+        }
+        
+        // Trim underscores from start and end
+        sanitized = sanitized.Trim('_');
+        
+        // Ensure it's not empty
+        if (string.IsNullOrEmpty(sanitized))
+        {
+            sanitized = "unknown";
+        }
+        
+        // Limit length to avoid excessively long filenames
+        if (sanitized.Length > 50)
+        {
+            sanitized = sanitized.Substring(0, 50);
+        }
+        
+        return sanitized.ToLower();
     }
 }

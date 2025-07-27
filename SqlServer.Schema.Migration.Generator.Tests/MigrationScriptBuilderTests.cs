@@ -17,7 +17,7 @@ public class MigrationScriptBuilderTests
         var databaseName = "TestDB";
         
         // Act
-        var script = _builder.BuildMigration(changes, databaseName);
+        var script = _builder.BuildMigration(changes, databaseName, "test_user");
         
         // Assert
         Assert.Contains("SET XACT_ABORT ON", script);
@@ -45,7 +45,7 @@ public class MigrationScriptBuilderTests
         var databaseName = "TestDB";
         
         // Act
-        var script = _builder.BuildMigration(changes, databaseName);
+        var script = _builder.BuildMigration(changes, databaseName, "test_user");
         
         // Assert
         Assert.Contains("-- Create operations", script);
@@ -93,7 +93,7 @@ public class MigrationScriptBuilderTests
         var databaseName = "TestDB";
         
         // Act
-        var script = _builder.BuildMigration(changes, databaseName);
+        var script = _builder.BuildMigration(changes, databaseName, "test_user");
         
         // Assert
         // Verify order: drops first, then modifications, then creates
@@ -139,7 +139,7 @@ public class MigrationScriptBuilderTests
         var databaseName = "TestDB";
         
         // Act
-        var script = _builder.BuildMigration(changes, databaseName);
+        var script = _builder.BuildMigration(changes, databaseName, "test_user");
         
         // Assert
         // Verify renames come before drops
@@ -169,7 +169,7 @@ public class MigrationScriptBuilderTests
         var databaseName = "TestDB";
         
         // Act
-        var script = _builder.BuildMigration(changes, databaseName);
+        var script = _builder.BuildMigration(changes, databaseName, "test_user");
         
         // Assert
         Assert.Contains("-- Migration:", script);
@@ -197,7 +197,7 @@ public class MigrationScriptBuilderTests
         var databaseName = "TestDB";
         
         // Act
-        var script = _builder.BuildMigration(changes, databaseName);
+        var script = _builder.BuildMigration(changes, databaseName, "test_user");
         
         // Assert
         Assert.Contains("-- Check if migration already applied", script);
@@ -224,7 +224,7 @@ public class MigrationScriptBuilderTests
         var databaseName = "TestDB";
         
         // Act
-        var script = _builder.BuildMigration(changes, databaseName);
+        var script = _builder.BuildMigration(changes, databaseName, "test_user");
         
         // Assert
         Assert.Contains("-- Record this migration as applied", script);
@@ -249,7 +249,7 @@ public class MigrationScriptBuilderTests
         var databaseName = "TestDB";
         
         // Act
-        var script = _builder.BuildMigration(changes, databaseName);
+        var script = _builder.BuildMigration(changes, databaseName, "test_user");
         
         // Assert
         // The migration name should include counts
@@ -277,12 +277,61 @@ public class MigrationScriptBuilderTests
         var databaseName = "TestDB";
         
         // Act
-        var script = _builder.BuildMigration(changes, databaseName);
+        var script = _builder.BuildMigration(changes, databaseName, "test_user");
         
         // Assert
         Assert.Contains("SET XACT_ABORT ON", script);
         Assert.Contains("BEGIN TRANSACTION", script);
         Assert.Contains("COMMIT TRANSACTION", script);
         Assert.Contains("PRINT 'Migration applied successfully.'", script);
+    }
+    
+    [Fact]
+    public void BuildMigration_ShouldIncludeActorInHeader()
+    {
+        // Arrange
+        var changes = new List<SchemaChange>
+        {
+            new SchemaChange 
+            { 
+                ObjectType = "Table", 
+                Schema = "dbo",
+                ObjectName = "Test",
+                ChangeType = ChangeType.Added,
+                NewDefinition = "CREATE TABLE [dbo].[Test] ([Id] INT)"
+            }
+        };
+        var databaseName = "TestDB";
+        var actor = "john_doe";
+        
+        // Act
+        var script = _builder.BuildMigration(changes, databaseName, actor);
+        
+        // Assert
+        Assert.Contains("-- Actor: john_doe", script);
+    }
+    
+    [Fact]
+    public void BuildMigration_WithNullActor_ShouldUseUnknown()
+    {
+        // Arrange
+        var changes = new List<SchemaChange>
+        {
+            new SchemaChange 
+            { 
+                ObjectType = "Table", 
+                Schema = "dbo",
+                ObjectName = "Test",
+                ChangeType = ChangeType.Added,
+                NewDefinition = "CREATE TABLE [dbo].[Test] ([Id] INT)"
+            }
+        };
+        var databaseName = "TestDB";
+        
+        // Act
+        var script = _builder.BuildMigration(changes, databaseName, null);
+        
+        // Assert
+        Assert.Contains("-- Actor: unknown", script);
     }
 }

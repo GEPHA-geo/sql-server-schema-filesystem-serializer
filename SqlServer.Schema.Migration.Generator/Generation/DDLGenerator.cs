@@ -7,9 +7,15 @@ public class DDLGenerator
 {
     readonly TableDDLGenerator _tableGenerator = new();
     readonly IndexDDLGenerator _indexGenerator = new();
+    readonly RenameDDLGenerator _renameGenerator = new();
 
     public string GenerateDDL(SchemaChange change)
     {
+        // Check if this is a rename operation
+        if (change.Properties.TryGetValue("IsRename", out var isRename) && isRename == "true")
+        {
+            return _renameGenerator.GenerateRenameDDL(change);
+        }
         return change.ObjectType switch
         {
             "Table" => _tableGenerator.GenerateTableDDL(change),

@@ -7,6 +7,7 @@ public class SqlFileChangeDetector
 {
     readonly TableChangeParser _tableParser = new();
     readonly IndexChangeParser _indexParser = new();
+    readonly RenameDetector _renameDetector = new();
 
     public List<SchemaChange> AnalyzeChanges(string outputPath, List<DiffEntry> diffEntries)
     {
@@ -54,6 +55,9 @@ public class SqlFileChangeDetector
                     break;
             }
         }
+        
+        // Apply rename detection to identify rename operations
+        changes = _renameDetector.DetectRenames(changes);
         
         return changes;
     }

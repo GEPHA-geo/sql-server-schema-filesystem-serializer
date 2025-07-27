@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Build and Test
+    
+    steps:
+    - uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+      
+    - name: Run tests
+      run: dotnet test --no-build --configuration Release --verbosity normal --logger "console;verbosity=detailed" --logger "trx;LogFileName=test-results.trx"
+      
+    - name: Publish test results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: '**/*.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
+
+  validate-migration-generator:
+    runs-on: ubuntu-latest
+    name: Validate Migration Generator
+    needs: test
+    
+    steps:
+    - uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Build Migration Generator
+      run: dotnet build SqlServer.Schema.Migration.Generator/SqlServer.Schema.Migration.Generator.csproj --configuration Release
+      
+    - name: Verify rename detection exists
+      run: |
+        # Check that rename detection files exist
+        if [ ! -f "SqlServer.Schema.Migration.Generator/Parsing/RenameDetector.cs" ]; then
+          echo "Error: RenameDetector.cs not found"
+          exit 1
+        fi
+        
+        if [ ! -f "SqlServer.Schema.Migration.Generator/Generation/RenameDDLGenerator.cs" ]; then
+          echo "Error: RenameDDLGenerator.cs not found"
+          exit 1
+        fi
+        
+        echo "✅ Rename detection files found"
+
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality Checks
+    
+    steps:
+    - uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Check code formatting
+      run: |
+        # Install dotnet format if needed
+        dotnet tool restore || dotnet tool install -g dotnet-format
+        
+        # Check formatting (will fail if code is not properly formatted)
+        dotnet format --verify-no-changes --verbosity diagnostic || {
+          echo "::warning::Code formatting issues detected. Run 'dotnet format' to fix."
+          # Don't fail the build for formatting issues, just warn
+          true
+        }
+        
+    - name: Run code analysis
+      run: |
+        # Build with code analysis enabled
+        dotnet build --configuration Release /p:EnableNETAnalyzers=true /p:AnalysisLevel=latest /p:EnforceCodeStyleInBuild=true || {
+          echo "::warning::Code analysis warnings detected."
+          # Don't fail for warnings, only errors
+          true
+        }

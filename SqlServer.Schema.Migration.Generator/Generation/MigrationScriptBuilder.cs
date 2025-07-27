@@ -8,7 +8,7 @@ public class MigrationScriptBuilder
     readonly DDLGenerator _ddlGenerator = new();
     readonly DependencyResolver _dependencyResolver = new();
 
-    public string BuildMigration(List<SchemaChange> changes, string databaseName)
+    public string BuildMigration(List<SchemaChange> changes, string databaseName, string? actor = null)
     {
         var sb = new StringBuilder();
         
@@ -20,6 +20,7 @@ public class MigrationScriptBuilder
         sb.AppendLine($"-- MigrationId: {migrationId}");
         sb.AppendLine($"-- Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
         sb.AppendLine($"-- Database: {databaseName}");
+        sb.AppendLine($"-- Actor: {actor ?? "unknown"}");
         sb.AppendLine($"-- Changes: {changes.Count} schema modifications");
         sb.AppendLine();
         sb.AppendLine("SET XACT_ABORT ON;");

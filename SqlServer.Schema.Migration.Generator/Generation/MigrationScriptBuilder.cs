@@ -41,11 +41,32 @@ public class MigrationScriptBuilder
             var orderedChanges = _dependencyResolver.OrderChanges(changes);
             
             // Group changes by type for better organization
-            var dropOperations = orderedChanges.Where(c => c.ChangeType == GitIntegration.ChangeType.Deleted).ToList();
-            var createOperations = orderedChanges.Where(c => c.ChangeType == GitIntegration.ChangeType.Added).ToList();
-            var alterOperations = orderedChanges.Where(c => c.ChangeType == GitIntegration.ChangeType.Modified).ToList();
+            // Separate rename operations from other modifications
+            var renameOperations = orderedChanges.Where(c => 
+                c.Properties.TryGetValue("IsRename", out var isRename) && isRename == "true").ToList();
+            var dropOperations = orderedChanges.Where(c => 
+                c.ChangeType == GitIntegration.ChangeType.Deleted && 
+                (!c.Properties.TryGetValue("IsRename", out var isRename) || isRename != "true")).ToList();
+            var createOperations = orderedChanges.Where(c => 
+                c.ChangeType == GitIntegration.ChangeType.Added && 
+                (!c.Properties.TryGetValue("IsRename", out var isRename2) || isRename2 != "true")).ToList();
+            var alterOperations = orderedChanges.Where(c => 
+                c.ChangeType == GitIntegration.ChangeType.Modified && 
+                (!c.Properties.TryGetValue("IsRename", out var isRename3) || isRename3 != "true")).ToList();
             
-            // Process drops first (in reverse dependency order)
+            // Process renames first (they are the safest operations)
+            if (renameOperations.Any())
+            {
+                sb.AppendLine("-- Rename operations");
+                foreach (var change in renameOperations)
+                {
+                    sb.AppendLine(_ddlGenerator.GenerateDDL(change));
+                    sb.AppendLine("GO");
+                    sb.AppendLine();
+                }
+            }
+            
+            // Process drops second (in reverse dependency order)
             if (dropOperations.Any())
             {
                 sb.AppendLine("-- Drop operations");

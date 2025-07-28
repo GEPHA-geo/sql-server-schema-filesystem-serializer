@@ -71,6 +71,43 @@ generated_script.sql
         RunGitCommand(path, "add .");
         RunGitCommand(path, $"commit -m \"{message}\"");
     }
+    
+    public void FetchRemote(string path, string remote = "origin")
+    {
+        Console.WriteLine($"Fetching latest changes from {remote}...");
+        RunGitCommand(path, $"fetch {remote}");
+    }
+    
+    public void CheckoutRemoteBranch(string path, string remote = "origin", string branch = "main")
+    {
+        Console.WriteLine($"Checking out {remote}/{branch}...");
+        RunGitCommand(path, $"checkout {remote}/{branch}");
+    }
+    
+    public void CreateAndCheckoutBranch(string path, string branchName)
+    {
+        Console.WriteLine($"Creating and checking out branch: {branchName}");
+        RunGitCommand(path, $"checkout -b {branchName}");
+    }
+    
+    public string GetCurrentBranch(string path)
+    {
+        var output = RunGitCommand(path, "branch --show-current").Trim();
+        return string.IsNullOrEmpty(output) ? "HEAD" : output;
+    }
+    
+    public bool HasRemote(string path, string remote = "origin")
+    {
+        try
+        {
+            RunGitCommand(path, $"remote get-url {remote}");
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     ChangeType MapGitStatus(string status)
     {

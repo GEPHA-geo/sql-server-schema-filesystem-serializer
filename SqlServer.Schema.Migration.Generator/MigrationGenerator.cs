@@ -44,6 +44,31 @@ public class MigrationGenerator
                 return false; // No changes on first run
             }
             
+            // If remote exists, fetch and checkout origin/main
+            if (_gitAnalyzer.HasRemote(outputPath))
+            {
+                try
+                {
+                    // Fetch latest changes
+                    _gitAnalyzer.FetchRemote(outputPath);
+                    
+                    // Checkout origin/main to get latest baseline
+                    _gitAnalyzer.CheckoutRemoteBranch(outputPath, "origin", "main");
+                    
+                    // Create a new timestamped branch
+                    var branchTimestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+                    var branchName = $"schema-update-{branchTimestamp}";
+                    _gitAnalyzer.CreateAndCheckoutBranch(outputPath, branchName);
+                    
+                    Console.WriteLine($"Working on branch: {branchName}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Warning: Could not fetch/checkout remote branch: {ex.Message}");
+                    Console.WriteLine("Continuing with local repository state...");
+                }
+            }
+            
             // Check for uncommitted changes
             var changes = _gitAnalyzer.GetUncommittedChanges(outputPath, Path.Combine("servers", targetServer, targetDatabase));
             if (!changes.Any())

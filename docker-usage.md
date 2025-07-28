@@ -7,7 +7,8 @@ Pull and run the latest image:
 ```bash
 docker run --rm -v $(pwd)/output:/output \
   ghcr.io/gepha-geo/sqlserver-schema-migrator:latest \
-  "Server=myserver;Database=mydb;User Id=sa;Password=mypassword;TrustServerCertificate=true" \
+  "Server=dev-server;Database=DevDB;User Id=sa;Password=mypassword;TrustServerCertificate=true" \
+  "Server=prod-server;Database=ProductionDB;User Id=sa;Password=mypassword;TrustServerCertificate=true" \
   "/output"
 ```
 
@@ -30,21 +31,24 @@ mkdir -p ./db_schemas
 docker run --rm \
   -v $(pwd)/db_schemas:/output \
   ghcr.io/gepha-geo/sqlserver-schema-migrator:latest \
-  "Server=localhost,1433;Database=MyDatabase;User Id=sa;Password=YourPassword;TrustServerCertificate=true" \
+  "Server=dev-server,1433;Database=DevDB;User Id=sa;Password=YourPassword;TrustServerCertificate=true" \
+  "Server=prod-server,1433;Database=ProductionDB;User Id=sa;Password=YourPassword;TrustServerCertificate=true" \
   "/output"
 ```
 
 ### Using Environment Variables
 
 ```bash
-# Set connection string as environment variable
-export DB_CONNECTION="Server=localhost,1433;Database=MyDatabase;User Id=sa;Password=YourPassword;TrustServerCertificate=true"
+# Set connection strings as environment variables
+export SOURCE_DB="Server=dev-server,1433;Database=DevDB;User Id=sa;Password=YourPassword;TrustServerCertificate=true"
+export TARGET_DB="Server=prod-server,1433;Database=ProductionDB;User Id=sa;Password=YourPassword;TrustServerCertificate=true"
 
-# Run with environment variable
+# Run with environment variables
 docker run --rm \
   -v $(pwd)/output:/output \
   ghcr.io/gepha-geo/sqlserver-schema-migrator:latest \
-  "$DB_CONNECTION" \
+  "$SOURCE_DB" \
+  "$TARGET_DB" \
   "/output"
 ```
 
@@ -60,14 +64,15 @@ services:
     image: ghcr.io/gepha-geo/sqlserver-schema-migrator:latest
     volumes:
       - ./schemas:/output
-    command: ["${CONNECTION_STRING}", "/output"]
+    command: ["${SOURCE_CONNECTION}", "${TARGET_CONNECTION}", "/output"]
     environment:
-      - CONNECTION_STRING=${DB_CONNECTION}
+      - SOURCE_CONNECTION=${SOURCE_DB}
+      - TARGET_CONNECTION=${TARGET_DB}
 ```
 
 Run with:
 ```bash
-DB_CONNECTION="your-connection-string" docker-compose run --rm schema-extractor
+SOURCE_DB="dev-connection-string" TARGET_DB="prod-connection-string" docker-compose run --rm schema-extractor
 ```
 
 ### GitHub Actions Usage
@@ -78,7 +83,8 @@ DB_CONNECTION="your-connection-string" docker-compose run --rm schema-extractor
     docker run --rm \
       -v ${{ github.workspace }}/output:/output \
       ghcr.io/gepha-geo/sqlserver-schema-migrator:latest \
-      "${{ secrets.DB_CONNECTION }}" \
+      "${{ secrets.SOURCE_DB_CONNECTION }}" \
+      "${{ secrets.TARGET_DB_CONNECTION }}" \
       "/output"
 ```
 
@@ -87,7 +93,7 @@ DB_CONNECTION="your-connection-string" docker-compose run --rm schema-extractor
 The container expects an output directory to be mounted at `/output`:
 
 - `-v $(pwd)/output:/output` - Mounts local `./output` directory
-- The extracted files will be organized in subdirectories by database name
+- The extracted files will be organized in hierarchical structure: `/output/servers/{target-server}/{target-database}/schemas/`
 
 ## Security Notes
 
@@ -107,7 +113,7 @@ docker run --rm \
   --user $(id -u):$(id -g) \
   -v $(pwd)/output:/output \
   ghcr.io/gepha-geo/sqlserver-schema-migrator:latest \
-  "connection-string" "/output"
+  "source-connection-string" "target-connection-string" "/output"
 ```
 
 ### Network Issues
@@ -120,7 +126,7 @@ docker run --rm \
   --network host \
   -v $(pwd)/output:/output \
   ghcr.io/gepha-geo/sqlserver-schema-migrator:latest \
-  "Server=localhost;..." "/output"
+  "Server=localhost;..." "Server=prod-server;..." "/output"
 ```
 
 ### Debug Output
@@ -132,7 +138,7 @@ To see more detailed output:
 docker run --rm \
   -v $(pwd)/output:/output \
   ghcr.io/gepha-geo/sqlserver-schema-migrator:latest \
-  "connection-string" "/output"
+  "source-connection-string" "target-connection-string" "/output"
 ```
 
 ## Building Locally

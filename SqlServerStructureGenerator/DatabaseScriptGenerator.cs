@@ -6,8 +6,26 @@ using System.Text;
 namespace SqlServerStructureGenerator;
 
 // Main orchestrator for database structure generation
-public class DatabaseScriptGenerator(string connectionString, string outputPath)
+public class DatabaseScriptGenerator
 {
+    readonly string _sourceConnectionString;
+    readonly string _targetConnectionString;
+    readonly string _outputPath;
+    readonly string _targetServer;
+    readonly string _targetDatabase;
+
+    public DatabaseScriptGenerator(string sourceConnectionString, string targetConnectionString, string outputPath)
+    {
+        _sourceConnectionString = sourceConnectionString;
+        _targetConnectionString = targetConnectionString;
+        _outputPath = outputPath;
+        
+        // Extract target server and database from target connection string
+        var targetBuilder = new SqlConnectionStringBuilder(targetConnectionString);
+        _targetServer = targetBuilder.DataSource.Replace('\\', '-').Replace(':', '-'); // Sanitize for folder names
+        _targetDatabase = targetBuilder.InitialCatalog;
+    }
+    
     readonly ScriptingOptions _scriptingOptions = new()
     {
         ScriptDrops = false,
@@ -37,21 +55,21 @@ public class DatabaseScriptGenerator(string connectionString, string outputPath)
 
     public async Task GenerateStructureAsync()
     {
-        var builder = new SqlConnectionStringBuilder(connectionString);
-        var databaseName = builder.InitialCatalog;
+        var sourceBuilder = new SqlConnectionStringBuilder(_sourceConnectionString);
+        var sourceDatabaseName = sourceBuilder.InitialCatalog;
         
-        if (string.IsNullOrEmpty(databaseName))
-            throw new ArgumentException("Database name not found in connection string");
+        if (string.IsNullOrEmpty(sourceDatabaseName))
+            throw new ArgumentException("Database name not found in source connection string");
             
-        Console.WriteLine($"Starting structure generation for database: {databaseName}");
+        Console.WriteLine($"Starting structure generation from: {sourceDatabaseName} to: {_targetServer}/{_targetDatabase}");
         var startTime = DateTime.Now;
         
-        // Create base output directory
-        var databasePath = Path.Combine(outputPath, databaseName);
+        // Create base output directory with new hierarchical structure
+        var databasePath = Path.Combine(_outputPath, "servers", _targetServer, _targetDatabase);
         Directory.CreateDirectory(databasePath);
         
         // Process all schemas
-        var schemaProcessor = new SchemaProcessor(connectionString, databasePath, _scriptingOptions);
+        var schemaProcessor = new SchemaProcessor(_sourceConnectionString, databasePath, _scriptingOptions);
         await schemaProcessor.ProcessAllSchemasAsync();
         
         var endTime = DateTime.Now;

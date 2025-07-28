@@ -39,7 +39,7 @@ public class SchemaProcessor(string connectionString, string basePath, Scripting
 
     async Task ProcessSchemaAsync(string schemaName)
     {
-        var schemaPath = Path.Combine(basePath, schemaName);
+        var schemaPath = Path.Combine(basePath, "schemas", schemaName);
         var startTime = DateTime.Now;
         Console.WriteLine($"Processing schema: {schemaName} [{startTime:HH:mm:ss.fff}]");
         

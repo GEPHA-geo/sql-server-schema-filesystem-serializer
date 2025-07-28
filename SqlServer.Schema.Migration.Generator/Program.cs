@@ -13,9 +13,14 @@ internal class Program
             "The path where database schema was serialized"
         ) { IsRequired = true };
         
-        var databaseNameOption = new Option<string>(
-            "--database",
-            "The database name to process"
+        var targetServerOption = new Option<string>(
+            "--target-server",
+            "The target server name or IP address"
+        ) { IsRequired = true };
+        
+        var targetDatabaseOption = new Option<string>(
+            "--target-database",
+            "The target database name"
         ) { IsRequired = true };
         
         var actorOption = new Option<string?>(
@@ -24,10 +29,11 @@ internal class Program
         ) { IsRequired = false };
         
         rootCommand.AddOption(outputPathOption);
-        rootCommand.AddOption(databaseNameOption);
+        rootCommand.AddOption(targetServerOption);
+        rootCommand.AddOption(targetDatabaseOption);
         rootCommand.AddOption(actorOption);
         
-        rootCommand.SetHandler((string outputPath, string databaseName, string? actor) =>
+        rootCommand.SetHandler((string outputPath, string targetServer, string targetDatabase, string? actor) =>
         {
             try
             {
@@ -45,9 +51,9 @@ internal class Program
                 }
                 
                 var generator = new MigrationGenerator();
-                var migrationsPath = Path.Combine(outputPath, "migrations");
+                var migrationsPath = Path.Combine(outputPath, "servers", targetServer, targetDatabase, "migrations");
                 
-                var changesDetected = generator.GenerateMigrations(outputPath, databaseName, migrationsPath, actor);
+                var changesDetected = generator.GenerateMigrations(outputPath, targetServer, targetDatabase, migrationsPath, actor);
                 
                 if (changesDetected)
                 {
@@ -63,7 +69,7 @@ internal class Program
                 Console.WriteLine($"Error: {ex.Message}");
                 Environment.Exit(1);
             }
-        }, outputPathOption, databaseNameOption, actorOption);
+        }, outputPathOption, targetServerOption, targetDatabaseOption, actorOption);
         
         return await rootCommand.InvokeAsync(args);
     }

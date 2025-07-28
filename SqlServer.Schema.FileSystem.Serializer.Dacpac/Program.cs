@@ -8,27 +8,36 @@ internal static class Program
 {
     static void Main(string[] args)
     {
-        if (args.Length != 2)
+        if (args.Length != 3)
         {
-            Console.WriteLine("Usage: DacpacStructureGenerator <connectionString> <outputPath>");
+            Console.WriteLine("Usage: DacpacStructureGenerator <sourceConnectionString> <targetConnectionString> <outputPath>");
+            Console.WriteLine();
+            Console.WriteLine("Example:");
+            Console.WriteLine(@"  DacpacStructureGenerator ""Server=dev;Database=DevDB;..."" ""Server=prod;Database=ProdDB;..."" ""/output""");
             return;
         }
 
-        var connectionString = args[0];
-        var outputPath = args[1];
+        var sourceConnectionString = args[0];
+        var targetConnectionString = args[1];
+        var outputPath = args[2];
+        
+        // Extract target server and database from target connection string
+        var targetBuilder = new SqlConnectionStringBuilder(targetConnectionString);
+        var targetServer = targetBuilder.DataSource.Replace('\\', '-').Replace(':', '-'); // Sanitize for folder names
+        var targetDatabase = targetBuilder.InitialCatalog;
 
         try
         {
             // Extract database to DACPAC
             Console.WriteLine("Extracting database to DACPAC...");
             var dacpacPath = Path.Combine(Path.GetTempPath(), "temp_database.dacpac");
-            var dacServices = new DacServices(connectionString);
+            var dacServices = new DacServices(sourceConnectionString);
             
-            // Extract database name from connection string
-            var builder = new SqlConnectionStringBuilder(connectionString);
-            var databaseName = builder.InitialCatalog;
+            // Extract source database name from source connection string
+            var sourceBuilder = new SqlConnectionStringBuilder(sourceConnectionString);
+            var sourceDatabaseName = sourceBuilder.InitialCatalog;
             
-            dacServices.Extract(dacpacPath, databaseName, "DacpacStructureGenerator", new Version(1, 0));
+            dacServices.Extract(dacpacPath, sourceDatabaseName, "DacpacStructureGenerator", new Version(1, 0));
             Console.WriteLine($"DACPAC extracted successfully to: {dacpacPath}");
 
             // Load the DACPAC
@@ -55,7 +64,7 @@ internal static class Program
             Console.WriteLine("Generating deployment script...");
             var script = dacServices.GenerateDeployScript(
                 dacpac,
-                databaseName,
+                sourceDatabaseName,
                 deployOptions
             );
             
@@ -63,18 +72,34 @@ internal static class Program
             File.WriteAllText("generated_script.sql", script);
             Console.WriteLine($"Script saved to generated_script.sql ({script.Length} characters)");
             
-            // Clean only the database-specific directory
-            var databaseOutputDir = Path.Combine(outputPath, databaseName);
-            if (Directory.Exists(databaseOutputDir))
+            // Clean only the database-specific directory (preserving migrations)
+            var targetOutputPath = Path.Combine(outputPath, "servers", targetServer, targetDatabase);
+            if (Directory.Exists(targetOutputPath))
             {
-                Console.WriteLine($"Removing existing database directory: {databaseOutputDir}");
-                Directory.Delete(databaseOutputDir, recursive: true);
+                Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving migrations)");
+                
+                // Get all subdirectories except migrations
+                var subdirs = Directory.GetDirectories(targetOutputPath)
+                    .Where(d => !Path.GetFileName(d).Equals("migrations", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                
+                // Delete each subdirectory
+                foreach (var dir in subdirs)
+                {
+                    Directory.Delete(dir, recursive: true);
+                }
+                
+                // Delete all files in the root (if any)
+                foreach (var file in Directory.GetFiles(targetOutputPath))
+                {
+                    File.Delete(file);
+                }
             }
             
             // Parse and organize the script into separate files
             Console.WriteLine("Parsing and organizing scripts...");
             var parser = new DacpacScriptParser();
-            parser.ParseAndOrganizeScripts(script, outputPath, databaseName);
+            parser.ParseAndOrganizeScripts(script, outputPath, targetServer, targetDatabase);
             
             // Clean up temp DACPAC file
             if (File.Exists(dacpacPath))
@@ -82,7 +107,7 @@ internal static class Program
                 File.Delete(dacpacPath);
             }
             
-            Console.WriteLine($"Database structure generated successfully at: {outputPath}");
+            Console.WriteLine($"Database structure generated successfully at: {targetOutputPath}");
         }
         catch (Exception ex)
         {

@@ -6,10 +6,10 @@ public class DacpacScriptParser
 {
     readonly FileSystemManager _fileSystemManager = new();
 
-    public void ParseAndOrganizeScripts(string script, string outputPath, string databaseName)
+    public void ParseAndOrganizeScripts(string script, string outputPath, string targetServer, string targetDatabase)
     {
-        // Create base directory
-        var basePath = Path.Combine(outputPath, databaseName);
+        // Create base directory with new hierarchical structure
+        var basePath = Path.Combine(outputPath, "servers", targetServer, targetDatabase);
         FileSystemManager.CreateDirectory(basePath);
         
         // Count total GO statements in original script

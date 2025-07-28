@@ -8,14 +8,23 @@ internal static class Program
 {
     static async Task Main(string[] args)
     {
-        if (args.Length != 2)
+        if (args.Length != 3)
         {
-            Console.WriteLine("Usage: DacpacStructureGenerator <connectionString> <outputPath>");
+            Console.WriteLine("Usage: DacpacStructureGenerator <sourceConnectionString> <targetConnectionString> <outputPath>");
+            Console.WriteLine();
+            Console.WriteLine("Example:");
+            Console.WriteLine(@"  DacpacStructureGenerator ""Server=dev;Database=DevDB;..."" ""Server=prod;Database=ProdDB;..."" ""/output""");
             return;
         }
 
-        var connectionString = args[0];
-        var outputPath = args[1];
+        var sourceConnectionString = args[0];
+        var targetConnectionString = args[1];
+        var outputPath = args[2];
+        
+        // Extract target server and database from target connection string
+        var targetBuilder = new SqlConnectionStringBuilder(targetConnectionString);
+        var targetServer = targetBuilder.DataSource.Replace('\\', '-').Replace(':', '-'); // Sanitize for folder names
+        var targetDatabase = targetBuilder.InitialCatalog;
 
         // Configure Git safe directory for Docker environments
         ConfigureGitSafeDirectory(outputPath);
@@ -25,13 +34,13 @@ internal static class Program
             // Extract database to DACPAC
             Console.WriteLine("Extracting database to DACPAC...");
             var dacpacPath = Path.Combine(Path.GetTempPath(), "temp_database.dacpac");
-            var dacServices = new DacServices(connectionString);
+            var dacServices = new DacServices(sourceConnectionString);
             
-            // Extract database name from connection string
-            var builder = new SqlConnectionStringBuilder(connectionString);
-            var databaseName = builder.InitialCatalog;
+            // Extract source database name from source connection string
+            var sourceBuilder = new SqlConnectionStringBuilder(sourceConnectionString);
+            var sourceDatabaseName = sourceBuilder.InitialCatalog;
             
-            dacServices.Extract(dacpacPath, databaseName, "DacpacStructureGenerator", new Version(1, 0));
+            dacServices.Extract(dacpacPath, sourceDatabaseName, "DacpacStructureGenerator", new Version(1, 0));
             Console.WriteLine($"DACPAC extracted successfully to: {dacpacPath}");
 
             // Load the DACPAC
@@ -58,7 +67,7 @@ internal static class Program
             Console.WriteLine("Generating deployment script...");
             var script = dacServices.GenerateDeployScript(
                 dacpac,
-                databaseName,
+                sourceDatabaseName,
                 deployOptions
             );
             
@@ -67,13 +76,13 @@ internal static class Program
             Console.WriteLine($"Script saved to generated_script.sql ({script.Length} characters)");
             
             // Clean only the database-specific directory (preserving migrations)
-            var databaseOutputDir = Path.Combine(outputPath, databaseName);
-            if (Directory.Exists(databaseOutputDir))
+            var targetOutputPath = Path.Combine(outputPath, "servers", targetServer, targetDatabase);
+            if (Directory.Exists(targetOutputPath))
             {
-                Console.WriteLine($"Cleaning database directory: {databaseOutputDir} (preserving migrations)");
+                Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving migrations)");
                 
                 // Get all subdirectories except migrations
-                var subdirs = Directory.GetDirectories(databaseOutputDir)
+                var subdirs = Directory.GetDirectories(targetOutputPath)
                     .Where(d => !Path.GetFileName(d).Equals("migrations", StringComparison.OrdinalIgnoreCase))
                     .ToList();
                 
@@ -84,7 +93,7 @@ internal static class Program
                 }
                 
                 // Delete all files in the root (if any)
-                foreach (var file in Directory.GetFiles(databaseOutputDir))
+                foreach (var file in Directory.GetFiles(targetOutputPath))
                 {
                     File.Delete(file);
                 }
@@ -93,7 +102,7 @@ internal static class Program
             // Parse and organize the script into separate files
             Console.WriteLine("Parsing and organizing scripts...");
             var parser = new DacpacScriptParser();
-            parser.ParseAndOrganizeScripts(script, outputPath, databaseName);
+            parser.ParseAndOrganizeScripts(script, outputPath, targetServer, targetDatabase);
             
             // Clean up temporary script file
             if (File.Exists("generated_script.sql"))
@@ -107,23 +116,24 @@ internal static class Program
                 File.Delete(dacpacPath);
             }
             
-            Console.WriteLine($"Database structure generated successfully at: {outputPath}");
+            Console.WriteLine($"Database structure generated successfully at: {targetOutputPath}");
             
             // Generate migrations
             Console.WriteLine("\nChecking for schema changes...");
             var migrationGenerator = new Migration.Generator.MigrationGenerator();
-            var migrationsPath = Path.Combine(outputPath, databaseName, "migrations");
+            var migrationsPath = Path.Combine(targetOutputPath, "migrations");
             
             // Get actor from environment variable (GitHub Actions provides GITHUB_ACTOR)
             var actor = Environment.GetEnvironmentVariable("GITHUB_ACTOR") ?? Environment.UserName;
             
-            // Pass connection string for validation
+            // Pass connection string for validation (use source for validation)
             var changesDetected = await migrationGenerator.GenerateMigrationsAsync(
                 outputPath, 
-                databaseName, 
+                targetServer,
+                targetDatabase, 
                 migrationsPath,
                 actor,
-                connectionString,  // Enable validation with the same connection
+                sourceConnectionString,  // Use source connection for validation
                 validateMigration: true);
 
             Console.WriteLine(changesDetected ? $"Migration files generated in: {migrationsPath}" : "No schema changes detected.");

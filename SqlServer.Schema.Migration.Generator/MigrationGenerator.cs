@@ -6,14 +6,15 @@ public class MigrationGenerator
     readonly Parsing.SqlFileChangeDetector _changeDetector = new();
     readonly Generation.MigrationScriptBuilder _scriptBuilder = new();
 
-    public bool GenerateMigrations(string outputPath, string databaseName, string migrationsPath, string? actor = null)
+    public bool GenerateMigrations(string outputPath, string targetServer, string targetDatabase, string migrationsPath, string? actor = null)
     {
-        return GenerateMigrationsAsync(outputPath, databaseName, migrationsPath, actor, null, true).GetAwaiter().GetResult();
+        return GenerateMigrationsAsync(outputPath, targetServer, targetDatabase, migrationsPath, actor, null, true).GetAwaiter().GetResult();
     }
 
     public async Task<bool> GenerateMigrationsAsync(
         string outputPath, 
-        string databaseName, 
+        string targetServer,
+        string targetDatabase, 
         string migrationsPath,
         string? actor = null,
         string? connectionString = null,
@@ -24,22 +25,27 @@ public class MigrationGenerator
             // Ensure migrations directory exists
             Directory.CreateDirectory(migrationsPath);
             
-            // Initialize Git repository if not exists
+            // Check if migrations directory is empty (first run for this server/database)
+            var existingMigrations = Directory.GetFiles(migrationsPath, "*.sql");
+            if (!existingMigrations.Any())
+            {
+                Console.WriteLine($"First run for {targetServer}/{targetDatabase} - creating bootstrap migration...");
+                CreateBootstrapMigration(migrationsPath);
+            }
+            
+            // Initialize Git repository if not exists at root level
             if (!_gitAnalyzer.IsGitRepository(outputPath))
             {
                 Console.WriteLine("Initializing Git repository for change tracking...");
                 _gitAnalyzer.InitializeRepository(outputPath);
                 
-                // Create bootstrap migration
-                CreateBootstrapMigration(migrationsPath);
-                
                 // Initial commit
-                _gitAnalyzer.CommitChanges(outputPath, $"Initial schema snapshot for {databaseName}");
+                _gitAnalyzer.CommitChanges(outputPath, $"Initial schema snapshot for {targetServer}/{targetDatabase}");
                 return false; // No changes on first run
             }
             
             // Check for uncommitted changes
-            var changes = _gitAnalyzer.GetUncommittedChanges(outputPath, databaseName);
+            var changes = _gitAnalyzer.GetUncommittedChanges(outputPath, Path.Combine("servers", targetServer, targetDatabase));
             if (!changes.Any())
             {
                 return false;
@@ -56,7 +62,7 @@ public class MigrationGenerator
             }
             
             // Generate migration script
-            var migrationScript = _scriptBuilder.BuildMigration(schemaChanges, databaseName, actor);
+            var migrationScript = _scriptBuilder.BuildMigration(schemaChanges, targetDatabase, actor);
             
             // Save migration file
             var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
@@ -79,7 +85,7 @@ public class MigrationGenerator
                 var validationResult = await validator.ValidateMigrationAsync(
                     migrationScript,
                     outputPath,
-                    databaseName);
+                    targetDatabase);
                     
                 if (!validationResult.Success)
                 {

@@ -36,6 +36,9 @@ generated_script.sql
         var statusOutput = RunGitCommand(path, "status --porcelain -u");
         var lines = statusOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         
+        // Normalize databaseName to use forward slashes for comparison
+        var normalizedDatabaseName = databaseName.Replace('\\', '/');
+        
         foreach (var line in lines)
         {
             if (line.Length < 3) continue;
@@ -44,7 +47,7 @@ generated_script.sql
             var filePath = line.Substring(3).Trim();
             
             // Only process SQL files from the database directory
-            if (filePath.StartsWith(databaseName) && filePath.EndsWith(".sql"))
+            if (filePath.StartsWith(normalizedDatabaseName) && filePath.EndsWith(".sql"))
             {
                 var changeType = MapGitStatus(status);
                 if (changeType != ChangeType.Unknown)

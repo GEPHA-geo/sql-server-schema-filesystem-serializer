@@ -114,11 +114,15 @@ internal static class Program
             var migrationGenerator = new Migration.Generator.MigrationGenerator();
             var migrationsPath = Path.Combine(outputPath, databaseName, "migrations");
             
+            // Get actor from environment variable (GitHub Actions provides GITHUB_ACTOR)
+            var actor = Environment.GetEnvironmentVariable("GITHUB_ACTOR") ?? Environment.UserName;
+            
             // Pass connection string for validation
             var changesDetected = await migrationGenerator.GenerateMigrationsAsync(
                 outputPath, 
                 databaseName, 
                 migrationsPath,
+                actor,
                 connectionString,  // Enable validation with the same connection
                 validateMigration: true);
 

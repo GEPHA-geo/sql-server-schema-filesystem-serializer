@@ -4,7 +4,10 @@ var outputPath = "/mnt/c/Users/petre.chitashvili/repos/gepha/db_comparison";
 var databaseName = "abc_20250723_1442";
 var migrationsPath = Path.Combine(outputPath, databaseName, "migrations");
 
+// Get actor from environment variable or use current user as fallback
+var actor = Environment.GetEnvironmentVariable("GITHUB_ACTOR") ?? Environment.UserName;
+
 var generator = new MigrationGenerator();
-var changesDetected = generator.GenerateMigrations(outputPath, databaseName, migrationsPath);
+var changesDetected = generator.GenerateMigrations(outputPath, databaseName, migrationsPath, actor);
 
 Console.WriteLine(changesDetected ? "Migration generated!" : "No changes detected.");

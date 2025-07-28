@@ -111,7 +111,19 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha
             
+      - name: Build Docker image (PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          # For PRs, just build the application to verify it compiles correctly
+          # We don't build the actual container image since we can't push it anyway
+          dotnet publish SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner \
+            --os linux \
+            --arch x64 \
+            -c Release \
+            -o ./pr-build-output
+            
       - name: Build and push Docker image
+        if: github.event_name != 'pull_request'
         run: |
           # Restore dependencies
           dotnet restore

@@ -1,7 +1,9 @@
 <Project>
     <PropertyGroup>
         <Company>AppifySheets</Company>
-        <AssemblyVersion>1.0.5</AssemblyVersion>
+        <!-- Read version from VERSION file -->
+        <VersionFromFile>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)VERSION').Trim())</VersionFromFile>
+        <AssemblyVersion>$(VersionFromFile)</AssemblyVersion>
         <!--<AssemblyVersion>$([System.DateTime]::UtcNow.ToString('yyyy.MM.dd.HHmm'))</AssemblyVersion>-->
         <FileVersion>$(AssemblyVersion)</FileVersion>
         <Version>$(AssemblyVersion)</Version>

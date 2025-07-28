@@ -71,7 +71,7 @@ public class MigrationGenerator
             // Sanitize actor name for filename (remove special characters)
             var sanitizedActor = string.IsNullOrEmpty(actor) ? "unknown" : SanitizeForFilename(actor);
             
-            var filename = $"{timestamp}_{sanitizedActor}_{description}.sql";
+            var filename = $"_{timestamp}_{sanitizedActor}_{description}.sql";
             var migrationPath = Path.Combine(migrationsPath, filename);
             
             // Validate migration if requested and connection string provided
@@ -115,7 +115,7 @@ public class MigrationGenerator
 
     void CreateBootstrapMigration(string migrationsPath)
     {
-        var bootstrapScript = @"-- Migration: 00000000_000000_system_create_migration_history_table.sql
+        var bootstrapScript = @"-- Migration: _00000000_000000_system_create_migration_history_table.sql
 -- MigrationId: 00000000_000000_create_migration_history_table
 -- Actor: system
 -- Description: Bootstrap migration - creates the migration tracking table
@@ -140,14 +140,14 @@ BEGIN
         ([MigrationId], [Filename], [Checksum], [Status], [ExecutionTime])
     VALUES 
         ('00000000_000000_create_migration_history_table', 
-         '00000000_000000_create_migration_history_table.sql',
+         '_00000000_000000_system_create_migration_history_table.sql',
          'BOOTSTRAP', 
          'Success', 
          0);
 END
 GO";
         
-        var bootstrapPath = Path.Combine(migrationsPath, "00000000_000000_system_create_migration_history_table.sql");
+        var bootstrapPath = Path.Combine(migrationsPath, "_00000000_000000_system_create_migration_history_table.sql");
         if (!File.Exists(bootstrapPath))
         {
             File.WriteAllText(bootstrapPath, bootstrapScript);

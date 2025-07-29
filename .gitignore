@@ -1,2 +1,5 @@
 # Serena cache files
 .serena/cache/
+
+# Local settings
+settings.local.json

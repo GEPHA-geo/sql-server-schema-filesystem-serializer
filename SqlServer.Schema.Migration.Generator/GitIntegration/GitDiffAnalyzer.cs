@@ -72,6 +72,23 @@ generated_script.sql
         RunGitCommand(path, $"commit -m \"{message}\"");
     }
     
+    public void CommitSpecificFiles(string path, string filePattern, string message)
+    {
+        RunGitCommand(path, $"add {filePattern}");
+        try
+        {
+            RunGitCommand(path, $"commit -m \"{message}\"");
+        }
+        catch (Exception ex)
+        {
+            // If there's nothing to commit, that's okay
+            if (!ex.Message.Contains("nothing to commit"))
+            {
+                throw;
+            }
+        }
+    }
+    
     public void FetchRemote(string path, string remote = "origin")
     {
         Console.WriteLine($"Fetching latest changes from {remote}...");

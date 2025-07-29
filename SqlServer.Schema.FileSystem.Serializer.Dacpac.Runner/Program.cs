@@ -31,6 +31,29 @@ internal static class Program
 
         try
         {
+            // Ensure we're on origin/main before generating files
+            var gitAnalyzer = new Migration.Generator.GitIntegration.GitDiffAnalyzer();
+            if (gitAnalyzer.IsGitRepository(outputPath) && gitAnalyzer.HasRemote(outputPath))
+            {
+                try
+                {
+                    Console.WriteLine("Preparing Git repository...");
+                    gitAnalyzer.FetchRemote(outputPath);
+                    gitAnalyzer.CheckoutRemoteBranch(outputPath, "origin", "main");
+                    
+                    var branchTimestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+                    var branchName = $"schema-update-{branchTimestamp}";
+                    gitAnalyzer.CreateAndCheckoutBranch(outputPath, branchName);
+                    
+                    Console.WriteLine($"Working on branch: {branchName}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Warning: Could not prepare Git branch: {ex.Message}");
+                    Console.WriteLine("Continuing with current state...");
+                }
+            }
+            
             // Extract database to DACPAC
             Console.WriteLine("Extracting database to DACPAC...");
             var dacpacPath = Path.Combine(Path.GetTempPath(), "temp_database.dacpac");
@@ -39,8 +62,17 @@ internal static class Program
             // Extract source database name from source connection string
             var sourceBuilder = new SqlConnectionStringBuilder(sourceConnectionString);
             var sourceDatabaseName = sourceBuilder.InitialCatalog;
+
+            try
+            {
+                dacServices.Extract(dacpacPath, sourceDatabaseName, "DacpacStructureGenerator", new Version(1, 0));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+                throw;
+            }
             
-            dacServices.Extract(dacpacPath, sourceDatabaseName, "DacpacStructureGenerator", new Version(1, 0));
             Console.WriteLine($"DACPAC extracted successfully to: {dacpacPath}");
 
             // Load the DACPAC
@@ -72,7 +104,7 @@ internal static class Program
             );
             
             // Save script for debugging
-            File.WriteAllText("generated_script.sql", script);
+            await File.WriteAllTextAsync("generated_script.sql", script);
             Console.WriteLine($"Script saved to generated_script.sql ({script.Length} characters)");
             
             // Clean only the database-specific directory (preserving migrations)

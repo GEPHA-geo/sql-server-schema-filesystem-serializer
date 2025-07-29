@@ -111,29 +111,55 @@ generated_script.sql
                 }
                 catch (Exception resetEx)
                 {
-                    Console.WriteLine($"⚠ Warning: Could not perform hard reset: {resetEx.Message}");
+                    Console.WriteLine($"❌ CRITICAL: Could not perform hard reset: {resetEx.Message}");
+                    throw new InvalidOperationException($"Git hard reset failed: {resetEx.Message}", resetEx);
                 }
                 
-                // Then try to pull --rebase from origin/main
+                // Check for available remotes before attempting to pull
+                string detectedRemote = null;
                 try
                 {
-                    Console.WriteLine("\nAttempting to pull --rebase from origin/main...");
-                    var pullOutput = RunGitCommand(path, "pull --rebase origin main");
-                    Console.WriteLine("✓ Successfully pulled latest changes from origin/main");
-                    if (!string.IsNullOrWhiteSpace(pullOutput))
+                    var remotes = RunGitCommand(path, "remote").Trim().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                    if (remotes.Length > 0)
                     {
-                        Console.WriteLine(pullOutput);
+                        // Prefer 'origin' if it exists, otherwise use the first available remote
+                        detectedRemote = remotes.Contains("origin") ? "origin" : remotes[0];
+                        Console.WriteLine($"Using remote: {detectedRemote}");
                     }
-                    
-                    // Log the commit we're on after reset
-                    var commitAfterReset = RunGitCommand(path, "rev-parse HEAD").Trim();
-                    var commitMsgAfterReset = RunGitCommand(path, "log -1 --pretty=%s").Trim();
-                    Console.WriteLine($"Now at commit: {commitAfterReset.Substring(0, Math.Min(8, commitAfterReset.Length))} - {commitMsgAfterReset}");
                 }
-                catch (Exception resetEx)
+                catch
                 {
-                    Console.WriteLine($"⚠ Warning: Could not perform hard reset: {resetEx.Message}");
+                    Console.WriteLine("No git remotes configured");
                 }
+                
+                // Then try to pull --rebase from the detected remote/main
+                if (!string.IsNullOrEmpty(detectedRemote))
+                {
+                    try
+                    {
+                        Console.WriteLine($"\nAttempting to pull --rebase from {detectedRemote}/main...");
+                        var pullOutput = RunGitCommand(path, $"pull --rebase {detectedRemote} main");
+                        Console.WriteLine($"✓ Successfully pulled latest changes from {detectedRemote}/main");
+                        if (!string.IsNullOrWhiteSpace(pullOutput))
+                        {
+                            Console.WriteLine(pullOutput);
+                        }
+                        
+                        // Log the commit we're on after reset
+                        var commitAfterReset = RunGitCommand(path, "rev-parse HEAD").Trim();
+                        var commitMsgAfterReset = RunGitCommand(path, "log -1 --pretty=%s").Trim();
+                        Console.WriteLine($"Now at commit: {commitAfterReset.Substring(0, Math.Min(8, commitAfterReset.Length))} - {commitMsgAfterReset}");
+                    }
+                    catch (Exception pullEx)
+                    {
+                        Console.WriteLine($"⚠ Warning: Could not pull from {detectedRemote}/main: {pullEx.Message}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("⚠ No remote configured, continuing with local state");
+                }
+                
                 return (true, "Using current main branch state after pull and reset");
             }
             
@@ -212,7 +238,8 @@ generated_script.sql
             }
             catch (Exception resetEx)
             {
-                Console.WriteLine($"⚠ Warning: Could not perform hard reset: {resetEx.Message}");
+                Console.WriteLine($"❌ CRITICAL: Could not perform hard reset: {resetEx.Message}");
+                throw new InvalidOperationException($"Git hard reset failed: {resetEx.Message}", resetEx);
             }
             
             // Create a new branch based on main (local or origin/main if available)
@@ -220,28 +247,52 @@ generated_script.sql
             var newBranchName = $"migration-{timestamp}";
             Console.WriteLine($"\nCreating new branch '{newBranchName}' for migration detection...");
             
+            // Check for available remotes
+            string remoteName = null;
             try
             {
-                // First, check if origin/main exists
-                Console.WriteLine("Checking if origin/main exists...");
-                try
+                var remotes = RunGitCommand(path, "remote").Trim().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                if (remotes.Length > 0)
                 {
-                    var originMainHash = RunGitCommand(path, "rev-parse origin/main").Trim();
-                    Console.WriteLine($"✓ Found origin/main at commit: {originMainHash.Substring(0, Math.Min(8, originMainHash.Length))}");
-                    
-                    // Try to create branch from origin/main
-                    RunGitCommand(path, $"checkout -b {newBranchName} origin/main");
-                    Console.WriteLine("✓ Successfully created branch from origin/main");
+                    // Prefer 'origin' if it exists, otherwise use the first available remote
+                    remoteName = remotes.Contains("origin") ? "origin" : remotes[0];
+                    Console.WriteLine($"Using remote: {remoteName}");
                 }
-                catch
+            }
+            catch
+            {
+                Console.WriteLine("No git remotes configured");
+            }
+            
+            try
+            {
+                // First, check if remote/main exists
+                if (!string.IsNullOrEmpty(remoteName))
                 {
-                    throw new Exception("origin/main not found");
+                    Console.WriteLine($"Checking if {remoteName}/main exists...");
+                    try
+                    {
+                        var remoteMainHash = RunGitCommand(path, $"rev-parse {remoteName}/main").Trim();
+                        Console.WriteLine($"✓ Found {remoteName}/main at commit: {remoteMainHash.Substring(0, Math.Min(8, remoteMainHash.Length))}");
+                        
+                        // Try to create branch from remote/main
+                        RunGitCommand(path, $"checkout -b {newBranchName} {remoteName}/main");
+                        Console.WriteLine($"✓ Successfully created branch from {remoteName}/main");
+                    }
+                    catch
+                    {
+                        throw new Exception($"{remoteName}/main not found");
+                    }
+                }
+                else
+                {
+                    throw new Exception("No remote configured");
                 }
             }
             catch
             {
                 // Fallback to local main branch
-                Console.WriteLine("origin/main not found, checking for local main branch...");
+                Console.WriteLine($"{remoteName ?? "Remote"}/main not found, checking for local main branch...");
                 try
                 {
                     var localMainHash = RunGitCommand(path, "rev-parse main").Trim();
@@ -260,23 +311,27 @@ generated_script.sql
                     }
                     catch (Exception resetEx)
                     {
-                        Console.WriteLine($"⚠ Could not perform hard reset: {resetEx.Message}");
+                        Console.WriteLine($"❌ CRITICAL: Could not perform hard reset: {resetEx.Message}");
+                        throw new InvalidOperationException($"Git hard reset failed: {resetEx.Message}", resetEx);
                     }
                     
-                    // Then pull latest changes
-                    try
+                    // Then pull latest changes if remote exists
+                    if (!string.IsNullOrEmpty(remoteName))
                     {
-                        Console.WriteLine("\nAttempting to pull --rebase from origin/main...");
-                        var pullOutput = RunGitCommand(path, "pull --rebase origin main");
-                        Console.WriteLine("✓ Successfully pulled latest changes");
-                        if (!string.IsNullOrWhiteSpace(pullOutput))
+                        try
                         {
-                            Console.WriteLine(pullOutput);
+                            Console.WriteLine($"\nAttempting to pull --rebase from {remoteName}/main...");
+                            var pullOutput = RunGitCommand(path, $"pull --rebase {remoteName} main");
+                            Console.WriteLine("✓ Successfully pulled latest changes");
+                            if (!string.IsNullOrWhiteSpace(pullOutput))
+                            {
+                                Console.WriteLine(pullOutput);
+                            }
                         }
-                    }
-                    catch (Exception pullEx)
-                    {
-                        Console.WriteLine($"⚠ Could not pull from origin: {pullEx.Message}");
+                        catch (Exception pullEx)
+                        {
+                            Console.WriteLine($"⚠ Could not pull from {remoteName}: {pullEx.Message}");
+                        }
                     }
                     
                     // Now create new branch from updated main

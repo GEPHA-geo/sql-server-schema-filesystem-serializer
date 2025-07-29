@@ -25,6 +25,12 @@ internal static class Program
         var targetBuilder = new SqlConnectionStringBuilder(targetConnectionString);
         var targetServer = targetBuilder.DataSource.Replace('\\', '-').Replace(':', '-'); // Sanitize for folder names
         var targetDatabase = targetBuilder.InitialCatalog;
+        
+        // Log the resolved server name and target path
+        Console.WriteLine($"Target Server (from connection): {targetBuilder.DataSource}");
+        Console.WriteLine($"Target Server (sanitized): {targetServer}");
+        Console.WriteLine($"Target Database: {targetDatabase}");
+        Console.WriteLine($"Target Path: servers/{targetServer}/{targetDatabase}/");
 
         // Configure Git safe directory for Docker environments
         ConfigureGitSafeDirectory(outputPath);
@@ -109,6 +115,8 @@ internal static class Program
             
             // Clean only the database-specific directory (preserving migrations)
             var targetOutputPath = Path.Combine(outputPath, "servers", targetServer, targetDatabase);
+            Console.WriteLine($"Full target output path: {targetOutputPath}");
+            
             if (Directory.Exists(targetOutputPath))
             {
                 Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving migrations)");

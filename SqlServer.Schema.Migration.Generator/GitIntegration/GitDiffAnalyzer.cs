@@ -65,6 +65,39 @@ generated_script.sql
         
         return entries;
     }
+
+    public (bool success, string message) CheckoutBranch(string path, string branch)
+    {
+        try
+        {
+            // First, log the current branch
+            var currentBranch = RunGitCommand(path, "branch --show-current").Trim();
+            Console.WriteLine($"Current branch: {currentBranch}");
+            
+            // Fetch latest changes from remote
+            Console.WriteLine("Fetching latest changes from remote...");
+            RunGitCommand(path, "fetch origin");
+            
+            // Create a new branch based on origin/main
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+            var newBranchName = $"migration-{timestamp}";
+            Console.WriteLine($"Creating new branch '{newBranchName}' based on origin/main...");
+            
+            // Create and checkout new branch from origin/main
+            RunGitCommand(path, $"checkout -b {newBranchName} origin/main");
+            
+            // Verify we're on the correct branch/commit
+            var verifyBranch = RunGitCommand(path, "rev-parse --abbrev-ref HEAD").Trim();
+            var commitHash = RunGitCommand(path, "rev-parse HEAD").Trim();
+            Console.WriteLine($"Now on branch: {verifyBranch} (commit: {commitHash.Substring(0, 8)})");
+            
+            return (true, $"Successfully created branch {newBranchName} from origin/main");
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+    }
     
     public void CommitChanges(string path, string message)
     {

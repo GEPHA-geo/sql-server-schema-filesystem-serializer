@@ -73,6 +73,22 @@ generated_script.sql
             Console.WriteLine("=== Starting Git Branch Setup for Migration Generation ===");
             Console.WriteLine($"Working directory: {path}");
             
+            // First check if this is a fresh repository without remotes
+            bool hasRemotes = false;
+            try
+            {
+                var remotes = RunGitCommand(path, "remote").Trim();
+                hasRemotes = !string.IsNullOrWhiteSpace(remotes);
+                if (!hasRemotes)
+                {
+                    Console.WriteLine("Note: This is a local repository without remotes (likely freshly initialized)");
+                }
+            }
+            catch
+            {
+                // Ignore - assume no remotes
+            }
+            
             // First, log the current branch
             var currentBranch = RunGitCommand(path, "branch --show-current").Trim();
             Console.WriteLine($"Current branch: {currentBranch}");
@@ -100,7 +116,7 @@ generated_script.sql
             // Check if we're already on main branch
             if (currentBranch == "main")
             {
-                Console.WriteLine("\nAlready on main branch, ensuring clean state and updating from remote...");
+                Console.WriteLine("\nAlready on main branch, ensuring clean state...");
                 
                 // First perform hard reset to ensure clean state
                 try
@@ -115,52 +131,63 @@ generated_script.sql
                     throw new InvalidOperationException($"Git hard reset failed: {resetEx.Message}", resetEx);
                 }
                 
-                // Check for available remotes before attempting to pull
-                string detectedRemote = null;
-                try
+                // Only attempt remote operations if remotes exist
+                if (hasRemotes)
                 {
-                    var remotes = RunGitCommand(path, "remote").Trim().Split('\n', StringSplitOptions.RemoveEmptyEntries);
-                    if (remotes.Length > 0)
-                    {
-                        // Prefer 'origin' if it exists, otherwise use the first available remote
-                        detectedRemote = remotes.Contains("origin") ? "origin" : remotes[0];
-                        Console.WriteLine($"Using remote: {detectedRemote}");
-                    }
-                }
-                catch
-                {
-                    Console.WriteLine("No git remotes configured");
-                }
-                
-                // Then try to pull --rebase from the detected remote/main
-                if (!string.IsNullOrEmpty(detectedRemote))
-                {
+                    Console.WriteLine("\nUpdating from remote...");
+                    
+                    // Check for available remotes before attempting to pull
+                    string detectedRemote = null;
                     try
                     {
-                        Console.WriteLine($"\nAttempting to pull --rebase from {detectedRemote}/main...");
-                        var pullOutput = RunGitCommand(path, $"pull --rebase {detectedRemote} main");
-                        Console.WriteLine($"✓ Successfully pulled latest changes from {detectedRemote}/main");
-                        if (!string.IsNullOrWhiteSpace(pullOutput))
+                        var remotes = RunGitCommand(path, "remote").Trim().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                        if (remotes.Length > 0)
                         {
-                            Console.WriteLine(pullOutput);
+                            // Prefer 'origin' if it exists, otherwise use the first available remote
+                            detectedRemote = remotes.Contains("origin") ? "origin" : remotes[0];
+                            Console.WriteLine($"Using remote: {detectedRemote}");
                         }
-                        
-                        // Log the commit we're on after reset
-                        var commitAfterReset = RunGitCommand(path, "rev-parse HEAD").Trim();
-                        var commitMsgAfterReset = RunGitCommand(path, "log -1 --pretty=%s").Trim();
-                        Console.WriteLine($"Now at commit: {commitAfterReset.Substring(0, Math.Min(8, commitAfterReset.Length))} - {commitMsgAfterReset}");
                     }
-                    catch (Exception pullEx)
+                    catch
                     {
-                        Console.WriteLine($"⚠ Warning: Could not pull from {detectedRemote}/main: {pullEx.Message}");
+                        Console.WriteLine("No git remotes configured");
+                    }
+                    
+                    // Then try to pull --rebase from the detected remote/main
+                    if (!string.IsNullOrEmpty(detectedRemote))
+                    {
+                        try
+                        {
+                            Console.WriteLine($"\nAttempting to pull --rebase from {detectedRemote}/main...");
+                            var pullOutput = RunGitCommand(path, $"pull --rebase {detectedRemote} main");
+                            Console.WriteLine($"✓ Successfully pulled latest changes from {detectedRemote}/main");
+                            if (!string.IsNullOrWhiteSpace(pullOutput))
+                            {
+                                Console.WriteLine(pullOutput);
+                            }
+                            
+                            // Log the commit we're on after reset
+                            var commitAfterReset = RunGitCommand(path, "rev-parse HEAD").Trim();
+                            var commitMsgAfterReset = RunGitCommand(path, "log -1 --pretty=%s").Trim();
+                            Console.WriteLine($"Now at commit: {commitAfterReset.Substring(0, Math.Min(8, commitAfterReset.Length))} - {commitMsgAfterReset}");
+                        }
+                        catch (Exception pullEx)
+                        {
+                            Console.WriteLine($"⚠ Warning: Could not pull from {detectedRemote}/main: {pullEx.Message}");
+                        }
                     }
                 }
                 else
                 {
-                    Console.WriteLine("⚠ No remote configured, continuing with local state");
+                    Console.WriteLine("❌ CRITICAL: No remotes configured in repository");
+                    Console.WriteLine("This should not happen in a CI/CD environment where the repository was cloned.");
+                    Console.WriteLine("Possible causes:");
+                    Console.WriteLine("  - The repository was initialized with 'git init' instead of being cloned");
+                    Console.WriteLine("  - The working directory is not the actual repository root");
+                    throw new InvalidOperationException("No git remotes found. This indicates a misconfigured environment.");
                 }
                 
-                return (true, "Using current main branch state after pull and reset");
+                return (true, "Using current main branch state");
             }
             
             // Check available remotes
@@ -248,6 +275,13 @@ generated_script.sql
             Console.WriteLine($"\nCreating new branch '{newBranchName}' for migration detection...");
             
             // Check for available remotes
+            if (!hasRemotes)
+            {
+                Console.WriteLine("❌ CRITICAL: No remotes configured in repository");
+                Console.WriteLine("Cannot create migration branch without remotes.");
+                throw new InvalidOperationException("No git remotes found. Cannot proceed with migration branch creation.");
+            }
+            
             string remoteName = null;
             try
             {
@@ -261,7 +295,7 @@ generated_script.sql
             }
             catch
             {
-                Console.WriteLine("No git remotes configured");
+                Console.WriteLine("Error checking remotes");
             }
             
             try

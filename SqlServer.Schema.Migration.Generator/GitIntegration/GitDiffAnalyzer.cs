@@ -74,24 +74,62 @@ generated_script.sql
             var currentBranch = RunGitCommand(path, "branch --show-current").Trim();
             Console.WriteLine($"Current branch: {currentBranch}");
             
-            // Fetch latest changes from remote
-            Console.WriteLine("Fetching latest changes from remote...");
-            RunGitCommand(path, "fetch origin");
+            // Check if we're already on main branch
+            if (currentBranch == "main")
+            {
+                Console.WriteLine("Already on main branch, using current state for migration detection");
+                return (true, "Using current main branch state");
+            }
             
-            // Create a new branch based on origin/main
+            // Check available remotes
+            string remoteList = "";
+            try
+            {
+                remoteList = RunGitCommand(path, "remote -v").Trim();
+                Console.WriteLine($"Available remotes: {remoteList}");
+            }
+            catch
+            {
+                Console.WriteLine("No git remotes configured");
+            }
+            
+            // Try to fetch if remotes are available
+            if (!string.IsNullOrEmpty(remoteList))
+            {
+                try
+                {
+                    Console.WriteLine("Fetching latest changes from remote...");
+                    RunGitCommand(path, "fetch --all");
+                }
+                catch (Exception fetchEx)
+                {
+                    Console.WriteLine($"Warning: Could not fetch from remote: {fetchEx.Message}");
+                }
+            }
+            
+            // Create a new branch based on main (local or origin/main if available)
             var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
             var newBranchName = $"migration-{timestamp}";
-            Console.WriteLine($"Creating new branch '{newBranchName}' based on origin/main...");
+            Console.WriteLine($"Creating new branch '{newBranchName}' based on main...");
             
-            // Create and checkout new branch from origin/main
-            RunGitCommand(path, $"checkout -b {newBranchName} origin/main");
+            try
+            {
+                // Try to create branch from origin/main first if it exists
+                RunGitCommand(path, $"checkout -b {newBranchName} origin/main");
+            }
+            catch
+            {
+                // Fallback to local main branch
+                Console.WriteLine("Using local main branch as base");
+                RunGitCommand(path, $"checkout -b {newBranchName} main");
+            }
             
             // Verify we're on the correct branch/commit
             var verifyBranch = RunGitCommand(path, "rev-parse --abbrev-ref HEAD").Trim();
             var commitHash = RunGitCommand(path, "rev-parse HEAD").Trim();
-            Console.WriteLine($"Now on branch: {verifyBranch} (commit: {commitHash.Substring(0, 8)})");
+            Console.WriteLine($"Now on branch: {verifyBranch} (commit: {commitHash.Substring(0, Math.Min(8, commitHash.Length))})");
             
-            return (true, $"Successfully created branch {newBranchName} from origin/main");
+            return (true, $"Successfully created branch {newBranchName}");
         }
         catch (Exception ex)
         {

@@ -80,7 +80,16 @@ generated_script.sql
                 // Add diagnostics for debugging git issues in containers
                 Console.WriteLine($"Current working directory: {Directory.GetCurrentDirectory()}");
                 Console.WriteLine($"Target path: {path}");
+                Console.WriteLine($"Absolute target path: {Path.GetFullPath(path)}");
                 Console.WriteLine($".git directory exists: {Directory.Exists(Path.Combine(path, ".git"))}");
+                
+                // Check common GitHub Actions paths
+                var githubWorkspace = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE");
+                if (!string.IsNullOrEmpty(githubWorkspace))
+                {
+                    Console.WriteLine($"GitHub Workspace: {githubWorkspace}");
+                    Console.WriteLine($"GitHub Workspace .git exists: {Directory.Exists(Path.Combine(githubWorkspace, ".git"))}");
+                }
                 
                 try
                 {

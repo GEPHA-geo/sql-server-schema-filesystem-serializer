@@ -100,9 +100,29 @@ generated_script.sql
             // Check if we're already on main branch
             if (currentBranch == "main")
             {
-                Console.WriteLine("\nAlready on main branch, performing hard reset to ensure clean state...");
+                Console.WriteLine("\nAlready on main branch, updating from remote and ensuring clean state...");
+                
+                // First try to pull --rebase from origin/main
                 try
                 {
+                    Console.WriteLine("Attempting to pull --rebase from origin/main...");
+                    var pullOutput = RunGitCommand(path, "pull --rebase origin main");
+                    Console.WriteLine("✓ Successfully pulled latest changes from origin/main");
+                    if (!string.IsNullOrWhiteSpace(pullOutput))
+                    {
+                        Console.WriteLine(pullOutput);
+                    }
+                }
+                catch (Exception pullEx)
+                {
+                    Console.WriteLine($"⚠ Warning: Could not pull from origin/main: {pullEx.Message}");
+                    Console.WriteLine("Continuing with local main branch state...");
+                }
+                
+                // Then perform hard reset to ensure clean state
+                try
+                {
+                    Console.WriteLine("\nPerforming hard reset to ensure clean state...");
                     RunGitCommand(path, "reset --hard HEAD");
                     Console.WriteLine("✓ Hard reset completed, using clean main branch state");
                     
@@ -115,7 +135,7 @@ generated_script.sql
                 {
                     Console.WriteLine($"⚠ Warning: Could not perform hard reset: {resetEx.Message}");
                 }
-                return (true, "Using current main branch state after reset");
+                return (true, "Using current main branch state after pull and reset");
             }
             
             // Check available remotes
@@ -228,6 +248,26 @@ generated_script.sql
                     var localMainHash = RunGitCommand(path, "rev-parse main").Trim();
                     Console.WriteLine($"✓ Found local main at commit: {localMainHash.Substring(0, Math.Min(8, localMainHash.Length))}");
                     
+                    // First checkout main and pull latest changes
+                    Console.WriteLine("Checking out main branch to pull latest changes...");
+                    RunGitCommand(path, "checkout main");
+                    
+                    try
+                    {
+                        Console.WriteLine("Attempting to pull --rebase from origin/main...");
+                        var pullOutput = RunGitCommand(path, "pull --rebase origin main");
+                        Console.WriteLine("✓ Successfully pulled latest changes");
+                        if (!string.IsNullOrWhiteSpace(pullOutput))
+                        {
+                            Console.WriteLine(pullOutput);
+                        }
+                    }
+                    catch (Exception pullEx)
+                    {
+                        Console.WriteLine($"⚠ Could not pull from origin: {pullEx.Message}");
+                    }
+                    
+                    // Now create new branch from updated main
                     RunGitCommand(path, $"checkout -b {newBranchName} main");
                     Console.WriteLine("✓ Successfully created branch from local main");
                 }

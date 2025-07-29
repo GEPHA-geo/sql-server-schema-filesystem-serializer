@@ -44,6 +44,19 @@ public class MigrationGenerator
                 return false; // No changes on first run
             }
             
+            // Create a new branch from origin/main for proper change detection
+            Console.WriteLine("Creating new branch from origin/main for migration generation...");
+            var checkoutResult = _gitAnalyzer.CheckoutBranch(outputPath, "origin/main");
+            if (!checkoutResult.success)
+            {
+                Console.WriteLine($"Warning: Could not create branch from origin/main: {checkoutResult.message}");
+                Console.WriteLine("Proceeding with current branch state...");
+            }
+            else
+            {
+                Console.WriteLine(checkoutResult.message);
+            }
+            
             // Check for uncommitted changes
             var changes = _gitAnalyzer.GetUncommittedChanges(outputPath, Path.Combine("servers", targetServer, targetDatabase));
             if (!changes.Any())
@@ -98,7 +111,7 @@ public class MigrationGenerator
             }
             */
             
-            File.WriteAllText(migrationPath, migrationScript);
+            await File.WriteAllTextAsync(migrationPath, migrationScript);
             Console.WriteLine($"Generated migration: {filename}");
             
             // Commit changes

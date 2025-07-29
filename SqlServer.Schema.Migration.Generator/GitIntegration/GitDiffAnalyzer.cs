@@ -108,8 +108,8 @@ generated_script.sql
                     
                     // Log the commit we're on after reset
                     var commitAfterReset = RunGitCommand(path, "rev-parse HEAD").Trim();
-                    var commitMessage = RunGitCommand(path, "log -1 --pretty=%s").Trim();
-                    Console.WriteLine($"Now at commit: {commitAfterReset.Substring(0, Math.Min(8, commitAfterReset.Length))} - {commitMessage}");
+                    var commitMsgAfterReset = RunGitCommand(path, "log -1 --pretty=%s").Trim();
+                    Console.WriteLine($"Now at commit: {commitAfterReset.Substring(0, Math.Min(8, commitAfterReset.Length))} - {commitMsgAfterReset}");
                 }
                 catch (Exception resetEx)
                 {

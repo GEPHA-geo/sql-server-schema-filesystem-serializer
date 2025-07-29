@@ -70,23 +70,69 @@ generated_script.sql
     {
         try
         {
+            Console.WriteLine("=== Starting Git Branch Setup for Migration Generation ===");
+            Console.WriteLine($"Working directory: {path}");
+            
             // First, log the current branch
             var currentBranch = RunGitCommand(path, "branch --show-current").Trim();
             Console.WriteLine($"Current branch: {currentBranch}");
             
+            // Check git status before any operations
+            Console.WriteLine("\nChecking git status before operations:");
+            try
+            {
+                var status = RunGitCommand(path, "status --short");
+                if (!string.IsNullOrWhiteSpace(status))
+                {
+                    Console.WriteLine("Uncommitted changes detected:");
+                    Console.WriteLine(status);
+                }
+                else
+                {
+                    Console.WriteLine("Working directory is clean");
+                }
+            }
+            catch (Exception statusEx)
+            {
+                Console.WriteLine($"Could not get git status: {statusEx.Message}");
+            }
+            
             // Check if we're already on main branch
             if (currentBranch == "main")
             {
-                Console.WriteLine("Already on main branch, using current state for migration detection");
-                return (true, "Using current main branch state");
+                Console.WriteLine("\nAlready on main branch, performing hard reset to ensure clean state...");
+                try
+                {
+                    RunGitCommand(path, "reset --hard HEAD");
+                    Console.WriteLine("✓ Hard reset completed, using clean main branch state");
+                    
+                    // Log the commit we're on after reset
+                    var commitAfterReset = RunGitCommand(path, "rev-parse HEAD").Trim();
+                    var commitMessage = RunGitCommand(path, "log -1 --pretty=%s").Trim();
+                    Console.WriteLine($"Now at commit: {commitAfterReset.Substring(0, Math.Min(8, commitAfterReset.Length))} - {commitMessage}");
+                }
+                catch (Exception resetEx)
+                {
+                    Console.WriteLine($"⚠ Warning: Could not perform hard reset: {resetEx.Message}");
+                }
+                return (true, "Using current main branch state after reset");
             }
             
             // Check available remotes
+            Console.WriteLine("\nChecking for git remotes...");
             string remoteList = "";
             try
             {
                 remoteList = RunGitCommand(path, "remote -v").Trim();
-                Console.WriteLine($"Available remotes: {remoteList}");
+                if (!string.IsNullOrWhiteSpace(remoteList))
+                {
+                    Console.WriteLine("Available remotes:");
+                    Console.WriteLine(remoteList);
+                }
+                else
+                {
+                    Console.WriteLine("No git remotes found");
+                }
             }
             catch
             {
@@ -98,41 +144,137 @@ generated_script.sql
             {
                 try
                 {
-                    Console.WriteLine("Fetching latest changes from remote...");
-                    RunGitCommand(path, "fetch --all");
+                    Console.WriteLine("\nFetching latest changes from all remotes...");
+                    var fetchOutput = RunGitCommand(path, "fetch --all --verbose");
+                    Console.WriteLine("✓ Fetch completed successfully");
+                    if (!string.IsNullOrWhiteSpace(fetchOutput))
+                    {
+                        Console.WriteLine("Fetch output:");
+                        Console.WriteLine(fetchOutput);
+                    }
                 }
                 catch (Exception fetchEx)
                 {
-                    Console.WriteLine($"Warning: Could not fetch from remote: {fetchEx.Message}");
+                    Console.WriteLine($"⚠ Warning: Could not fetch from remote: {fetchEx.Message}");
                 }
+            }
+            
+            // Perform hard reset to clean any uncommitted changes before switching branches
+            Console.WriteLine("\nPerforming hard reset to ensure clean working directory...");
+            try
+            {
+                // First stash any changes just in case
+                try
+                {
+                    var stashResult = RunGitCommand(path, "stash push -m \"Auto-stash before migration generation\"");
+                    if (stashResult.Contains("Saved working directory"))
+                    {
+                        Console.WriteLine("✓ Stashed uncommitted changes");
+                    }
+                }
+                catch
+                {
+                    // Ignore stash errors
+                }
+                
+                RunGitCommand(path, "reset --hard HEAD");
+                Console.WriteLine("✓ Hard reset completed");
+                
+                // Clean untracked files as well
+                try
+                {
+                    RunGitCommand(path, "clean -fd");
+                    Console.WriteLine("✓ Cleaned untracked files and directories");
+                }
+                catch (Exception cleanEx)
+                {
+                    Console.WriteLine($"⚠ Could not clean untracked files: {cleanEx.Message}");
+                }
+            }
+            catch (Exception resetEx)
+            {
+                Console.WriteLine($"⚠ Warning: Could not perform hard reset: {resetEx.Message}");
             }
             
             // Create a new branch based on main (local or origin/main if available)
             var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
             var newBranchName = $"migration-{timestamp}";
-            Console.WriteLine($"Creating new branch '{newBranchName}' based on main...");
+            Console.WriteLine($"\nCreating new branch '{newBranchName}' for migration detection...");
             
             try
             {
-                // Try to create branch from origin/main first if it exists
-                RunGitCommand(path, $"checkout -b {newBranchName} origin/main");
+                // First, check if origin/main exists
+                Console.WriteLine("Checking if origin/main exists...");
+                try
+                {
+                    var originMainHash = RunGitCommand(path, "rev-parse origin/main").Trim();
+                    Console.WriteLine($"✓ Found origin/main at commit: {originMainHash.Substring(0, Math.Min(8, originMainHash.Length))}");
+                    
+                    // Try to create branch from origin/main
+                    RunGitCommand(path, $"checkout -b {newBranchName} origin/main");
+                    Console.WriteLine("✓ Successfully created branch from origin/main");
+                }
+                catch
+                {
+                    throw new Exception("origin/main not found");
+                }
             }
             catch
             {
                 // Fallback to local main branch
-                Console.WriteLine("Using local main branch as base");
-                RunGitCommand(path, $"checkout -b {newBranchName} main");
+                Console.WriteLine("origin/main not found, checking for local main branch...");
+                try
+                {
+                    var localMainHash = RunGitCommand(path, "rev-parse main").Trim();
+                    Console.WriteLine($"✓ Found local main at commit: {localMainHash.Substring(0, Math.Min(8, localMainHash.Length))}");
+                    
+                    RunGitCommand(path, $"checkout -b {newBranchName} main");
+                    Console.WriteLine("✓ Successfully created branch from local main");
+                }
+                catch (Exception mainEx)
+                {
+                    // If even local main doesn't exist, just create a new branch
+                    Console.WriteLine($"⚠ Could not find main branch: {mainEx.Message}");
+                    Console.WriteLine("Creating new branch from current HEAD...");
+                    RunGitCommand(path, $"checkout -b {newBranchName}");
+                    Console.WriteLine("✓ Created new branch from current HEAD");
+                }
             }
             
             // Verify we're on the correct branch/commit
+            Console.WriteLine("\nVerifying branch state:");
             var verifyBranch = RunGitCommand(path, "rev-parse --abbrev-ref HEAD").Trim();
             var commitHash = RunGitCommand(path, "rev-parse HEAD").Trim();
-            Console.WriteLine($"Now on branch: {verifyBranch} (commit: {commitHash.Substring(0, Math.Min(8, commitHash.Length))})");
+            var commitMessage = RunGitCommand(path, "log -1 --pretty=%s").Trim();
+            Console.WriteLine($"✓ Now on branch: {verifyBranch}");
+            Console.WriteLine($"  Commit: {commitHash.Substring(0, Math.Min(8, commitHash.Length))} - {commitMessage}");
             
+            // Final status check
+            Console.WriteLine("\nFinal git status:");
+            try
+            {
+                var finalStatus = RunGitCommand(path, "status --short");
+                if (string.IsNullOrWhiteSpace(finalStatus))
+                {
+                    Console.WriteLine("✓ Working directory is clean and ready for migration detection");
+                }
+                else
+                {
+                    Console.WriteLine("⚠ Warning: Unexpected changes after setup:");
+                    Console.WriteLine(finalStatus);
+                }
+            }
+            catch
+            {
+                // Ignore status check errors
+            }
+            
+            Console.WriteLine("\n=== Git Branch Setup Completed ===");
             return (true, $"Successfully created branch {newBranchName}");
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"\n❌ Error during git branch setup: {ex.Message}");
             return (false, ex.Message);
         }
     }

@@ -101,6 +101,29 @@ generated_script.sql
                     Console.WriteLine($"Could not determine git root: {ex.Message}");
                 }
                 
+                // Check git config to understand remote issues
+                try
+                {
+                    var configList = RunGitCommand(path, "config --list");
+                    var remoteConfigs = configList.Split('\n').Where(line => line.StartsWith("remote.")).ToList();
+                    if (remoteConfigs.Any())
+                    {
+                        Console.WriteLine("Git remote configuration found:");
+                        foreach (var config in remoteConfigs.Take(5)) // Show first 5 remote configs
+                        {
+                            Console.WriteLine($"  {config}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No remote configuration found in git config");
+                    }
+                }
+                catch (Exception configEx)
+                {
+                    Console.WriteLine($"Could not read git config: {configEx.Message}");
+                }
+                
                 var remotes = RunGitCommand(path, "remote").Trim();
                 hasRemotes = !string.IsNullOrWhiteSpace(remotes);
                 if (!hasRemotes)
@@ -110,6 +133,31 @@ generated_script.sql
                     Console.WriteLine("  - Repository ownership issues (common in Docker)");
                     Console.WriteLine("  - Working in a subdirectory with 'git init' instead of the main repo");
                     Console.WriteLine("  - Missing git configuration");
+                    
+                    // Try to check git directory permissions
+                    try
+                    {
+                        var gitDir = Path.Combine(path, ".git");
+                        if (Directory.Exists(gitDir))
+                        {
+                            var gitConfigFile = Path.Combine(gitDir, "config");
+                            Console.WriteLine($"Git config file exists: {File.Exists(gitConfigFile)}");
+                            if (File.Exists(gitConfigFile))
+                            {
+                                // Try to read first few lines of git config
+                                var configLines = File.ReadAllLines(gitConfigFile).Take(10);
+                                Console.WriteLine("Git config file content (first 10 lines):");
+                                foreach (var line in configLines)
+                                {
+                                    Console.WriteLine($"  {line}");
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception permEx)
+                    {
+                        Console.WriteLine($"Could not check git directory: {permEx.Message}");
+                    }
                 }
                 else
                 {

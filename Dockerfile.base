@@ -1,16 +1,39 @@
-# Base image with .NET runtime and Git
+# Base image with .NET runtime, Git, and Docker CLI
+# Also includes dotnet-script for interactive C# scripting
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS builder
+RUN dotnet tool install -g dotnet-script
+
 FROM mcr.microsoft.com/dotnet/runtime:9.0
 
-# Install Git with minimal dependencies
+# Install Git, Docker CLI, and minimal dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     git \
-    ca-certificates && \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release && \
+    # Add Docker's official GPG key
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
+    # Add Docker repository
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
+    $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    # Install Docker CLI only (not the daemon)
+    apt-get update && \
+    apt-get install -y --no-install-recommends docker-ce-cli && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Verify Git installation and set up Git
+# Copy dotnet-script from builder stage
+COPY --from=builder /root/.dotnet/tools /root/.dotnet/tools
+
+# Add .NET tools to PATH
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
+# Verify installations and set up Git
 RUN git --version && \
+    docker --version && \
+    dotnet-script --version && \
     git config --global user.email "docker@sqlserver-migrator.local" && \
     git config --global user.name "SQL Server Migrator" && \
     git config --global init.defaultBranch main && \
@@ -19,5 +42,6 @@ RUN git --version && \
     git config --global --add safe.directory '*'
 
 # Label for identification
-LABEL org.opencontainers.image.description="NET 9.0 Runtime with Git"
+LABEL org.opencontainers.image.description="NET 9.0 Runtime with Git, Docker CLI, and dotnet-script"
 LABEL org.opencontainers.image.source="https://github.com/GEPHA-geo/sql-server-schema-filesystem-serializer"
+LABEL org.opencontainers.image.title="dotnet-runtime-git-docker"

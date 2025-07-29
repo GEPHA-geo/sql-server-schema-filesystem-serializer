@@ -100,11 +100,30 @@ generated_script.sql
             // Check if we're already on main branch
             if (currentBranch == "main")
             {
-                Console.WriteLine("\nAlready on main branch, performing hard reset to ensure clean state...");
+                Console.WriteLine("\nAlready on main branch, ensuring clean state and updating from remote...");
+                
+                // First perform hard reset to ensure clean state
                 try
                 {
+                    Console.WriteLine("Performing hard reset to ensure clean state...");
                     RunGitCommand(path, "reset --hard HEAD");
-                    Console.WriteLine("✓ Hard reset completed, using clean main branch state");
+                    Console.WriteLine("✓ Hard reset completed");
+                }
+                catch (Exception resetEx)
+                {
+                    Console.WriteLine($"⚠ Warning: Could not perform hard reset: {resetEx.Message}");
+                }
+                
+                // Then try to pull --rebase from origin/main
+                try
+                {
+                    Console.WriteLine("\nAttempting to pull --rebase from origin/main...");
+                    var pullOutput = RunGitCommand(path, "pull --rebase origin main");
+                    Console.WriteLine("✓ Successfully pulled latest changes from origin/main");
+                    if (!string.IsNullOrWhiteSpace(pullOutput))
+                    {
+                        Console.WriteLine(pullOutput);
+                    }
                     
                     // Log the commit we're on after reset
                     var commitAfterReset = RunGitCommand(path, "rev-parse HEAD").Trim();
@@ -115,7 +134,7 @@ generated_script.sql
                 {
                     Console.WriteLine($"⚠ Warning: Could not perform hard reset: {resetEx.Message}");
                 }
-                return (true, "Using current main branch state after reset");
+                return (true, "Using current main branch state after pull and reset");
             }
             
             // Check available remotes
@@ -228,6 +247,39 @@ generated_script.sql
                     var localMainHash = RunGitCommand(path, "rev-parse main").Trim();
                     Console.WriteLine($"✓ Found local main at commit: {localMainHash.Substring(0, Math.Min(8, localMainHash.Length))}");
                     
+                    // First checkout main
+                    Console.WriteLine("Checking out main branch...");
+                    RunGitCommand(path, "checkout main");
+                    
+                    // Hard reset to ensure clean state
+                    try
+                    {
+                        Console.WriteLine("Performing hard reset to ensure clean state...");
+                        RunGitCommand(path, "reset --hard HEAD");
+                        Console.WriteLine("✓ Hard reset completed");
+                    }
+                    catch (Exception resetEx)
+                    {
+                        Console.WriteLine($"⚠ Could not perform hard reset: {resetEx.Message}");
+                    }
+                    
+                    // Then pull latest changes
+                    try
+                    {
+                        Console.WriteLine("\nAttempting to pull --rebase from origin/main...");
+                        var pullOutput = RunGitCommand(path, "pull --rebase origin main");
+                        Console.WriteLine("✓ Successfully pulled latest changes");
+                        if (!string.IsNullOrWhiteSpace(pullOutput))
+                        {
+                            Console.WriteLine(pullOutput);
+                        }
+                    }
+                    catch (Exception pullEx)
+                    {
+                        Console.WriteLine($"⚠ Could not pull from origin: {pullEx.Message}");
+                    }
+                    
+                    // Now create new branch from updated main
                     RunGitCommand(path, $"checkout -b {newBranchName} main");
                     Console.WriteLine("✓ Successfully created branch from local main");
                 }

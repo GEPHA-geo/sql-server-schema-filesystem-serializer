@@ -77,15 +77,39 @@ generated_script.sql
             bool hasRemotes = false;
             try
             {
+                // Add diagnostics for debugging git issues in containers
+                Console.WriteLine($"Current working directory: {Directory.GetCurrentDirectory()}");
+                Console.WriteLine($"Target path: {path}");
+                Console.WriteLine($".git directory exists: {Directory.Exists(Path.Combine(path, ".git"))}");
+                
+                try
+                {
+                    var gitRoot = RunGitCommand(path, "rev-parse --show-toplevel").Trim();
+                    Console.WriteLine($"Git root directory: {gitRoot}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Could not determine git root: {ex.Message}");
+                }
+                
                 var remotes = RunGitCommand(path, "remote").Trim();
                 hasRemotes = !string.IsNullOrWhiteSpace(remotes);
                 if (!hasRemotes)
                 {
-                    Console.WriteLine("Note: This is a local repository without remotes (likely freshly initialized)");
+                    Console.WriteLine("WARNING: No git remotes found!");
+                    Console.WriteLine("This might indicate:");
+                    Console.WriteLine("  - Repository ownership issues (common in Docker)");
+                    Console.WriteLine("  - Working in a subdirectory with 'git init' instead of the main repo");
+                    Console.WriteLine("  - Missing git configuration");
+                }
+                else
+                {
+                    Console.WriteLine($"Found remotes: {remotes.Replace('\n', ' ')}");
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Error checking for remotes: {ex.Message}");
                 // Ignore - assume no remotes
             }
             

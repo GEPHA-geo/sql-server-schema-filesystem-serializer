@@ -37,6 +37,14 @@ internal static class Program
 
         try
         {
+            // Log environment information for debugging
+            Console.WriteLine("=== Environment Information ===");
+            Console.WriteLine($"Current Directory: {Environment.CurrentDirectory}");
+            Console.WriteLine($"Output Path: {outputPath}");
+            Console.WriteLine($"GitHub Workspace: {Environment.GetEnvironmentVariable("GITHUB_WORKSPACE") ?? "Not set"}");
+            Console.WriteLine($"GitHub Repository: {Environment.GetEnvironmentVariable("GITHUB_REPOSITORY") ?? "Not set"}");
+            Console.WriteLine($"Running in GitHub Actions: {!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"))}");
+            
             // Ensure we're on origin/main with clean state before generating files
             var gitAnalyzer = new Migration.Generator.GitIntegration.GitDiffAnalyzer();
             if (gitAnalyzer.IsGitRepository(outputPath))
@@ -49,8 +57,9 @@ internal static class Program
                     var checkoutResult = gitAnalyzer.CheckoutBranch(outputPath, "origin/main");
                     if (!checkoutResult.success)
                     {
-                        Console.WriteLine($"Warning: {checkoutResult.message}");
-                        Console.WriteLine("Continuing with current state...");
+                        Console.WriteLine($"❌ CRITICAL: Git operation failed: {checkoutResult.message}");
+                        Console.WriteLine("Cannot continue without proper git configuration.");
+                        throw new InvalidOperationException($"Git branch setup failed: {checkoutResult.message}");
                     }
                     else
                     {
@@ -59,8 +68,9 @@ internal static class Program
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Warning: Could not prepare Git repository: {ex.Message}");
-                    Console.WriteLine("Continuing with current state...");
+                    Console.WriteLine($"❌ CRITICAL: Could not prepare Git repository: {ex.Message}");
+                    // Re-throw to stop execution
+                    throw;
                 }
             }
             

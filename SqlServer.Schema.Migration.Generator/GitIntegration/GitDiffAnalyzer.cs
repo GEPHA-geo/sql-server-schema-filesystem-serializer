@@ -83,6 +83,37 @@ generated_script.sql
                 Console.WriteLine($"Absolute target path: {Path.GetFullPath(path)}");
                 Console.WriteLine($".git directory exists: {Directory.Exists(Path.Combine(path, ".git"))}");
                 
+                // List top-level directory contents
+                try
+                {
+                    var targetDir = Path.GetFullPath(path);
+                    Console.WriteLine($"\nDirectory contents of {targetDir}:");
+                    
+                    // List directories
+                    var dirs = Directory.GetDirectories(targetDir).Select(Path.GetFileName).OrderBy(d => d);
+                    Console.WriteLine($"Directories ({dirs.Count()}):");
+                    foreach (var dir in dirs)
+                    {
+                        Console.WriteLine($"  [DIR] {dir}");
+                    }
+                    
+                    // List files
+                    var files = Directory.GetFiles(targetDir).Select(Path.GetFileName).OrderBy(f => f);
+                    Console.WriteLine($"Files ({files.Count()}):");
+                    foreach (var file in files.Take(20)) // Show first 20 files
+                    {
+                        Console.WriteLine($"  [FILE] {file}");
+                    }
+                    if (files.Count() > 20)
+                    {
+                        Console.WriteLine($"  ... and {files.Count() - 20} more files");
+                    }
+                }
+                catch (Exception listEx)
+                {
+                    Console.WriteLine($"Could not list directory contents: {listEx.Message}");
+                }
+                
                 // Check common GitHub Actions paths
                 var githubWorkspace = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE");
                 if (!string.IsNullOrEmpty(githubWorkspace))
@@ -95,6 +126,15 @@ generated_script.sql
                 {
                     var gitRoot = RunGitCommand(path, "rev-parse --show-toplevel").Trim();
                     Console.WriteLine($"Git root directory: {gitRoot}");
+                    
+                    // Check if we're in a subdirectory
+                    var currentPath = Path.GetFullPath(path);
+                    if (!currentPath.Equals(gitRoot, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine($"WARNING: Working in subdirectory of git repo!");
+                        Console.WriteLine($"  Current: {currentPath}");
+                        Console.WriteLine($"  Git root: {gitRoot}");
+                    }
                 }
                 catch (Exception ex)
                 {

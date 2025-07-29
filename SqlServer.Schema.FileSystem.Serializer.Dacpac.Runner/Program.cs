@@ -37,25 +37,29 @@ internal static class Program
 
         try
         {
-            // Ensure we're on origin/main before generating files
+            // Ensure we're on origin/main with clean state before generating files
             var gitAnalyzer = new Migration.Generator.GitIntegration.GitDiffAnalyzer();
-            if (gitAnalyzer.IsGitRepository(outputPath) && gitAnalyzer.HasRemote(outputPath))
+            if (gitAnalyzer.IsGitRepository(outputPath))
             {
                 try
                 {
-                    Console.WriteLine("Preparing Git repository...");
-                    gitAnalyzer.FetchRemote(outputPath);
-                    gitAnalyzer.CheckoutRemoteBranch(outputPath, "origin", "main");
+                    Console.WriteLine("=== Preparing Git repository for schema extraction ===");
                     
-                    var branchTimestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
-                    var branchName = $"schema-update-{branchTimestamp}";
-                    gitAnalyzer.CreateAndCheckoutBranch(outputPath, branchName);
-                    
-                    Console.WriteLine($"Working on branch: {branchName}");
+                    // Use the enhanced CheckoutBranch method which includes hard reset
+                    var checkoutResult = gitAnalyzer.CheckoutBranch(outputPath, "origin/main");
+                    if (!checkoutResult.success)
+                    {
+                        Console.WriteLine($"Warning: {checkoutResult.message}");
+                        Console.WriteLine("Continuing with current state...");
+                    }
+                    else
+                    {
+                        Console.WriteLine(checkoutResult.message);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Warning: Could not prepare Git branch: {ex.Message}");
+                    Console.WriteLine($"Warning: Could not prepare Git repository: {ex.Message}");
                     Console.WriteLine("Continuing with current state...");
                 }
             }

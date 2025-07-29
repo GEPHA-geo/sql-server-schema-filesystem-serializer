@@ -100,31 +100,30 @@ generated_script.sql
             // Check if we're already on main branch
             if (currentBranch == "main")
             {
-                Console.WriteLine("\nAlready on main branch, updating from remote and ensuring clean state...");
+                Console.WriteLine("\nAlready on main branch, ensuring clean state and updating from remote...");
                 
-                // First try to pull --rebase from origin/main
+                // First perform hard reset to ensure clean state
                 try
                 {
-                    Console.WriteLine("Attempting to pull --rebase from origin/main...");
+                    Console.WriteLine("Performing hard reset to ensure clean state...");
+                    RunGitCommand(path, "reset --hard HEAD");
+                    Console.WriteLine("✓ Hard reset completed");
+                }
+                catch (Exception resetEx)
+                {
+                    Console.WriteLine($"⚠ Warning: Could not perform hard reset: {resetEx.Message}");
+                }
+                
+                // Then try to pull --rebase from origin/main
+                try
+                {
+                    Console.WriteLine("\nAttempting to pull --rebase from origin/main...");
                     var pullOutput = RunGitCommand(path, "pull --rebase origin main");
                     Console.WriteLine("✓ Successfully pulled latest changes from origin/main");
                     if (!string.IsNullOrWhiteSpace(pullOutput))
                     {
                         Console.WriteLine(pullOutput);
                     }
-                }
-                catch (Exception pullEx)
-                {
-                    Console.WriteLine($"⚠ Warning: Could not pull from origin/main: {pullEx.Message}");
-                    Console.WriteLine("Continuing with local main branch state...");
-                }
-                
-                // Then perform hard reset to ensure clean state
-                try
-                {
-                    Console.WriteLine("\nPerforming hard reset to ensure clean state...");
-                    RunGitCommand(path, "reset --hard HEAD");
-                    Console.WriteLine("✓ Hard reset completed, using clean main branch state");
                     
                     // Log the commit we're on after reset
                     var commitAfterReset = RunGitCommand(path, "rev-parse HEAD").Trim();
@@ -248,13 +247,26 @@ generated_script.sql
                     var localMainHash = RunGitCommand(path, "rev-parse main").Trim();
                     Console.WriteLine($"✓ Found local main at commit: {localMainHash.Substring(0, Math.Min(8, localMainHash.Length))}");
                     
-                    // First checkout main and pull latest changes
-                    Console.WriteLine("Checking out main branch to pull latest changes...");
+                    // First checkout main
+                    Console.WriteLine("Checking out main branch...");
                     RunGitCommand(path, "checkout main");
                     
+                    // Hard reset to ensure clean state
                     try
                     {
-                        Console.WriteLine("Attempting to pull --rebase from origin/main...");
+                        Console.WriteLine("Performing hard reset to ensure clean state...");
+                        RunGitCommand(path, "reset --hard HEAD");
+                        Console.WriteLine("✓ Hard reset completed");
+                    }
+                    catch (Exception resetEx)
+                    {
+                        Console.WriteLine($"⚠ Could not perform hard reset: {resetEx.Message}");
+                    }
+                    
+                    // Then pull latest changes
+                    try
+                    {
+                        Console.WriteLine("\nAttempting to pull --rebase from origin/main...");
                         var pullOutput = RunGitCommand(path, "pull --rebase origin main");
                         Console.WriteLine("✓ Successfully pulled latest changes");
                         if (!string.IsNullOrWhiteSpace(pullOutput))

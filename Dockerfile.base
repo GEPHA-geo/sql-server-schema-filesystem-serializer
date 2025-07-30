@@ -1,9 +1,6 @@
-# Base image with .NET runtime, Git, and Docker CLI
+# Base image with .NET SDK, Git, and Docker CLI
 # Also includes dotnet-script for interactive C# scripting
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS builder
-RUN dotnet tool install -g dotnet-script
-
-FROM mcr.microsoft.com/dotnet/runtime:9.0
+FROM mcr.microsoft.com/dotnet/sdk:9.0
 
 # Install Git, Docker CLI, and minimal dependencies
 RUN apt-get update && \
@@ -24,8 +21,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy dotnet-script from builder stage
-COPY --from=builder /root/.dotnet/tools /root/.dotnet/tools
+# Install dotnet-script global tool
+RUN dotnet tool install -g dotnet-script
 
 # Add .NET tools to PATH
 ENV PATH="${PATH}:/root/.dotnet/tools"
@@ -42,6 +39,6 @@ RUN git --version && \
     git config --global --add safe.directory '*'
 
 # Label for identification
-LABEL org.opencontainers.image.description="NET 9.0 Runtime with Git, Docker CLI, and dotnet-script"
+LABEL org.opencontainers.image.description=".NET 9.0 SDK with Git, Docker CLI, and dotnet-script"
 LABEL org.opencontainers.image.source="https://github.com/GEPHA-geo/sql-server-schema-filesystem-serializer"
-LABEL org.opencontainers.image.title="dotnet-runtime-git-docker"
+LABEL org.opencontainers.image.title="dotnet-sdk-git-docker"

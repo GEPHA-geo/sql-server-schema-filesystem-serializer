@@ -245,6 +245,12 @@ generated_script.sql
                     Console.WriteLine("Performing hard reset to ensure clean state...");
                     RunGitCommand(path, "reset --hard HEAD");
                     Console.WriteLine("✓ Hard reset completed");
+                    
+                    // Create migration branch after hard reset
+                    var migrationBranch = $"migration/{DateTime.UtcNow:yyyyMMdd_HHmmss}";
+                    Console.WriteLine($"\nCreating migration branch: {migrationBranch}");
+                    RunGitCommand(path, $"checkout -b {migrationBranch}");
+                    Console.WriteLine($"✓ Created and switched to branch: {migrationBranch}");
                 }
                 catch (Exception resetEx)
                 {

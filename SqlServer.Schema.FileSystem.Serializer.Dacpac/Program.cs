@@ -72,15 +72,15 @@ internal static class Program
             File.WriteAllText("generated_script.sql", script);
             Console.WriteLine($"Script saved to generated_script.sql ({script.Length} characters)");
             
-            // Clean only the database-specific directory (preserving migrations)
+            // Clean only the database-specific directory (preserving z_migrations)
             var targetOutputPath = Path.Combine(outputPath, "servers", targetServer, targetDatabase);
             if (Directory.Exists(targetOutputPath))
             {
-                Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving migrations)");
+                Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving z_migrations)");
                 
-                // Get all subdirectories except migrations
+                // Get all subdirectories except z_migrations
                 var subdirs = Directory.GetDirectories(targetOutputPath)
-                    .Where(d => !Path.GetFileName(d).Equals("migrations", StringComparison.OrdinalIgnoreCase))
+                    .Where(d => !Path.GetFileName(d).Equals("z_migrations", StringComparison.OrdinalIgnoreCase))
                     .ToList();
                 
                 // Delete each subdirectory

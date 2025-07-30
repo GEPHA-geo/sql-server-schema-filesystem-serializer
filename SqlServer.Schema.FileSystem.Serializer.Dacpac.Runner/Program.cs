@@ -133,11 +133,11 @@ internal static class Program
             
             if (Directory.Exists(targetOutputPath))
             {
-                Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving migrations)");
+                Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving z_migrations)");
                 
                 // Get all subdirectories except migrations
                 var subdirs = Directory.GetDirectories(targetOutputPath)
-                    .Where(d => !Path.GetFileName(d).Equals("migrations", StringComparison.OrdinalIgnoreCase))
+                    .Where(d => !Path.GetFileName(d).Equals("z_migrations", StringComparison.OrdinalIgnoreCase))
                     .ToList();
                 
                 // Delete each subdirectory
@@ -175,7 +175,7 @@ internal static class Program
             // Generate migrations
             Console.WriteLine("\nChecking for schema changes...");
             var migrationGenerator = new Migration.Generator.MigrationGenerator();
-            var migrationsPath = Path.Combine(targetOutputPath, "migrations");
+            var migrationsPath = Path.Combine(targetOutputPath, "z_migrations");
             
             // Get actor from environment variable (GitHub Actions provides GITHUB_ACTOR)
             var actor = Environment.GetEnvironmentVariable("GITHUB_ACTOR") ?? Environment.UserName;

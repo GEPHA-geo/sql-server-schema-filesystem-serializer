@@ -145,6 +145,33 @@ public class TableChangeParserTests
     
     
     [Fact]
+    public void ParseTableChanges_WhenColumnHasOnlyWhitespaceDifferences_ShouldNotDetectAsModified()
+    {
+        // Arrange
+        var entry = new DiffEntry
+        {
+            Path = "servers/server1/db1/schemas/dbo/Tables/TestTable/TBL_TestTable.sql",
+            ChangeType = ChangeType.Modified,
+            OldContent = @"CREATE TABLE [dbo].[TestTable] (
+    [Id] INT IDENTITY(1,1) NOT NULL,
+    [Name]   NVARCHAR(50)    NULL,
+    [test] NCHAR (10) NULL
+);",
+            NewContent = @"CREATE TABLE [dbo].[TestTable] (
+    [Id] INT IDENTITY(1,1) NOT NULL,
+    [Name]   NVARCHAR(50)    NULL,
+    [test]  NCHAR (10) NULL
+);"
+        };
+        
+        // Act
+        var changes = _parser.ParseTableChanges(entry);
+        
+        // Assert
+        Assert.Empty(changes); // No changes should be detected as only whitespace differs
+    }
+
+    [Fact]
     public void ParseTableChanges_WithNoChanges_ShouldReturnEmptyList()
     {
         // Arrange

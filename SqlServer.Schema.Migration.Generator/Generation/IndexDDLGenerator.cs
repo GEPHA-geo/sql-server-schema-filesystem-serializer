@@ -13,11 +13,11 @@ public class IndexDDLGenerator
                 return change.NewDefinition;
                 
             case ChangeType.Deleted:
-                return $"DROP INDEX IF EXISTS [{change.ObjectName}] ON [{change.Schema}].[{change.TableName}];";
+                return $"DROP INDEX [{change.ObjectName}] ON [{change.Schema}].[{change.TableName}];";
                 
             case ChangeType.Modified:
                 // Always drop and recreate indexes
-                var dropDDL = $"DROP INDEX IF EXISTS [{change.ObjectName}] ON [{change.Schema}].[{change.TableName}];";
+                var dropDDL = $"DROP INDEX [{change.ObjectName}] ON [{change.Schema}].[{change.TableName}];";
                 return $"{dropDDL}\nGO\n\n{change.NewDefinition}";
                 
             default:

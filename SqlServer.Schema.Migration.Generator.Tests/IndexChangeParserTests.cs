@@ -115,6 +115,29 @@ WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF,
     }
     
     [Fact]
+    public void ParseIndexChange_WithIDXPrefixInFilename_ShouldExtractActualIndexNameFromContent()
+    {
+        // Arrange
+        var entry = new DiffEntry
+        {
+            Path = "servers/server1/db1/schemas/dbo/Tables/er_pac_zg_koef_cvl/IDX_IX_er_pac_zg_koef_cvl.sql",
+            ChangeType = ChangeType.Deleted,
+            OldContent = @"CREATE NONCLUSTERED INDEX [IX_er_pac_zg_koef_cvl]
+    ON [dbo].[er_pac_zg_koef_cvl]([pn] ASC);"
+        };
+        
+        // Act
+        var change = _parser.ParseIndexChange(entry);
+        
+        // Assert
+        Assert.NotNull(change);
+        Assert.Equal("IX_er_pac_zg_koef_cvl", change.ObjectName); // Should be without IDX_ prefix
+        Assert.Equal("dbo", change.Schema);
+        Assert.Equal("er_pac_zg_koef_cvl", change.TableName);
+        Assert.Equal(ChangeType.Deleted, change.ChangeType);
+    }
+
+    [Fact]
     public void ParseIndexChange_WithInvalidPathButValidContent_ShouldExtractFromContent()
     {
         // Arrange

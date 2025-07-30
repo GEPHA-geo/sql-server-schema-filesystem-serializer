@@ -48,7 +48,7 @@ public class IndexDDLGeneratorTests
         var ddl = _generator.GenerateIndexDDL(change);
         
         // Assert
-        Assert.Equal("DROP INDEX IF EXISTS [IX_Customer_Name] ON [dbo].[Customer];", ddl);
+        Assert.Equal("DROP INDEX [IX_Customer_Name] ON [dbo].[Customer];", ddl);
     }
     
     [Fact]
@@ -70,7 +70,7 @@ public class IndexDDLGeneratorTests
         var ddl = _generator.GenerateIndexDDL(change);
         
         // Assert
-        Assert.Contains("DROP INDEX IF EXISTS [IX_Product_Category] ON [dbo].[Product];", ddl);
+        Assert.Contains("DROP INDEX [IX_Product_Category] ON [dbo].[Product];", ddl);
         Assert.Contains("GO", ddl);
         Assert.Contains(change.NewDefinition, ddl);
     }

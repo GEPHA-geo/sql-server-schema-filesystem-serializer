@@ -91,20 +91,27 @@ public class TableChangeParser
                 foreach (var newCol in newColumns)
                 {
                     var oldCol = oldColumns.FirstOrDefault(c => c.Name == newCol.Name);
-                    if (oldCol != null && oldCol.Definition != newCol.Definition)
+                    if (oldCol != null)
                     {
-                        changes.Add(new SchemaChange
+                        // Normalize both definitions for comparison to avoid false positives from whitespace/formatting differences
+                        var normalizedOld = NormalizeColumnDefinition(oldCol.Definition);
+                        var normalizedNew = NormalizeColumnDefinition(newCol.Definition);
+                        
+                        if (normalizedOld != normalizedNew)
                         {
-                            ObjectType = "Column",
-                            Schema = tableInfo.Value.Schema,
-                            TableName = tableInfo.Value.TableName,
-                            ObjectName = newCol.Name,
-                            ColumnName = newCol.Name,
-                            ChangeType = ChangeType.Modified,
-                            OldDefinition = oldCol.Definition,
-                            NewDefinition = newCol.Definition,
-                            Properties = new Dictionary<string, string> { ["DataType"] = newCol.DataType }
-                        });
+                            changes.Add(new SchemaChange
+                            {
+                                ObjectType = "Column",
+                                Schema = tableInfo.Value.Schema,
+                                TableName = tableInfo.Value.TableName,
+                                ObjectName = newCol.Name,
+                                ColumnName = newCol.Name,
+                                ChangeType = ChangeType.Modified,
+                                OldDefinition = oldCol.Definition,
+                                NewDefinition = newCol.Definition,
+                                Properties = new Dictionary<string, string> { ["DataType"] = newCol.DataType }
+                            });
+                        }
                     }
                 }
             }
@@ -196,6 +203,13 @@ public class TableChangeParser
             result.Add(current.ToString());
             
         return result;
+    }
+
+    // Normalizes column definitions to avoid false positives in change detection due to whitespace/formatting differences
+    string NormalizeColumnDefinition(string definition)
+    {
+        // Remove extra whitespace and normalize
+        return Regex.Replace(definition.Trim(), @"\s+", " ");
     }
 
     class ColumnInfo

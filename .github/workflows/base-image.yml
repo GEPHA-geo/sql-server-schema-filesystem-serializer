@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: gepha-geo/dotnet-runtime-git-docker
+  IMAGE_NAME: gepha-geo/dotnet-sdk-git-docker
 
 jobs:
   build-base:
@@ -58,5 +58,5 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/orgs/GEPHA-geo/packages/container/dotnet-runtime-git" \
+            "https://api.github.com/orgs/GEPHA-geo/packages/container/dotnet-sdk-git-docker" \
             -d '{"visibility":"public"}' || echo "Failed to make package public - may need manual configuration"

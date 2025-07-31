@@ -180,6 +180,35 @@ public class DacpacScriptParser
                 statement.Name = match.Groups[2].Value;
             }
         }
+        else if (Regex.IsMatch(statementText, @"EXEC(UTE)?\s+(sys\.)?sp_addextendedproperty", RegexOptions.IgnoreCase))
+        {
+            statement.Type = ObjectType.ExtendedProperty;
+            // Extract table and schema from the sp_addextendedproperty call
+            var match = Regex.Match(statementText, 
+                @"@level0name\s*=\s*N?'([^']+)'.*?@level1name\s*=\s*N?'([^']+)'", 
+                RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            if (match.Success)
+            {
+                statement.Schema = match.Groups[1].Value;
+                statement.ParentTable = match.Groups[2].Value;
+                
+                // Extract property name
+                var nameMatch = Regex.Match(statementText, @"@name\s*=\s*N?'([^']+)'", RegexOptions.IgnoreCase);
+                if (nameMatch.Success)
+                {
+                    // Check if this is a column description
+                    var columnMatch = Regex.Match(statementText, @"@level2name\s*=\s*N?'([^']+)'", RegexOptions.IgnoreCase);
+                    if (columnMatch.Success)
+                    {
+                        statement.Name = $"Column_Description_{columnMatch.Groups[1].Value}";
+                    }
+                    else
+                    {
+                        statement.Name = nameMatch.Groups[1].Value;
+                    }
+                }
+            }
+        }
         else
         {
             // Skip statements we don't handle
@@ -238,7 +267,8 @@ public class DacpacScriptParser
         type == ObjectType.CheckConstraint ||
         type == ObjectType.DefaultConstraint ||
         type == ObjectType.Index ||
-        type == ObjectType.Trigger;
+        type == ObjectType.Trigger ||
+        type == ObjectType.ExtendedProperty;
 
     void ProcessObjectGroup(KeyValuePair<string, List<SqlStatement>> objectGroup, string basePath)
     {
@@ -328,6 +358,7 @@ public class DacpacScriptParser
         ObjectType.DefaultConstraint => "DF",
         ObjectType.Index => "IDX",
         ObjectType.Trigger => "TR",
+        ObjectType.ExtendedProperty => "EP",
         _ => ""
     };
 
@@ -379,6 +410,7 @@ public class DacpacScriptParser
             ["VIEW"] = CountPattern(script, @"CREATE\s+VIEW"),
             ["PROCEDURE"] = CountPattern(script, @"CREATE\s+PROCEDURE"),
             ["FUNCTION"] = CountPattern(script, @"CREATE\s+FUNCTION"),
+            ["EXTENDED PROPERTY"] = CountPattern(script, @"sp_addextendedproperty"),
             ["INLINE PRIMARY KEY"] = CountPattern(script, @"CONSTRAINT\s+\[[^\]]+\]\s+PRIMARY\s+KEY")
         };
         
@@ -417,6 +449,8 @@ public class DacpacScriptParser
             parsedCounts.GetValueOrDefault(ObjectType.StoredProcedure, 0));
         CheckCount("Functions", originalCounts["FUNCTION"], 
             parsedCounts.GetValueOrDefault(ObjectType.Function, 0));
+        CheckCount("Extended Properties", originalCounts.GetValueOrDefault("EXTENDED PROPERTY", 0), 
+            parsedCounts.GetValueOrDefault(ObjectType.ExtendedProperty, 0));
         
         // Warn about unparsed statements
         var totalOriginal = originalCounts.Values.Sum();
@@ -469,5 +503,6 @@ public enum ObjectType
     Trigger,
     View,
     StoredProcedure,
-    Function
+    Function,
+    ExtendedProperty
 }

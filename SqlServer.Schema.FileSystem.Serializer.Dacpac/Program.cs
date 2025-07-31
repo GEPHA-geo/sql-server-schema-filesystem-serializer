@@ -37,7 +37,16 @@ internal static class Program
             var sourceBuilder = new SqlConnectionStringBuilder(sourceConnectionString);
             var sourceDatabaseName = sourceBuilder.InitialCatalog;
             
-            dacServices.Extract(dacpacPath, sourceDatabaseName, "DacpacStructureGenerator", new Version(1, 0));
+            // Configure extract options to include extended properties
+            var extractOptions = new DacExtractOptions
+            {
+                ExtractAllTableData = false,
+                IgnoreExtendedProperties = false,  // Include extended properties (column descriptions)
+                IgnorePermissions = true,
+                IgnoreUserLoginMappings = true
+            };
+            
+            dacServices.Extract(dacpacPath, sourceDatabaseName, "DacpacStructureGenerator", new Version(1, 0), null, null, extractOptions);
             Console.WriteLine($"DACPAC extracted successfully to: {dacpacPath}");
 
             // Load the DACPAC
@@ -51,6 +60,7 @@ internal static class Program
                 IgnoreUserSettingsObjects = true,
                 IgnoreLoginSids = true,
                 IgnoreRoleMembership = true,
+                IgnoreExtendedProperties = false,  // Include column descriptions and other extended properties
                 ExcludeObjectTypes =
                 [
                     Microsoft.SqlServer.Dac.ObjectType.Users,

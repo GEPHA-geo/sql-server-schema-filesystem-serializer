@@ -46,6 +46,12 @@ public class SqlFileChangeDetector
                         changes.Add(triggerChange);
                     break;
                     
+                case "ExtendedProperty":
+                    var extendedPropertyChange = ParseExtendedPropertyChange(entry);
+                    if (extendedPropertyChange != null)
+                        changes.Add(extendedPropertyChange);
+                    break;
+                    
                 case "View":
                 case "StoredProcedure":
                 case "Function":
@@ -72,6 +78,8 @@ public class SqlFileChangeDetector
             return "Constraint";
         if (filePath.Contains("/Tables/") && filePath.Contains("/trg_"))
             return "Trigger";
+        if (filePath.Contains("/Tables/") && filePath.Contains("/EP_"))
+            return "ExtendedProperty";
         if (filePath.Contains("/Views/"))
             return "View";
         if (filePath.Contains("/StoredProcedures/"))
@@ -109,6 +117,23 @@ public class SqlFileChangeDetector
             Schema = triggerInfo.Value.Schema,
             ObjectName = triggerInfo.Value.TriggerName,
             TableName = triggerInfo.Value.TableName,
+            ChangeType = entry.ChangeType,
+            OldDefinition = entry.OldContent,
+            NewDefinition = entry.NewContent
+        };
+    }
+    
+    SchemaChange? ParseExtendedPropertyChange(DiffEntry entry)
+    {
+        var extPropInfo = ExtractExtendedPropertyInfo(entry.Path);
+        if (extPropInfo == null) return null;
+        
+        return new SchemaChange
+        {
+            ObjectType = "ExtendedProperty",
+            Schema = extPropInfo.Value.Schema,
+            ObjectName = extPropInfo.Value.PropertyName,
+            TableName = extPropInfo.Value.TableName,
             ChangeType = entry.ChangeType,
             OldDefinition = entry.OldContent,
             NewDefinition = entry.NewContent
@@ -169,6 +194,21 @@ public class SqlFileChangeDetector
             var tableName = match.Groups[2].Value;
             var triggerName = match.Groups[3].Value;
             return (schema, tableName, triggerName);
+        }
+        
+        return null;
+    }
+    
+    (string Schema, string TableName, string PropertyName)? ExtractExtendedPropertyInfo(string filePath)
+    {
+        // Extract from file path (e.g., "database/schemas/dbo/Tables/Customer/EP_Column_Description_CustomerName.sql")
+        var match = Regex.Match(filePath, @"[^/]+/schemas/([^/]+)/Tables/([^/]+)/(EP_[^.]+)\.sql$");
+        if (match.Success)
+        {
+            var schema = match.Groups[1].Value;
+            var tableName = match.Groups[2].Value;
+            var propertyName = match.Groups[3].Value;
+            return (schema, tableName, propertyName);
         }
         
         return null;

@@ -254,19 +254,7 @@ internal static class Program
                 validateMigration: true,
                 customCommitMessage: commitMessage);
 
-            Console.WriteLine(changesDetected ? $"Migration files generated in: {migrationsPath}" : "No schema changes detected.");
-            
-            // Validate migration generation consistency
-            var validationResult = ValidateMigrationGeneration(outputPath, targetServer, targetDatabase, migrationsPath, changesDetected);
-            if (!validationResult.IsValid)
-            {
-                Console.WriteLine($"❌ Migration validation failed: {validationResult.ErrorMessage}");
-                Environment.Exit(1);
-            }
-            else
-            {
-                Console.WriteLine("✓ Migration validation passed");
-            }
+            Console.WriteLine(changesDetected ? $"✓ Migration files generated in: {migrationsPath}" : "No schema changes detected.");
         }
         catch (Exception ex)
         {

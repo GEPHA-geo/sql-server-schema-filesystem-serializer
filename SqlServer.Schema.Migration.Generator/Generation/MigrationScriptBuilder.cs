@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using SqlServer.Schema.Migration.Generator.Parsing;
 
 namespace SqlServer.Schema.Migration.Generator.Generation;
@@ -67,11 +68,46 @@ public class MigrationScriptBuilder
                 }
             }
             
+            // Filter out default constraints for columns being dropped
+            var columnsBeingDropped = dropOperations
+                .Where(c => c.ObjectType == "Column")
+                .Select(c => new { c.Schema, c.TableName, c.ColumnName })
+                .ToHashSet();
+            
+            var filteredDropOperations = dropOperations.Where(change =>
+            {
+                // Keep all non-constraint drops
+                if (change.ObjectType != "Constraint") return true;
+                
+                // Check if this is a default constraint for a column being dropped
+                if (change.ObjectName.StartsWith("DF_") && change.OldDefinition != null)
+                {
+                    // Try to extract the column name from the constraint definition
+                    var match = Regex.Match(change.OldDefinition, @"DEFAULT.*?FOR\s+\[([^\]]+)\]", RegexOptions.IgnoreCase);
+                    
+                    if (match.Success)
+                    {
+                        var columnName = match.Groups[1].Value;
+                        // Check if this column is being dropped
+                        if (columnsBeingDropped.Any(c => 
+                            c.Schema == change.Schema && 
+                            c.TableName == change.TableName && 
+                            c.ColumnName == columnName))
+                        {
+                            Console.WriteLine($"Filtering out default constraint {change.ObjectName} as column {columnName} is being dropped");
+                            return false;
+                        }
+                    }
+                }
+                
+                return true;
+            }).ToList();
+            
             // Process drops second (in reverse dependency order)
-            if (dropOperations.Any())
+            if (filteredDropOperations.Any())
             {
                 sb.AppendLine("-- Drop operations");
-                foreach (var change in dropOperations)
+                foreach (var change in filteredDropOperations)
                 {
                     sb.AppendLine(_ddlGenerator.GenerateDDL(change));
                     sb.AppendLine("GO");

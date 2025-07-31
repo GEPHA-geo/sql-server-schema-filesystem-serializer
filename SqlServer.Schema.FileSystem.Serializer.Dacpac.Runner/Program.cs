@@ -1,26 +1,76 @@
+using System.CommandLine;
 using Microsoft.Data.SqlClient;
 using Microsoft.SqlServer.Dac;
 using SqlServer.Schema.FileSystem.Serializer.Dacpac.Core;
+using SqlServer.Schema.Migration.Generator.GitIntegration;
 
 namespace SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner;
 
 internal static class Program
 {
-    static async Task Main(string[] args)
+    static async Task<int> Main(string[] args)
     {
-        if (args.Length != 3)
-        {
-            Console.WriteLine("Usage: DacpacStructureGenerator <sourceConnectionString> <targetConnectionString> <outputPath>");
-            Console.WriteLine();
-            Console.WriteLine("Example:");
-            Console.WriteLine(@"  DacpacStructureGenerator ""Server=dev;Database=DevDB;..."" ""Server=prod;Database=ProdDB;..."" ""/output""");
-            return;
-        }
-
-        var sourceConnectionString = args[0];
-        var targetConnectionString = args[1];
-        var outputPath = args[2];
+        var rootCommand = new RootCommand("SQL Server DACPAC Structure Generator - Extracts database schema and generates file-based representation");
         
+        // Define required options
+        var sourceConnectionOption = new Option<string>(
+            aliases: new[] { "--source-connection", "-s" },
+            description: "Source database connection string"
+        ) { IsRequired = true };
+        
+        var targetConnectionOption = new Option<string>(
+            aliases: new[] { "--target-connection", "-t" },
+            description: "Target database connection string (used for organizing output)"
+        ) { IsRequired = true };
+        
+        var outputPathOption = new Option<string>(
+            aliases: new[] { "--output-path", "-o" },
+            description: "Output directory path for generated schema files"
+        ) { IsRequired = true };
+        
+        // Define optional commit message option
+        var commitMessageOption = new Option<string?>(
+            aliases: new[] { "--commit-message", "-m" },
+            description: "Custom git commit message for database structure changes"
+        ) { IsRequired = false };
+        
+        // Add options to root command
+        rootCommand.AddOption(sourceConnectionOption);
+        rootCommand.AddOption(targetConnectionOption);
+        rootCommand.AddOption(outputPathOption);
+        rootCommand.AddOption(commitMessageOption);
+        
+        // Set handler
+        rootCommand.SetHandler(async (string sourceConnection, string targetConnection, string outputPath, string? commitMessage) =>
+        {
+            await RunDacpacExtraction(sourceConnection, targetConnection, outputPath, commitMessage);
+        }, sourceConnectionOption, targetConnectionOption, outputPathOption, commitMessageOption);
+        
+        // Support legacy positional arguments for backward compatibility
+        if (args.Length >= 3 && !args.Any(arg => arg.StartsWith("-")))
+        {
+            // Convert positional arguments to named options
+            var newArgs = new List<string>
+            {
+                "--source-connection", args[0],
+                "--target-connection", args[1],
+                "--output-path", args[2]
+            };
+            
+            if (args.Length >= 4)
+            {
+                newArgs.Add("--commit-message");
+                newArgs.Add(args[3]);
+            }
+            
+            args = newArgs.ToArray();
+        }
+        
+        return await rootCommand.InvokeAsync(args);
+    }
+    
+    static async Task RunDacpacExtraction(string sourceConnectionString, string targetConnectionString, string outputPath, string? commitMessage)
+    {
         // Extract target server and database from target connection string
         var targetBuilder = new SqlConnectionStringBuilder(targetConnectionString);
         var targetServer = targetBuilder.DataSource.Replace('\\', '-').Replace(':', '-'); // Sanitize for folder names
@@ -31,6 +81,10 @@ internal static class Program
         Console.WriteLine($"Target Server (sanitized): {targetServer}");
         Console.WriteLine($"Target Database: {targetDatabase}");
         Console.WriteLine($"Target Path: servers/{targetServer}/{targetDatabase}/");
+        if (!string.IsNullOrWhiteSpace(commitMessage))
+        {
+            Console.WriteLine($"Commit Message: {commitMessage}");
+        }
 
         // Configure Git safe directory for Docker environments
         ConfigureGitSafeDirectory(outputPath);
@@ -46,7 +100,7 @@ internal static class Program
             Console.WriteLine($"Running in GitHub Actions: {!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"))}");
             
             // Ensure we're on origin/main with clean state before generating files
-            var gitAnalyzer = new Migration.Generator.GitIntegration.GitDiffAnalyzer();
+            var gitAnalyzer = new GitDiffAnalyzer();
             if (gitAnalyzer.IsGitRepository(outputPath))
             {
                 try
@@ -143,11 +197,12 @@ internal static class Program
             
             if (Directory.Exists(targetOutputPath))
             {
-                Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving z_migrations)");
+                Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving z_migrations and z_migrations_reverse)");
                 
                 // Get all subdirectories except migrations
                 var subdirs = Directory.GetDirectories(targetOutputPath)
-                    .Where(d => !Path.GetFileName(d).Equals("z_migrations", StringComparison.OrdinalIgnoreCase))
+                    .Where(d => !Path.GetFileName(d).Equals("z_migrations", StringComparison.OrdinalIgnoreCase) &&
+                               !Path.GetFileName(d).Equals("z_migrations_reverse", StringComparison.OrdinalIgnoreCase))
                     .ToList();
                 
                 // Delete each subdirectory
@@ -181,6 +236,43 @@ internal static class Program
             }
             
             Console.WriteLine($"Database structure generated successfully at: {targetOutputPath}");
+            
+            // Commit the database structure changes if there are any
+            if (gitAnalyzer.IsGitRepository(outputPath))
+            {
+                try
+                {
+                    // Check for uncommitted changes in the database directory
+                    var dbPath = Path.Combine("servers", targetServer, targetDatabase);
+                    var changes = gitAnalyzer.GetUncommittedChanges(outputPath, dbPath);
+                    
+                    if (changes.Any())
+                    {
+                        Console.WriteLine($"\nDetected {changes.Count} changed files in database structure");
+                        
+                        // Determine commit message
+                        var actualCommitMessage = string.IsNullOrWhiteSpace(commitMessage) 
+                            ? $"Update database structure for {targetServer}/{targetDatabase}" 
+                            : commitMessage;
+                        
+                        Console.WriteLine($"Committing changes with message: {actualCommitMessage}");
+                        
+                        // Commit only the database structure changes (not migrations)
+                        gitAnalyzer.CommitSpecificFiles(outputPath, dbPath, actualCommitMessage);
+                        
+                        Console.WriteLine("✓ Database structure changes committed successfully");
+                    }
+                    else
+                    {
+                        Console.WriteLine("\nNo database structure changes to commit");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Warning: Could not commit database structure changes: {ex.Message}");
+                    // Don't fail the entire process if commit fails
+                }
+            }
             
             // Generate migrations
             Console.WriteLine("\nChecking for schema changes...");

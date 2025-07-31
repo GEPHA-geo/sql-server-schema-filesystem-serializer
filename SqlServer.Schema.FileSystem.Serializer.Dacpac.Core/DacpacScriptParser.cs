@@ -404,7 +404,7 @@ public class DacpacScriptParser
             ["PRIMARY KEY"] = CountPattern(script, @"ALTER\s+TABLE\s+[^\s]+\s+ADD\s+CONSTRAINT\s+[^\s]+\s+PRIMARY\s+KEY"),
             ["FOREIGN KEY"] = CountPattern(script, @"ADD\s+CONSTRAINT\s+\[FK_[^\]]+\]\s+FOREIGN\s+KEY"),
             ["CHECK"] = CountPattern(script, @"WITH\s+CHECK\s+ADD\s+CONSTRAINT.*CHECK\s*\("),
-            ["DEFAULT"] = CountPattern(script, @"DEFAULT\s*\("),
+            ["DEFAULT"] = CountPattern(script, @"ADD\s+CONSTRAINT\s+\[[^\]]+\]\s+DEFAULT"),
             ["INDEX"] = CountPattern(script, @"CREATE\s+(UNIQUE\s+)?(CLUSTERED\s+|NONCLUSTERED\s+)?INDEX"),
             ["TRIGGER"] = CountPattern(script, @"CREATE\s+TRIGGER"),
             ["VIEW"] = CountPattern(script, @"CREATE\s+VIEW"),

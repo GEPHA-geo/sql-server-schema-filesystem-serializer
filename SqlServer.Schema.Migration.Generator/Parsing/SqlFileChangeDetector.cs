@@ -95,11 +95,27 @@ public class SqlFileChangeDetector
         var schemaObjectName = ExtractSchemaAndObjectName(entry.Path);
         if (schemaObjectName == null) return null;
         
+        // For constraints in table folders, extract table name from the object name
+        // The object name might be in format "table_name/constraint_name"
+        string tableName = null;
+        string constraintName = schemaObjectName.Value.ObjectName;
+        
+        if (constraintName.Contains("/"))
+        {
+            var parts = constraintName.Split('/');
+            if (parts.Length == 2)
+            {
+                tableName = parts[0];
+                constraintName = parts[1];
+            }
+        }
+        
         return new SchemaChange
         {
             ObjectType = "Constraint",
             Schema = schemaObjectName.Value.Schema,
-            ObjectName = schemaObjectName.Value.ObjectName,
+            ObjectName = constraintName,
+            TableName = tableName,
             ChangeType = entry.ChangeType,
             OldDefinition = entry.OldContent,
             NewDefinition = entry.NewContent

@@ -307,4 +307,66 @@ public class DDLGeneratorTests
         // Assert
         Assert.Equal("ALTER TABLE [dbo].[Customer] DROP CONSTRAINT [DF_Customer_Created];", ddl);
     }
+
+    [Fact]
+    public void GenerateDDL_ForDefaultConstraintFromTableFolder_ShouldGenerateProperDropStatement()
+    {
+        // Arrange - simulating the constraint parsed from er_pac_zg_koef_cvl/DF_er_pac_zg_koef_cvl_axali_sveti
+        var change = new SchemaChange
+        {
+            ObjectType = "Constraint",
+            Schema = "dbo",
+            TableName = "er_pac_zg_koef_cvl",
+            ObjectName = "DF_er_pac_zg_koef_cvl_axali_sveti",
+            ChangeType = ChangeType.Deleted
+        };
+        
+        // Act
+        var ddl = _generator.GenerateDDL(change);
+        
+        // Assert
+        Assert.Equal("ALTER TABLE [dbo].[er_pac_zg_koef_cvl] DROP CONSTRAINT [DF_er_pac_zg_koef_cvl_axali_sveti];", ddl);
+        // Should NOT be a comment like "-- Drop constraint: er_pac_zg_koef_cvl/DF_er_pac_zg_koef_cvl_axali_sveti"
+        Assert.DoesNotContain("--", ddl);
+    }
+
+    [Fact]
+    public void MigrationScriptBuilder_ShouldFilterOutDefaultConstraintsForDroppedColumns()
+    {
+        // Arrange
+        var builder = new MigrationScriptBuilder();
+        var changes = new List<SchemaChange>
+        {
+            // Column being dropped
+            new SchemaChange
+            {
+                ObjectType = "Column",
+                Schema = "dbo",
+                TableName = "er_pac_zg_koef_cvl",
+                ColumnName = "axali_sveti",
+                ChangeType = ChangeType.Deleted
+            },
+            // Default constraint for the column being dropped
+            new SchemaChange
+            {
+                ObjectType = "Constraint",
+                Schema = "dbo",
+                TableName = "er_pac_zg_koef_cvl",
+                ObjectName = "DF_er_pac_zg_koef_cvl_axali_sveti",
+                ChangeType = ChangeType.Deleted,
+                OldDefinition = "ALTER TABLE [dbo].[er_pac_zg_koef_cvl] ADD CONSTRAINT [DF_er_pac_zg_koef_cvl_axali_sveti] DEFAULT ('') FOR [axali_sveti];"
+            }
+        };
+        
+        // Act
+        var migration = builder.BuildMigration(changes, "TestDB", "test-user");
+        
+        // Assert
+        // Should contain the column drop
+        Assert.Contains("DROP COLUMN [axali_sveti]", migration);
+        
+        // Should NOT contain the constraint drop (neither as SQL nor as comment)
+        Assert.DoesNotContain("DROP CONSTRAINT [DF_er_pac_zg_koef_cvl_axali_sveti]", migration);
+        Assert.DoesNotContain("-- Drop constraint: DF_er_pac_zg_koef_cvl_axali_sveti", migration);
+    }
 }

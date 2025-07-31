@@ -78,8 +78,38 @@ public class SqlFileChangeDetectorTests
         Assert.Single(changes);
         var change = changes[0];
         Assert.Equal("Constraint", change.ObjectType);
-        Assert.Equal("Order/FK_Order_Customer", change.ObjectName);
+        Assert.Equal("FK_Order_Customer", change.ObjectName);
+        Assert.Equal("Order", change.TableName);
     }
+
+    [Fact]
+    public void AnalyzeChanges_WithConstraintInTableFolder_ShouldExtractTableNameAndConstraintName()
+    {
+        // Arrange
+        var diffEntries = new List<DiffEntry>
+        {
+            new DiffEntry
+            {
+                Path = "servers/pharm-n1.pharm.local/abc/schemas/dbo/Tables/er_pac_zg_koef_cvl/DF_er_pac_zg_koef_cvl_axali_sveti.sql",
+                ChangeType = ChangeType.Deleted,
+                OldContent = "ALTER TABLE [dbo].[er_pac_zg_koef_cvl] ADD CONSTRAINT [DF_er_pac_zg_koef_cvl_axali_sveti] DEFAULT ('') FOR [axali_sveti];"
+            }
+        };
+        
+        // Act
+        var changes = _detector.AnalyzeChanges("/output", diffEntries);
+        
+        // Assert
+        Assert.Single(changes);
+        var change = changes[0];
+        Assert.Equal("Constraint", change.ObjectType);
+        Assert.Equal("DF_er_pac_zg_koef_cvl_axali_sveti", change.ObjectName);
+        Assert.Equal("er_pac_zg_koef_cvl", change.TableName);
+        Assert.Equal("dbo", change.Schema);
+        Assert.Equal(ChangeType.Deleted, change.ChangeType);
+    }
+
+
     
     [Fact]
     public void AnalyzeChanges_WithTriggerChanges_ShouldDetectTriggerChanges()

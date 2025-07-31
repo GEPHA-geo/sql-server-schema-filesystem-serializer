@@ -54,6 +54,7 @@ public class MigrationGenerator
             var changes = _gitAnalyzer.GetUncommittedChanges(outputPath, Path.Combine("servers", targetServer, targetDatabase));
             if (!changes.Any())
             {
+                Console.WriteLine("No uncommitted changes detected by git");
                 return false;
             }
             
@@ -64,6 +65,7 @@ public class MigrationGenerator
             if (!schemaChanges.Any())
             {
                 Console.WriteLine("No schema changes requiring migration");
+                Console.WriteLine($"[DEBUG] Files checked: {changes.Count}, but none had schema changes");
                 return false;
             }
             
@@ -114,15 +116,30 @@ public class MigrationGenerator
             await File.WriteAllTextAsync(reverseMigrationPath, reverseMigrationScript);
             Console.WriteLine($"Generated reverse migration: z_migrations_reverse/{filename}");
             
+            // Validate before committing - check that migration files exist in git's uncommitted changes
+            var allUncommittedChanges = _gitAnalyzer.GetUncommittedChanges(outputPath, "");
+            var migrationFileCreated = allUncommittedChanges.Any(c => c.Path.Contains($"/z_migrations/{filename}"));
+            var reverseMigrationFileCreated = allUncommittedChanges.Any(c => c.Path.Contains($"/z_migrations_reverse/{filename}"));
+            
+            if (!migrationFileCreated || !reverseMigrationFileCreated)
+            {
+                Console.WriteLine($"❌ Validation failed: Migration files were not detected by git");
+                Console.WriteLine($"Migration file detected: {migrationFileCreated}");
+                Console.WriteLine($"Reverse migration file detected: {reverseMigrationFileCreated}");
+                return false;
+            }
+            
             // Commit changes
             var commitMessage = customCommitMessage ?? $"Schema update: {description}";
             _gitAnalyzer.CommitChanges(outputPath, commitMessage);
             
+            // Return true since we successfully created migration files
             return true;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error generating migrations: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             return false;
         }
     }

@@ -5,6 +5,7 @@ public class MigrationGenerator
     readonly GitIntegration.GitDiffAnalyzer _gitAnalyzer = new();
     readonly Parsing.SqlFileChangeDetector _changeDetector = new();
     readonly Generation.MigrationScriptBuilder _scriptBuilder = new();
+    readonly Generation.ReverseMigrationBuilder _reverseScriptBuilder = new();
 
     public bool GenerateMigrations(string outputPath, string targetServer, string targetDatabase, string migrationsPath, string? actor = null)
     {
@@ -24,6 +25,10 @@ public class MigrationGenerator
         {
             // Ensure migrations directory exists
             Directory.CreateDirectory(migrationsPath);
+            
+            // Create reverse migrations directory
+            var reverseMigrationsPath = Path.Combine(Path.GetDirectoryName(migrationsPath)!, "z_migrations_reverse");
+            Directory.CreateDirectory(reverseMigrationsPath);
             
             // Check if migrations directory is empty (first run for this server/database)
             var existingMigrations = Directory.GetFiles(migrationsPath, "*.sql");
@@ -64,6 +69,9 @@ public class MigrationGenerator
             // Generate migration script
             var migrationScript = _scriptBuilder.BuildMigration(schemaChanges, targetDatabase, actor);
             
+            // Generate reverse migration script
+            var reverseMigrationScript = _reverseScriptBuilder.BuildReverseMigration(schemaChanges, targetDatabase, actor);
+            
             // Save migration file
             var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
             var description = GenerateDescription(schemaChanges);
@@ -73,6 +81,7 @@ public class MigrationGenerator
             
             var filename = $"_{timestamp}_{sanitizedActor}_{description}.sql";
             var migrationPath = Path.Combine(migrationsPath, filename);
+            var reverseMigrationPath = Path.Combine(reverseMigrationsPath, filename);
             
             // Validate migration if requested and connection string provided
             // TODO: Enable validation after resolving Git export issues in Windows/WSL environment
@@ -100,6 +109,9 @@ public class MigrationGenerator
             
             await File.WriteAllTextAsync(migrationPath, migrationScript);
             Console.WriteLine($"Generated migration: {filename}");
+            
+            await File.WriteAllTextAsync(reverseMigrationPath, reverseMigrationScript);
+            Console.WriteLine($"Generated reverse migration: z_migrations_reverse/{filename}");
             
             // Commit changes
             _gitAnalyzer.CommitChanges(outputPath, $"Schema update: {description}");

@@ -645,7 +645,7 @@ generated_script.sql
         return string.Empty;
     }
 
-    string RunGitCommand(string workingDirectory, string arguments)
+    static string RunGitCommand(string workingDirectory, string arguments)
     {
         // Ensure the working directory exists
         if (!Directory.Exists(workingDirectory))

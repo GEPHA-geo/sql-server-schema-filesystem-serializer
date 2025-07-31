@@ -86,11 +86,12 @@ internal static class Program
             var targetOutputPath = Path.Combine(outputPath, "servers", targetServer, targetDatabase);
             if (Directory.Exists(targetOutputPath))
             {
-                Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving z_migrations)");
-                
-                // Get all subdirectories except z_migrations
+                Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving z_migrations and z_migrations_reverse)");
+
+                // Get all subdirectories except z_migrations and z_migrations_reverse
                 var subdirs = Directory.GetDirectories(targetOutputPath)
-                    .Where(d => !Path.GetFileName(d).Equals("z_migrations", StringComparison.OrdinalIgnoreCase))
+                    .Where(d => !Path.GetFileName(d).Equals("z_migrations", StringComparison.OrdinalIgnoreCase) &&
+                               !Path.GetFileName(d).Equals("z_migrations_reverse", StringComparison.OrdinalIgnoreCase))
                     .ToList();
                 
                 // Delete each subdirectory

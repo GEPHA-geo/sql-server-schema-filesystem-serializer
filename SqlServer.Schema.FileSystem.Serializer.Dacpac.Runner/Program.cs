@@ -85,7 +85,16 @@ internal static class Program
 
             try
             {
-                dacServices.Extract(dacpacPath, sourceDatabaseName, "DacpacStructureGenerator", new Version(1, 0));
+                // Configure extract options to include extended properties
+                var extractOptions = new DacExtractOptions
+                {
+                    ExtractAllTableData = false,
+                    IgnoreExtendedProperties = false,  // Include extended properties (column descriptions)
+                    IgnorePermissions = true,
+                    IgnoreUserLoginMappings = true
+                };
+                
+                dacServices.Extract(dacpacPath, sourceDatabaseName, "DacpacStructureGenerator", new Version(1, 0), null, null, extractOptions);
             }
             catch (Exception e)
             {
@@ -106,6 +115,7 @@ internal static class Program
                 IgnoreUserSettingsObjects = true,
                 IgnoreLoginSids = true,
                 IgnoreRoleMembership = true,
+                IgnoreExtendedProperties = false,  // Include column descriptions and other extended properties
                 ExcludeObjectTypes =
                 [
                     Microsoft.SqlServer.Dac.ObjectType.Users,

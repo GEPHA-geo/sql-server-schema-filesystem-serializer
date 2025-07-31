@@ -26,6 +26,7 @@ public class DDLGenerator
             "View" => GenerateViewDDL(change),
             "StoredProcedure" => GenerateStoredProcedureDDL(change),
             "Function" => GenerateFunctionDDL(change),
+            "ExtendedProperty" => GenerateExtendedPropertyDDL(change),
             _ => $"-- Unsupported object type: {change.ObjectType}"
         };
     }
@@ -118,6 +119,28 @@ public class DDLGenerator
                 
             default:
                 return $"-- Unknown change type for function: {change.ObjectName}";
+        }
+    }
+    
+    string GenerateExtendedPropertyDDL(SchemaChange change)
+    {
+        switch (change.ChangeType)
+        {
+            case ChangeType.Added:
+                // Extended properties are created using their full definition (sp_addextendedproperty)
+                return change.NewDefinition;
+                
+            case ChangeType.Deleted:
+                // Extract property details from the definition to create DROP statement
+                // For now, return the full definition with a comment
+                return $"-- TODO: Generate DROP extended property statement\n-- {change.NewDefinition}";
+                
+            case ChangeType.Modified:
+                // Drop and recreate the extended property
+                return $"-- TODO: Generate UPDATE extended property statement\n-- {change.NewDefinition}";
+                
+            default:
+                return $"-- Unknown change type for extended property: {change.ObjectName}";
         }
     }
 

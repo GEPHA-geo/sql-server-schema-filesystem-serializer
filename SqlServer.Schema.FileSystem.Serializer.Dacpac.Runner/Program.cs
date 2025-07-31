@@ -6,6 +6,8 @@ using SqlServer.Schema.Migration.Generator.GitIntegration;
 
 namespace SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner;
 
+internal record MigrationValidationResult(bool IsValid, string? ErrorMessage = null);
+
 internal static class Program
 {
     static async Task<int> Main(string[] args)
@@ -28,23 +30,17 @@ internal static class Program
             description: "Output directory path for generated schema files"
         ) { IsRequired = true };
         
-        // Define optional commit message option
-        var commitMessageOption = new Option<string?>(
-            aliases: new[] { "--commit-message", "-m" },
-            description: "Custom git commit message for database structure changes"
-        ) { IsRequired = false };
         
         // Add options to root command
         rootCommand.AddOption(sourceConnectionOption);
         rootCommand.AddOption(targetConnectionOption);
         rootCommand.AddOption(outputPathOption);
-        rootCommand.AddOption(commitMessageOption);
         
         // Set handler
-        rootCommand.SetHandler(async (string sourceConnection, string targetConnection, string outputPath, string? commitMessage) =>
+        rootCommand.SetHandler(async (string sourceConnection, string targetConnection, string outputPath) =>
         {
-            await RunDacpacExtraction(sourceConnection, targetConnection, outputPath, commitMessage);
-        }, sourceConnectionOption, targetConnectionOption, outputPathOption, commitMessageOption);
+            await RunDacpacExtraction(sourceConnection, targetConnection, outputPath);
+        }, sourceConnectionOption, targetConnectionOption, outputPathOption);
         
         // Support legacy positional arguments for backward compatibility
         if (args.Length >= 3 && !args.Any(arg => arg.StartsWith("-")))
@@ -57,11 +53,6 @@ internal static class Program
                 "--output-path", args[2]
             };
             
-            if (args.Length >= 4)
-            {
-                newArgs.Add("--commit-message");
-                newArgs.Add(args[3]);
-            }
             
             args = newArgs.ToArray();
         }
@@ -69,7 +60,7 @@ internal static class Program
         return await rootCommand.InvokeAsync(args);
     }
     
-    static async Task RunDacpacExtraction(string sourceConnectionString, string targetConnectionString, string outputPath, string? commitMessage)
+    static async Task RunDacpacExtraction(string sourceConnectionString, string targetConnectionString, string outputPath)
     {
         // Extract target server and database from target connection string
         var targetBuilder = new SqlConnectionStringBuilder(targetConnectionString);
@@ -81,10 +72,6 @@ internal static class Program
         Console.WriteLine($"Target Server (sanitized): {targetServer}");
         Console.WriteLine($"Target Database: {targetDatabase}");
         Console.WriteLine($"Target Path: servers/{targetServer}/{targetDatabase}/");
-        if (!string.IsNullOrWhiteSpace(commitMessage))
-        {
-            Console.WriteLine($"Commit Message: {commitMessage}");
-        }
 
         // Configure Git safe directory for Docker environments
         ConfigureGitSafeDirectory(outputPath);
@@ -237,43 +224,6 @@ internal static class Program
             
             Console.WriteLine($"Database structure generated successfully at: {targetOutputPath}");
             
-            // Commit the database structure changes if there are any
-            if (gitAnalyzer.IsGitRepository(outputPath))
-            {
-                try
-                {
-                    // Check for uncommitted changes in the database directory
-                    var dbPath = Path.Combine("servers", targetServer, targetDatabase);
-                    var changes = gitAnalyzer.GetUncommittedChanges(outputPath, dbPath);
-                    
-                    if (changes.Any())
-                    {
-                        Console.WriteLine($"\nDetected {changes.Count} changed files in database structure");
-                        
-                        // Determine commit message
-                        var actualCommitMessage = string.IsNullOrWhiteSpace(commitMessage) 
-                            ? $"Update database structure for {targetServer}/{targetDatabase}" 
-                            : commitMessage;
-                        
-                        Console.WriteLine($"Committing changes with message: {actualCommitMessage}");
-                        
-                        // Commit only the database structure changes (not migrations)
-                        gitAnalyzer.CommitSpecificFiles(outputPath, dbPath, actualCommitMessage);
-                        
-                        Console.WriteLine("✓ Database structure changes committed successfully");
-                    }
-                    else
-                    {
-                        Console.WriteLine("\nNo database structure changes to commit");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Warning: Could not commit database structure changes: {ex.Message}");
-                    // Don't fail the entire process if commit fails
-                }
-            }
-            
             // Generate migrations
             Console.WriteLine("\nChecking for schema changes...");
             var migrationGenerator = new Migration.Generator.MigrationGenerator();
@@ -293,6 +243,18 @@ internal static class Program
                 validateMigration: true);
 
             Console.WriteLine(changesDetected ? $"Migration files generated in: {migrationsPath}" : "No schema changes detected.");
+            
+            // Validate migration generation consistency
+            var validationResult = ValidateMigrationGeneration(outputPath, targetServer, targetDatabase, migrationsPath, changesDetected);
+            if (!validationResult.IsValid)
+            {
+                Console.WriteLine($"❌ Migration validation failed: {validationResult.ErrorMessage}");
+                Environment.Exit(1);
+            }
+            else
+            {
+                Console.WriteLine("✓ Migration validation passed");
+            }
         }
         catch (Exception ex)
         {
@@ -331,6 +293,83 @@ internal static class Program
         {
             // Ignore Git configuration errors - it's not critical for DACPAC extraction
             // This is just to help with migration generation later
+        }
+    }
+    
+    static MigrationValidationResult ValidateMigrationGeneration(
+        string outputPath, 
+        string targetServer, 
+        string targetDatabase,
+        string migrationsPath,
+        bool migrationExpected)
+    {
+        try
+        {
+            var gitAnalyzer = new GitDiffAnalyzer();
+            var dbPath = Path.Combine("servers", targetServer, targetDatabase);
+            
+            // Get list of migration files created in this run
+            var migrationFiles = Directory.GetFiles(migrationsPath, "*.sql")
+                .Where(f => !Path.GetFileName(f).StartsWith("_00000000_000000_")) // Exclude bootstrap migration
+                .OrderByDescending(f => File.GetLastWriteTimeUtc(f))
+                .ToList();
+                
+            var reverseMigrationsPath = Path.Combine(Path.GetDirectoryName(migrationsPath)!, "z_migrations_reverse");
+            var reverseMigrationFiles = Directory.Exists(reverseMigrationsPath) 
+                ? Directory.GetFiles(reverseMigrationsPath, "*.sql")
+                    .OrderByDescending(f => File.GetLastWriteTimeUtc(f))
+                    .ToList()
+                : new List<string>();
+            
+            // Check most recent migration (if any)
+            var recentMigration = migrationFiles.FirstOrDefault();
+            var recentReverseMigration = reverseMigrationFiles.FirstOrDefault();
+            
+            // Check if a fresh migration was created (within last 30 seconds to account for processing time)
+            var freshMigrationCreated = recentMigration != null && 
+                (DateTime.UtcNow - File.GetLastWriteTimeUtc(recentMigration)).TotalSeconds <= 30;
+            
+            // Validation rules:
+            // 1. If migration was expected but no fresh migration was created
+            if (migrationExpected && !freshMigrationCreated)
+            {
+                return new MigrationValidationResult(false, 
+                    "Migration generation was reported as successful but no fresh migration file was found.");
+            }
+            
+            // 2. If no migration was expected but a fresh migration exists
+            if (!migrationExpected && freshMigrationCreated)
+            {
+                return new MigrationValidationResult(false, 
+                    $"No migration was expected but a fresh migration file was created: {Path.GetFileName(recentMigration)}");
+            }
+            
+            // 3. If migration was generated, perform additional checks
+            if (migrationExpected && freshMigrationCreated && recentMigration != null)
+            {
+                // Check that reverse migration exists with same filename
+                var migrationFileName = Path.GetFileName(recentMigration);
+                var expectedReversePath = Path.Combine(reverseMigrationsPath, migrationFileName);
+                if (!File.Exists(expectedReversePath))
+                {
+                    return new MigrationValidationResult(false, 
+                        $"Reverse migration file not found. Expected: {expectedReversePath}");
+                }
+                
+                // Check reverse migration was also created recently
+                var reverseAge = DateTime.UtcNow - File.GetLastWriteTimeUtc(expectedReversePath);
+                if (reverseAge.TotalSeconds > 30)
+                {
+                    return new MigrationValidationResult(false, 
+                        $"Reverse migration file exists but appears to be old (created {reverseAge.TotalSeconds:F1} seconds ago).");
+                }
+            }
+            
+            return new MigrationValidationResult(true);
+        }
+        catch (Exception ex)
+        {
+            return new MigrationValidationResult(false, $"Validation error: {ex.Message}");
         }
     }
 }

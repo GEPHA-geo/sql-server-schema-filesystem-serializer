@@ -89,5 +89,5 @@ echo === Build and publish completed successfully! ===
 echo Images created:
 echo   - %REGISTRY%/%IMAGE_NAME%:%VERSION%
 echo   - %REGISTRY%/%IMAGE_NAME%:latest
-
+pause
 endlocal

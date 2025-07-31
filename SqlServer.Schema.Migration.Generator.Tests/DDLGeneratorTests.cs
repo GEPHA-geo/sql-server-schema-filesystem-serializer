@@ -331,7 +331,7 @@ public class DDLGeneratorTests
     }
 
     [Fact]
-    public void MigrationScriptBuilder_ShouldFilterOutDefaultConstraintsForDroppedColumns()
+    public void MigrationScriptBuilder_ShouldExplicitlyDropDefaultConstraintsBeforeColumns()
     {
         // Arrange
         var builder = new MigrationScriptBuilder();
@@ -362,11 +362,13 @@ public class DDLGeneratorTests
         var migration = builder.BuildMigration(changes, "TestDB", "test-user");
         
         // Assert
-        // Should contain the column drop
+        // Should contain both the constraint drop AND the column drop
+        Assert.Contains("DROP CONSTRAINT [DF_er_pac_zg_koef_cvl_axali_sveti]", migration);
         Assert.Contains("DROP COLUMN [axali_sveti]", migration);
         
-        // Should NOT contain the constraint drop (neither as SQL nor as comment)
-        Assert.DoesNotContain("DROP CONSTRAINT [DF_er_pac_zg_koef_cvl_axali_sveti]", migration);
-        Assert.DoesNotContain("-- Drop constraint: DF_er_pac_zg_koef_cvl_axali_sveti", migration);
+        // Verify constraint is dropped before column
+        var constraintDropIndex = migration.IndexOf("DROP CONSTRAINT [DF_er_pac_zg_koef_cvl_axali_sveti]");
+        var columnDropIndex = migration.IndexOf("DROP COLUMN [axali_sveti]");
+        Assert.True(constraintDropIndex < columnDropIndex, "Constraint should be dropped before column");
     }
 }

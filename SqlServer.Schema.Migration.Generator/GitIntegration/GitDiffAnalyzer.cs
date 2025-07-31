@@ -549,6 +549,7 @@ generated_script.sql
     
     public void CommitChanges(string path, string message)
     {
+        Console.WriteLine($"\n📝 Committing changes with message: {message}");
         RunGitCommand(path, "add .");
         RunGitCommand(path, $"commit -m \"{message}\"");
     }

@@ -68,40 +68,8 @@ public class MigrationScriptBuilder
                 }
             }
             
-            // Filter out default constraints for columns being dropped
-            var columnsBeingDropped = dropOperations
-                .Where(c => c.ObjectType == "Column")
-                .Select(c => new { c.Schema, c.TableName, c.ColumnName })
-                .ToHashSet();
-            
-            var filteredDropOperations = dropOperations.Where(change =>
-            {
-                // Keep all non-constraint drops
-                if (change.ObjectType != "Constraint") return true;
-                
-                // Check if this is a default constraint for a column being dropped
-                if (change.ObjectName.StartsWith("DF_") && change.OldDefinition != null)
-                {
-                    // Try to extract the column name from the constraint definition
-                    var match = Regex.Match(change.OldDefinition, @"DEFAULT.*?FOR\s+\[([^\]]+)\]", RegexOptions.IgnoreCase);
-                    
-                    if (match.Success)
-                    {
-                        var columnName = match.Groups[1].Value;
-                        // Check if this column is being dropped
-                        if (columnsBeingDropped.Any(c => 
-                            c.Schema == change.Schema && 
-                            c.TableName == change.TableName && 
-                            c.ColumnName == columnName))
-                        {
-                            Console.WriteLine($"Filtering out default constraint {change.ObjectName} as column {columnName} is being dropped");
-                            return false;
-                        }
-                    }
-                }
-                
-                return true;
-            }).ToList();
+            // Don't filter out any constraints - they must be explicitly dropped before columns
+            var filteredDropOperations = dropOperations;
             
             // Process drops second (in reverse dependency order)
             if (filteredDropOperations.Any())

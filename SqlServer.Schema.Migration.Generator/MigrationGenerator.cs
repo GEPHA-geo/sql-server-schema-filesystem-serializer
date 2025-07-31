@@ -130,7 +130,9 @@ public class MigrationGenerator
             }
             
             // Commit changes
-            var commitMessage = customCommitMessage ?? $"Schema update: {description}";
+            var commitMessage = !string.IsNullOrWhiteSpace(customCommitMessage) 
+                ? customCommitMessage 
+                : $"Schema update: {description}";
             _gitAnalyzer.CommitChanges(outputPath, commitMessage);
             
             // Return true since we successfully created migration files

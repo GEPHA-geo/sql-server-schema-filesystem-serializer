@@ -30,17 +30,22 @@ internal static class Program
             description: "Output directory path for generated schema files"
         ) { IsRequired = true };
         
+        var commitMessageOption = new Option<string?>(
+            aliases: new[] { "--commit-message", "-m" },
+            description: "Custom commit message for migration generation (optional)"
+        ) { IsRequired = false };
         
         // Add options to root command
         rootCommand.AddOption(sourceConnectionOption);
         rootCommand.AddOption(targetConnectionOption);
         rootCommand.AddOption(outputPathOption);
+        rootCommand.AddOption(commitMessageOption);
         
         // Set handler
-        rootCommand.SetHandler(async (string sourceConnection, string targetConnection, string outputPath) =>
+        rootCommand.SetHandler(async (string sourceConnection, string targetConnection, string outputPath, string? commitMessage) =>
         {
-            await RunDacpacExtraction(sourceConnection, targetConnection, outputPath);
-        }, sourceConnectionOption, targetConnectionOption, outputPathOption);
+            await RunDacpacExtraction(sourceConnection, targetConnection, outputPath, commitMessage);
+        }, sourceConnectionOption, targetConnectionOption, outputPathOption, commitMessageOption);
         
         // Support legacy positional arguments for backward compatibility
         if (args.Length >= 3 && !args.Any(arg => arg.StartsWith("-")))
@@ -53,6 +58,12 @@ internal static class Program
                 "--output-path", args[2]
             };
             
+            // Add optional commit message if provided as 4th parameter
+            if (args.Length >= 4)
+            {
+                newArgs.Add("--commit-message");
+                newArgs.Add(args[3]);
+            }
             
             args = newArgs.ToArray();
         }
@@ -60,7 +71,7 @@ internal static class Program
         return await rootCommand.InvokeAsync(args);
     }
     
-    static async Task RunDacpacExtraction(string sourceConnectionString, string targetConnectionString, string outputPath)
+    static async Task RunDacpacExtraction(string sourceConnectionString, string targetConnectionString, string outputPath, string? commitMessage = null)
     {
         // Extract target server and database from target connection string
         var targetBuilder = new SqlConnectionStringBuilder(targetConnectionString);
@@ -240,7 +251,8 @@ internal static class Program
                 migrationsPath,
                 actor,
                 sourceConnectionString,  // Use source connection for validation
-                validateMigration: true);
+                validateMigration: true,
+                customCommitMessage: commitMessage);
 
             Console.WriteLine(changesDetected ? $"Migration files generated in: {migrationsPath}" : "No schema changes detected.");
             

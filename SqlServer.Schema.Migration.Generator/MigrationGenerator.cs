@@ -19,7 +19,8 @@ public class MigrationGenerator
         string migrationsPath,
         string? actor = null,
         string? connectionString = null,
-        bool validateMigration = true)
+        bool validateMigration = true,
+        string? customCommitMessage = null)
     {
         try
         {
@@ -114,7 +115,8 @@ public class MigrationGenerator
             Console.WriteLine($"Generated reverse migration: z_migrations_reverse/{filename}");
             
             // Commit changes
-            _gitAnalyzer.CommitChanges(outputPath, $"Schema update: {description}");
+            var commitMessage = customCommitMessage ?? $"Schema update: {description}";
+            _gitAnalyzer.CommitChanges(outputPath, commitMessage);
             
             return true;
         }

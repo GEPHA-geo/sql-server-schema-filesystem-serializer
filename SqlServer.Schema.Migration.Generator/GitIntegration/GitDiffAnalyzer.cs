@@ -343,8 +343,8 @@ generated_script.sql
             {
                 try
                 {
-                    Console.WriteLine("\nFetching latest changes from all remotes...");
-                    var fetchOutput = RunGitCommand(path, "fetch --all --verbose");
+                    Console.WriteLine("Fetching latest changes from origin main...");
+                    var fetchOutput = RunGitCommand(path, "fetch origin main --verbose");
                     Console.WriteLine("✓ Fetch completed successfully");
                     if (!string.IsNullOrWhiteSpace(fetchOutput))
                     {

@@ -1,6 +1,7 @@
+name: fast-forward
 on: 
   issue_comment:
-    types: [created]
+    types: [created, edited]
 
 jobs:
   fast_forward_job:

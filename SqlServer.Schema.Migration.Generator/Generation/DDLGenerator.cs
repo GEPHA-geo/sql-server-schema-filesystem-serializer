@@ -8,6 +8,15 @@ public class DDLGenerator
     readonly TableDDLGenerator _tableGenerator = new();
     readonly IndexDDLGenerator _indexGenerator = new();
     readonly RenameDDLGenerator _renameGenerator = new();
+    
+    // Store all changes for cross-referencing
+    private List<SchemaChange>? _allChanges;
+    
+    public void SetAllChanges(List<SchemaChange> allChanges)
+    {
+        _allChanges = allChanges;
+        _tableGenerator.SetAllChanges(allChanges);
+    }
 
     public string GenerateDDL(SchemaChange change)
     {
@@ -16,6 +25,13 @@ public class DDLGenerator
         {
             return _renameGenerator.GenerateRenameDDL(change);
         }
+        
+        // Skip DEFAULT constraints that will be handled inline with column creation
+        if (ShouldSkipDefaultConstraint(change))
+        {
+            return $"-- DEFAULT constraint handled inline with column creation: {change.ObjectName}";
+        }
+        
         return change.ObjectType switch
         {
             "Table" => _tableGenerator.GenerateTableDDL(change),
@@ -29,6 +45,55 @@ public class DDLGenerator
             "ExtendedProperty" => GenerateExtendedPropertyDDL(change),
             _ => $"-- Unsupported object type: {change.ObjectType}"
         };
+    }
+    
+    bool ShouldSkipDefaultConstraint(SchemaChange change)
+    {
+        if (change.ObjectType != "Constraint" || change.ChangeType != ChangeType.Added)
+            return false;
+            
+        // Check if this is a DEFAULT constraint
+        if (!change.ObjectName.StartsWith("DF_") && 
+            !change.NewDefinition.Contains("DEFAULT", StringComparison.OrdinalIgnoreCase))
+            return false;
+            
+        // Check if there's a corresponding column being added
+        if (_allChanges != null)
+        {
+            // Extract column name from the constraint definition
+            var columnName = ExtractColumnNameFromConstraint(change.NewDefinition);
+            if (!string.IsNullOrEmpty(columnName))
+            {
+                // Check if this column is being added with NOT NULL
+                var columnChange = _allChanges.FirstOrDefault(c =>
+                    c.ObjectType == "Column" &&
+                    c.ChangeType == ChangeType.Added &&
+                    c.TableName == change.TableName &&
+                    c.Schema == change.Schema &&
+                    c.ColumnName == columnName &&
+                    c.NewDefinition.Contains("NOT NULL", StringComparison.OrdinalIgnoreCase));
+                    
+                if (columnChange != null)
+                {
+                    // This DEFAULT constraint will be handled inline with the column
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    string ExtractColumnNameFromConstraint(string constraintDef)
+    {
+        // Extract column name from DEFAULT constraint
+        // Example: ALTER TABLE [dbo].[Table] ADD CONSTRAINT [DF_Table_Column] DEFAULT ((0)) FOR [Column]
+        var match = System.Text.RegularExpressions.Regex.Match(
+            constraintDef,
+            @"FOR\s+\[([^\]]+)\]",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            
+        return match.Success ? match.Groups[1].Value : null;
     }
 
     string GenerateConstraintDDL(SchemaChange change)

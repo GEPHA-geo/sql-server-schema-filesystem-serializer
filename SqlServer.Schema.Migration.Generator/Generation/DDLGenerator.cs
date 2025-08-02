@@ -101,6 +101,11 @@ public class DDLGenerator
         switch (change.ChangeType)
         {
             case ChangeType.Added:
+                // For DEFAULT constraints, drop any existing default on the column first
+                if (IsDefaultConstraint(change))
+                {
+                    return GenerateDefaultConstraintWithDropExisting(change);
+                }
                 return change.NewDefinition;
                 
             case ChangeType.Deleted:
@@ -131,6 +136,43 @@ public class DDLGenerator
             default:
                 return $"-- Unknown change type for constraint: {change.ObjectName}";
         }
+    }
+
+    bool IsDefaultConstraint(SchemaChange change)
+    {
+        return change.ObjectName.StartsWith("DF_") || 
+               change.NewDefinition.Contains("DEFAULT", StringComparison.OrdinalIgnoreCase);
+    }
+    
+    string GenerateDefaultConstraintWithDropExisting(SchemaChange change)
+    {
+        // Extract column name from the constraint definition
+        var columnName = ExtractColumnNameFromConstraint(change.NewDefinition);
+        if (string.IsNullOrEmpty(columnName))
+        {
+            // If we can't extract column name, just return the original definition
+            return change.NewDefinition;
+        }
+        
+        var sb = new System.Text.StringBuilder();
+        
+        // Generate SQL to drop any existing DEFAULT constraint on this column
+        sb.AppendLine($"-- Drop any existing DEFAULT constraint on column [{columnName}]");
+        sb.AppendLine($"DECLARE @ConstraintName nvarchar(200)");
+        sb.AppendLine($"SELECT @ConstraintName = dc.name");
+        sb.AppendLine($"FROM sys.default_constraints dc");
+        sb.AppendLine($"INNER JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id");
+        sb.AppendLine($"WHERE dc.parent_object_id = OBJECT_ID(N'[{change.Schema}].[{change.TableName}]')");
+        sb.AppendLine($"AND c.name = '{columnName}'");
+        sb.AppendLine();
+        sb.AppendLine($"IF @ConstraintName IS NOT NULL");
+        sb.AppendLine($"    EXEC('ALTER TABLE [{change.Schema}].[{change.TableName}] DROP CONSTRAINT [' + @ConstraintName + ']')");
+        sb.AppendLine($"GO");
+        sb.AppendLine();
+        sb.AppendLine($"-- Add new DEFAULT constraint");
+        sb.AppendLine(change.NewDefinition);
+        
+        return sb.ToString();
     }
 
     string GenerateViewDDL(SchemaChange change)

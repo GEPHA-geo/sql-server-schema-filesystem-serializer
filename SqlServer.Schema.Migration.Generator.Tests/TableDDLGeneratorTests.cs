@@ -172,4 +172,136 @@ public class TableDDLGeneratorTests
         // but TableDDLGenerator doesn't handle renames directly
         Assert.Contains("ALTER COLUMN", ddl);
     }
+
+    
+    [Fact]
+    public void GenerateColumnDDL_ForNotNullColumnWithDefaultConstraint_ShouldIncludeDefaultInline()
+    {
+        // Arrange
+        var columnChange = new SchemaChange
+        {
+            ObjectType = "Column",
+            Schema = "dbo",
+            TableName = "Product",
+            ObjectName = "IsActive",
+            ColumnName = "IsActive",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "[IsActive] BIT NOT NULL"
+        };
+        
+        var defaultConstraint = new SchemaChange
+        {
+            ObjectType = "Constraint",
+            Schema = "dbo",
+            TableName = "Product",
+            ObjectName = "DF_Product_IsActive",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "ALTER TABLE [dbo].[Product] ADD CONSTRAINT [DF_Product_IsActive] DEFAULT ((1)) FOR [IsActive]"
+        };
+        
+        var allChanges = new List<SchemaChange> { columnChange, defaultConstraint };
+        _generator.SetAllChanges(allChanges);
+        
+        // Act
+        var ddl = _generator.GenerateColumnDDL(columnChange);
+        
+        // Assert
+        Assert.Equal("ALTER TABLE [dbo].[Product] ADD [IsActive] BIT DEFAULT ((1)) NOT NULL;", ddl);
+    }
+    
+    [Fact]
+    public void GenerateColumnDDL_ForNotNullColumnWithComplexDefaultConstraint_ShouldIncludeDefaultInline()
+    {
+        // Arrange
+        var columnChange = new SchemaChange
+        {
+            ObjectType = "Column",
+            Schema = "dbo",
+            TableName = "Order",
+            ObjectName = "CreatedDate",
+            ColumnName = "CreatedDate",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "[CreatedDate] DATETIME2 NOT NULL"
+        };
+        
+        var defaultConstraint = new SchemaChange
+        {
+            ObjectType = "Constraint",
+            Schema = "dbo",
+            TableName = "Order",
+            ObjectName = "DF_Order_CreatedDate",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "ALTER TABLE [dbo].[Order] ADD CONSTRAINT [DF_Order_CreatedDate] DEFAULT (GETUTCDATE()) FOR [CreatedDate]"
+        };
+        
+        var allChanges = new List<SchemaChange> { columnChange, defaultConstraint };
+        _generator.SetAllChanges(allChanges);
+        
+        // Act
+        var ddl = _generator.GenerateColumnDDL(columnChange);
+        
+        // Assert
+        Assert.Equal("ALTER TABLE [dbo].[Order] ADD [CreatedDate] DATETIME2 DEFAULT (GETUTCDATE()) NOT NULL;", ddl);
+    }
+    
+    [Fact]
+    public void GenerateColumnDDL_ForNullableColumnWithDefaultConstraint_ShouldNotIncludeDefaultInline()
+    {
+        // Arrange
+        var columnChange = new SchemaChange
+        {
+            ObjectType = "Column",
+            Schema = "dbo",
+            TableName = "Product",
+            ObjectName = "Description",
+            ColumnName = "Description",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "[Description] NVARCHAR(500) NULL"
+        };
+        
+        var defaultConstraint = new SchemaChange
+        {
+            ObjectType = "Constraint",
+            Schema = "dbo",
+            TableName = "Product",
+            ObjectName = "DF_Product_Description",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "ALTER TABLE [dbo].[Product] ADD CONSTRAINT [DF_Product_Description] DEFAULT ('No description') FOR [Description]"
+        };
+        
+        var allChanges = new List<SchemaChange> { columnChange, defaultConstraint };
+        _generator.SetAllChanges(allChanges);
+        
+        // Act
+        var ddl = _generator.GenerateColumnDDL(columnChange);
+        
+        // Assert
+        // Nullable columns don't need inline DEFAULT, so it should remain unchanged
+        Assert.Equal("ALTER TABLE [dbo].[Product] ADD [Description] NVARCHAR(500) NULL;", ddl);
+    }
+    
+    [Fact]
+    public void GenerateColumnDDL_ForNotNullColumnWithoutDefaultConstraint_ShouldNotAddDefault()
+    {
+        // Arrange
+        var columnChange = new SchemaChange
+        {
+            ObjectType = "Column",
+            Schema = "dbo",
+            TableName = "Customer",
+            ObjectName = "Email",
+            ColumnName = "Email",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "[Email] NVARCHAR(100) NOT NULL"
+        };
+        
+        var allChanges = new List<SchemaChange> { columnChange };
+        _generator.SetAllChanges(allChanges);
+        
+        // Act
+        var ddl = _generator.GenerateColumnDDL(columnChange);
+        
+        // Assert
+        Assert.Equal("ALTER TABLE [dbo].[Customer] ADD [Email] NVARCHAR(100) NOT NULL;", ddl);
+    }
 }

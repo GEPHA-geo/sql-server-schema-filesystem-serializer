@@ -39,6 +39,9 @@ public class MigrationScriptBuilder
         
         try
         {
+            // Pass all changes to DDL generator for cross-referencing
+            _ddlGenerator.SetAllChanges(changes);
+            
             // Order changes by dependencies
             var orderedChanges = _dependencyResolver.OrderChanges(changes);
             

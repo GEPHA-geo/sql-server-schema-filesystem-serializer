@@ -371,4 +371,101 @@ public class DDLGeneratorTests
         var columnDropIndex = migration.IndexOf("DROP COLUMN [axali_sveti]");
         Assert.True(constraintDropIndex < columnDropIndex, "Constraint should be dropped before column");
     }
+
+    
+    [Fact]
+    public void GenerateDDL_ForDefaultConstraint_WhenAddingNotNullColumn_ShouldSkipConstraint()
+    {
+        // Arrange
+        var columnChange = new SchemaChange
+        {
+            ObjectType = "Column",
+            Schema = "dbo",
+            TableName = "Product",
+            ObjectName = "IsActive",
+            ColumnName = "IsActive",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "[IsActive] BIT NOT NULL"
+        };
+        
+        var constraintChange = new SchemaChange
+        {
+            ObjectType = "Constraint",
+            Schema = "dbo",
+            TableName = "Product",
+            ObjectName = "DF_Product_IsActive",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "ALTER TABLE [dbo].[Product] ADD CONSTRAINT [DF_Product_IsActive] DEFAULT ((1)) FOR [IsActive]"
+        };
+        
+        var allChanges = new List<SchemaChange> { columnChange, constraintChange };
+        _generator.SetAllChanges(allChanges);
+        
+        // Act
+        var ddl = _generator.GenerateDDL(constraintChange);
+        
+        // Assert
+        Assert.Contains("DEFAULT constraint handled inline with column creation", ddl);
+    }
+    
+    [Fact]
+    public void GenerateDDL_ForDefaultConstraint_WhenColumnNotBeingAdded_ShouldGenerateConstraint()
+    {
+        // Arrange
+        var constraintChange = new SchemaChange
+        {
+            ObjectType = "Constraint",
+            Schema = "dbo",
+            TableName = "Product",
+            ObjectName = "DF_Product_Description",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "ALTER TABLE [dbo].[Product] ADD CONSTRAINT [DF_Product_Description] DEFAULT ('No description') FOR [Description]"
+        };
+        
+        // No corresponding column being added
+        var allChanges = new List<SchemaChange> { constraintChange };
+        _generator.SetAllChanges(allChanges);
+        
+        // Act
+        var ddl = _generator.GenerateDDL(constraintChange);
+        
+        // Assert
+        Assert.Equal(constraintChange.NewDefinition, ddl);
+    }
+    
+    [Fact]
+    public void GenerateDDL_ForDefaultConstraint_WhenAddingNullableColumn_ShouldGenerateConstraint()
+    {
+        // Arrange
+        var columnChange = new SchemaChange
+        {
+            ObjectType = "Column",
+            Schema = "dbo",
+            TableName = "Product",
+            ObjectName = "Description",
+            ColumnName = "Description",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "[Description] NVARCHAR(500) NULL"
+        };
+        
+        var constraintChange = new SchemaChange
+        {
+            ObjectType = "Constraint",
+            Schema = "dbo",
+            TableName = "Product",
+            ObjectName = "DF_Product_Description",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "ALTER TABLE [dbo].[Product] ADD CONSTRAINT [DF_Product_Description] DEFAULT ('No description') FOR [Description]"
+        };
+        
+        var allChanges = new List<SchemaChange> { columnChange, constraintChange };
+        _generator.SetAllChanges(allChanges);
+        
+        // Act
+        var ddl = _generator.GenerateDDL(constraintChange);
+        
+        // Assert
+        // Nullable columns don't need inline DEFAULT, so constraint should be generated separately
+        Assert.Equal(constraintChange.NewDefinition, ddl);
+    }
 }

@@ -430,7 +430,10 @@ public class DDLGeneratorTests
         var ddl = _generator.GenerateDDL(constraintChange);
         
         // Assert
-        Assert.Equal(constraintChange.NewDefinition, ddl);
+        // Now it should include drop logic for any existing default on the column
+        Assert.Contains("Drop any existing DEFAULT constraint on column [Description]", ddl);
+        Assert.Contains("sys.default_constraints", ddl);
+        Assert.Contains(constraintChange.NewDefinition, ddl);
     }
     
     [Fact]
@@ -466,6 +469,274 @@ public class DDLGeneratorTests
         
         // Assert
         // Nullable columns don't need inline DEFAULT, so constraint should be generated separately
+        // But now with drop logic for any existing default on the column
+        Assert.Contains("Drop any existing DEFAULT constraint on column [Description]", ddl);
+        Assert.Contains("sys.default_constraints", ddl);
+        Assert.Contains(constraintChange.NewDefinition, ddl);
+    }
+
+    
+    [Fact]
+    public void GenerateDDL_ForDefaultConstraint_WhenAddedSeparately_ShouldDropExistingDefaultFirst()
+    {
+        // Arrange
+        var constraintChange = new SchemaChange
+        {
+            ObjectType = "Constraint",
+            Schema = "dbo",
+            TableName = "Product",
+            ObjectName = "DF_Product_Status",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "ALTER TABLE [dbo].[Product] ADD CONSTRAINT [DF_Product_Status] DEFAULT ('Active') FOR [Status]"
+        };
+        
+        // No corresponding column being added - this is a standalone default constraint
+        var allChanges = new List<SchemaChange> { constraintChange };
+        _generator.SetAllChanges(allChanges);
+        
+        // Act
+        var ddl = _generator.GenerateDDL(constraintChange);
+        
+        // Assert
+        // Should contain logic to drop any existing default constraint on the column
+        Assert.Contains("Drop any existing DEFAULT constraint on column [Status]", ddl);
+        Assert.Contains("sys.default_constraints", ddl);
+        Assert.Contains("@ConstraintName IS NOT NULL", ddl);
+        Assert.Contains("DROP CONSTRAINT", ddl);
+        Assert.Contains("Add new DEFAULT constraint", ddl);
+        Assert.Contains(constraintChange.NewDefinition, ddl);
+    }
+    
+    [Fact]
+    public void GenerateDDL_ForNonDefaultConstraint_ShouldNotAddDropLogic()
+    {
+        // Arrange
+        var constraintChange = new SchemaChange
+        {
+            ObjectType = "Constraint",
+            Schema = "dbo",
+            TableName = "Order",
+            ObjectName = "FK_Order_Customer",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "ALTER TABLE [dbo].[Order] ADD CONSTRAINT [FK_Order_Customer] FOREIGN KEY ([CustomerId]) REFERENCES [dbo].[Customer] ([Id])"
+        };
+        
+        var allChanges = new List<SchemaChange> { constraintChange };
+        _generator.SetAllChanges(allChanges);
+        
+        // Act
+        var ddl = _generator.GenerateDDL(constraintChange);
+        
+        // Assert
+        // Foreign key constraint should not have drop logic
+        Assert.DoesNotContain("sys.default_constraints", ddl);
         Assert.Equal(constraintChange.NewDefinition, ddl);
+    }
+
+    
+    [Fact]
+    public void GenerateDDL_ForDefaultConstraint_WithDifferentConstraintName_ShouldDropExistingAndAddNew()
+    {
+        // Arrange - scenario where we're adding DF_Product_Status but column might already have DF_Product_OldStatus
+        var constraintChange = new SchemaChange
+        {
+            ObjectType = "Constraint",
+            Schema = "dbo",
+            TableName = "Product",
+            ObjectName = "DF_Product_Status_New",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "ALTER TABLE [dbo].[Product] ADD CONSTRAINT [DF_Product_Status_New] DEFAULT ('Pending') FOR [Status]"
+        };
+        
+        var allChanges = new List<SchemaChange> { constraintChange };
+        _generator.SetAllChanges(allChanges);
+        
+        // Act
+        var ddl = _generator.GenerateDDL(constraintChange);
+        
+        // Assert
+        // Should drop ANY existing default constraint on the Status column
+        Assert.Contains("Drop any existing DEFAULT constraint on column [Status]", ddl);
+        Assert.Contains("FROM sys.default_constraints dc", ddl);
+        Assert.Contains("WHERE dc.parent_object_id = OBJECT_ID(N'[dbo].[Product]')", ddl);
+        Assert.Contains("AND c.name = 'Status'", ddl);
+        Assert.Contains("IF @ConstraintName IS NOT NULL", ddl);
+        Assert.Contains("DROP CONSTRAINT", ddl);
+        // And then add the new constraint
+        Assert.Contains(constraintChange.NewDefinition, ddl);
+    }
+    
+    [Fact]
+    public void GenerateDDL_ForDefaultConstraint_ExtractColumnName_HandlesComplexDefaults()
+    {
+        // Arrange - test various DEFAULT constraint formats
+        var testCases = new[]
+        {
+            new
+            {
+                Definition = "ALTER TABLE [dbo].[Order] ADD CONSTRAINT [DF_Order_OrderDate] DEFAULT (GETDATE()) FOR [OrderDate]",
+                ExpectedColumn = "OrderDate"
+            },
+            new
+            {
+                Definition = "ALTER TABLE [dbo].[Product] ADD CONSTRAINT [DF_Product_Price] DEFAULT ((0.00)) FOR [Price]",
+                ExpectedColumn = "Price"
+            },
+            new
+            {
+                Definition = "ALTER TABLE [dbo].[Customer] ADD CONSTRAINT [DF_Customer_Country] DEFAULT (N'USA') FOR [Country]",
+                ExpectedColumn = "Country"
+            }
+        };
+        
+        foreach (var testCase in testCases)
+        {
+            var constraintChange = new SchemaChange
+            {
+                ObjectType = "Constraint",
+                Schema = "dbo",
+                TableName = "TestTable",
+                ObjectName = "DF_TestTable_Column",
+                ChangeType = ChangeType.Added,
+                NewDefinition = testCase.Definition
+            };
+            
+            var allChanges = new List<SchemaChange> { constraintChange };
+            _generator.SetAllChanges(allChanges);
+            
+            // Act
+            var ddl = _generator.GenerateDDL(constraintChange);
+            
+            // Assert
+            Assert.Contains($"Drop any existing DEFAULT constraint on column [{testCase.ExpectedColumn}]", ddl);
+            Assert.Contains($"AND c.name = '{testCase.ExpectedColumn}'", ddl);
+        }
+    }
+
+    
+    [Fact]
+    public void GenerateDDL_ForDefaultConstraint_ReplacingExistingWithDifferentName_ShouldGenerateCorrectScript()
+    {
+        // Arrange - Real-world scenario: Column 'Status' has DF_Product_StatusOld, we're adding DF_Product_Status
+        var constraintChange = new SchemaChange
+        {
+            ObjectType = "Constraint",
+            Schema = "dbo",
+            TableName = "Product",
+            ObjectName = "DF_Product_Status",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "ALTER TABLE [dbo].[Product] ADD CONSTRAINT [DF_Product_Status] DEFAULT ('Active') FOR [Status]"
+        };
+        
+        var allChanges = new List<SchemaChange> { constraintChange };
+        _generator.SetAllChanges(allChanges);
+        
+        // Act
+        var ddl = _generator.GenerateDDL(constraintChange);
+        
+        // Assert
+        // Verify the complete script structure
+        var lines = ddl.Split('\n').Select(l => l.Trim()).ToList();
+        
+        // Should have comment explaining what we're doing
+        Assert.Contains("-- Drop any existing DEFAULT constraint on column [Status]", ddl);
+        
+        // Should declare variable for constraint name
+        Assert.Contains("DECLARE @ConstraintName nvarchar(200)", ddl);
+        
+        // Should query sys.default_constraints to find ANY default on Status column
+        Assert.Contains("SELECT @ConstraintName = dc.name", ddl);
+        Assert.Contains("FROM sys.default_constraints dc", ddl);
+        Assert.Contains("INNER JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id", ddl);
+        Assert.Contains("WHERE dc.parent_object_id = OBJECT_ID(N'[dbo].[Product]')", ddl);
+        Assert.Contains("AND c.name = 'Status'", ddl);
+        
+        // Should conditionally drop the constraint if found
+        Assert.Contains("IF @ConstraintName IS NOT NULL", ddl);
+        Assert.Contains("EXEC('ALTER TABLE [dbo].[Product] DROP CONSTRAINT [' + @ConstraintName + ']')", ddl);
+        
+        // Should have GO statement to separate batches
+        Assert.Contains("GO", ddl);
+        
+        // Should have comment for adding new constraint
+        Assert.Contains("-- Add new DEFAULT constraint", ddl);
+        
+        // Should include the original constraint definition
+        Assert.Contains(constraintChange.NewDefinition, ddl);
+        
+        // Verify the script will work even if:
+        // 1. No existing default constraint exists (won't error)
+        // 2. Existing constraint has different name like DF_Product_StatusOld
+        // 3. Existing constraint has same name (will drop and recreate)
+    }
+    
+    [Fact]
+    public void GenerateDDL_ForDefaultConstraint_MultipleScenariosWithDifferentNames_ShouldHandleAll()
+    {
+        // Test multiple real-world scenarios
+        var scenarios = new[]
+        {
+            new
+            {
+                Description = "Replacing auto-generated constraint name",
+                Schema = "dbo",
+                Table = "Customer",
+                Column = "IsActive",
+                OldConstraintName = "DF__Customer__IsActi__5EBF139D", // SQL Server auto-generated
+                NewConstraintName = "DF_Customer_IsActive",
+                NewDefault = "((1))"
+            },
+            new
+            {
+                Description = "Changing naming convention",
+                Schema = "sales",
+                Table = "Order",
+                Column = "OrderDate",
+                OldConstraintName = "Default_Order_OrderDate", // Old naming convention
+                NewConstraintName = "DF_Order_OrderDate", // New naming convention
+                NewDefault = "(GETUTCDATE())"
+            },
+            new
+            {
+                Description = "Fixing typo in constraint name",
+                Schema = "dbo",
+                Table = "Product",
+                Column = "Price",
+                OldConstraintName = "DF_Prodcut_Price", // Typo: Prodcut instead of Product
+                NewConstraintName = "DF_Product_Price",
+                NewDefault = "((0.00))"
+            }
+        };
+        
+        foreach (var scenario in scenarios)
+        {
+            // Arrange
+            var constraintChange = new SchemaChange
+            {
+                ObjectType = "Constraint",
+                Schema = scenario.Schema,
+                TableName = scenario.Table,
+                ObjectName = scenario.NewConstraintName,
+                ChangeType = ChangeType.Added,
+                NewDefinition = $"ALTER TABLE [{scenario.Schema}].[{scenario.Table}] ADD CONSTRAINT [{scenario.NewConstraintName}] DEFAULT {scenario.NewDefault} FOR [{scenario.Column}]"
+            };
+            
+            var allChanges = new List<SchemaChange> { constraintChange };
+            _generator.SetAllChanges(allChanges);
+            
+            // Act
+            var ddl = _generator.GenerateDDL(constraintChange);
+            
+            // Assert - Verify it will drop ANY existing constraint on the column
+            Assert.True(ddl.Contains($"Drop any existing DEFAULT constraint on column [{scenario.Column}]"), 
+                $"Failed for scenario: {scenario.Description} - Missing drop comment");
+            Assert.True(ddl.Contains($"WHERE dc.parent_object_id = OBJECT_ID(N'[{scenario.Schema}].[{scenario.Table}]')"),
+                $"Failed for scenario: {scenario.Description} - Missing WHERE clause");
+            Assert.True(ddl.Contains($"AND c.name = '{scenario.Column}'"),
+                $"Failed for scenario: {scenario.Description} - Missing column name check");
+            
+            // The beauty of this approach is it doesn't need to know the old constraint name
+            // It will find and drop whatever DEFAULT constraint exists on that column
+        }
     }
 }

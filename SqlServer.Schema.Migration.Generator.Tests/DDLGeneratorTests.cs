@@ -5,6 +5,8 @@ using SqlServer.Schema.Migration.Generator.GitIntegration;
 
 namespace SqlServer.Schema.Migration.Generator.Tests;
 
+using System.Linq;
+
 public class DDLGeneratorTests
 {
     readonly DDLGenerator _generator = new();
@@ -739,4 +741,202 @@ public class DDLGeneratorTests
             // It will find and drop whatever DEFAULT constraint exists on that column
         }
     }
+
+    #region Extended Property Tests
+    
+    [Fact]
+    public void GenerateDDL_ForExtendedProperty_Added_ShouldReturnAddStatement()
+    {
+        // Arrange
+        var change = new SchemaChange
+        {
+            ObjectType = "ExtendedProperty",
+            Schema = "dbo",
+            TableName = "Customer",
+            ObjectName = "MS_Description",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'Customer information table', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Customer'"
+        };
+        
+        // Act
+        var ddl = _generator.GenerateDDL(change);
+        
+        // Assert
+        Assert.Equal(change.NewDefinition, ddl);
+    }
+    
+    [Fact]
+    public void GenerateDDL_ForExtendedProperty_Deleted_ShouldGenerateDropStatement()
+    {
+        // Arrange
+        var change = new SchemaChange
+        {
+            ObjectType = "ExtendedProperty",
+            Schema = "dbo",
+            TableName = "Customer",
+            ObjectName = "MS_Description",
+            ChangeType = ChangeType.Deleted,
+            OldDefinition = "EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'Customer information table', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Customer'"
+        };
+        
+        // Act
+        var ddl = _generator.GenerateDDL(change);
+        
+        // Assert
+        Assert.Contains("Drop extended property", ddl);
+        Assert.Contains("sp_dropextendedproperty", ddl);
+        Assert.Contains("@name = N'MS_Description'", ddl);
+        Assert.Contains("@level0type = N'SCHEMA'", ddl);
+        Assert.Contains("@level0name = N'dbo'", ddl);
+        Assert.Contains("@level1type = N'TABLE'", ddl);
+        Assert.Contains("@level1name = N'Customer'", ddl);
+    }
+    
+    [Fact]
+    public void GenerateDDL_ForExtendedProperty_Modified_ShouldGenerateUpdateStatement()
+    {
+        // Arrange
+        var change = new SchemaChange
+        {
+            ObjectType = "ExtendedProperty",
+            Schema = "dbo",
+            TableName = "Customer",
+            ObjectName = "MS_Description",
+            ChangeType = ChangeType.Modified,
+            OldDefinition = "EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'Customer information table', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Customer'",
+            NewDefinition = "EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'Customer information and contact details', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Customer'"
+        };
+        
+        // Act
+        var ddl = _generator.GenerateDDL(change);
+        
+        // Assert
+        Assert.Contains("Update extended property", ddl);
+        Assert.Contains("sp_updateextendedproperty", ddl);
+        Assert.Contains("BEGIN TRY", ddl);
+        Assert.Contains("END TRY", ddl);
+        Assert.Contains("BEGIN CATCH", ddl);
+        Assert.Contains("IF ERROR_NUMBER() = 15217", ddl); // Property does not exist error
+        Assert.Contains("@value = N'Customer information and contact details'", ddl);
+    }
+    
+    [Fact]
+    public void GenerateDDL_ForExtendedProperty_ColumnLevel_ShouldHandleCorrectly()
+    {
+        // Arrange
+        var change = new SchemaChange
+        {
+            ObjectType = "ExtendedProperty",
+            Schema = "dbo",
+            TableName = "Customer",
+            ObjectName = "Column_Description_Email",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'Customer email address', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Customer', @level2type = N'COLUMN', @level2name = N'Email'"
+        };
+        
+        // Act
+        var ddl = _generator.GenerateDDL(change);
+        
+        // Assert
+        Assert.Equal(change.NewDefinition, ddl);
+    }
+    
+    [Fact]
+    public void GenerateDDL_ForExtendedProperty_DeleteColumnLevel_ShouldIncludeAllLevels()
+    {
+        // Arrange
+        var change = new SchemaChange
+        {
+            ObjectType = "ExtendedProperty",
+            Schema = "dbo",
+            TableName = "Customer",
+            ObjectName = "Column_Description_Email",
+            ChangeType = ChangeType.Deleted,
+            OldDefinition = "EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'Customer email address', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Customer', @level2type = N'COLUMN', @level2name = N'Email'"
+        };
+        
+        // Act
+        var ddl = _generator.GenerateDDL(change);
+        
+        // Assert
+        Assert.Contains("sp_dropextendedproperty", ddl);
+        Assert.Contains("@level2type = N'COLUMN'", ddl);
+        Assert.Contains("@level2name = N'Email'", ddl);
+    }
+    
+    [Fact]
+    public void GenerateDDL_ForExtendedProperty_InvalidDefinition_ShouldReturnCommentedError()
+    {
+        // Arrange
+        var change = new SchemaChange
+        {
+            ObjectType = "ExtendedProperty",
+            Schema = "dbo",
+            TableName = "Customer",
+            ObjectName = "MS_Description",
+            ChangeType = ChangeType.Deleted,
+            OldDefinition = "INVALID SQL STATEMENT"
+        };
+        
+        // Act
+        var ddl = _generator.GenerateDDL(change);
+        
+        // Assert
+        Assert.StartsWith("-- Could not parse extended property definition:", ddl);
+        Assert.Contains("INVALID SQL STATEMENT", ddl);
+    }
+    
+    [Fact]
+    public void GenerateDDL_ForExtendedProperty_ModifyWithTryCatch_ShouldHandleBothUpdateAndAdd()
+    {
+        // Arrange
+        var change = new SchemaChange
+        {
+            ObjectType = "ExtendedProperty",
+            Schema = "dbo",
+            TableName = "Product",
+            ObjectName = "MS_Description",
+            ChangeType = ChangeType.Modified,
+            NewDefinition = "EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'Product catalog', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Product'"
+        };
+        
+        // Act
+        var ddl = _generator.GenerateDDL(change);
+        
+        // Assert
+        // Should try update first
+        Assert.Contains("BEGIN TRY", ddl);
+        Assert.Contains("sp_updateextendedproperty", ddl);
+        Assert.Contains("END TRY", ddl);
+        
+        // Should fall back to add if property doesn't exist
+        Assert.Contains("BEGIN CATCH", ddl);
+        Assert.Contains("IF ERROR_NUMBER() = 15217", ddl);
+        Assert.Contains("sp_addextendedproperty", ddl);
+        Assert.Contains("THROW", ddl); // Re-throw other errors
+        Assert.Contains("END CATCH", ddl);
+    }
+    
+    [Fact]
+    public void GenerateDDL_ForExtendedProperty_WithSpecialCharacters_ShouldPreserveValues()
+    {
+        // Arrange
+        var change = new SchemaChange
+        {
+            ObjectType = "ExtendedProperty",
+            Schema = "dbo",
+            TableName = "Order",
+            ObjectName = "MS_Description",
+            ChangeType = ChangeType.Added,
+            NewDefinition = "EXEC sys.sp_addextendedproperty @name = N'MS_Description', @value = N'Order''s details with special chars: [test] & symbols', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'TABLE', @level1name = N'Order'"
+        };
+        
+        // Act
+        var ddl = _generator.GenerateDDL(change);
+        
+        // Assert
+        Assert.Contains("Order''s details with special chars: [test] & symbols", ddl);
+    }
+    
+    #endregion
 }

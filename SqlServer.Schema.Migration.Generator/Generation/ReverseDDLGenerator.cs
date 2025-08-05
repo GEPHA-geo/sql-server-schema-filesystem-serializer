@@ -1,5 +1,8 @@
 using SqlServer.Schema.Migration.Generator.Parsing;
 using SqlServer.Schema.Migration.Generator.GitIntegration;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace SqlServer.Schema.Migration.Generator.Generation;
 
@@ -246,16 +249,16 @@ public class ReverseDDLGenerator
         switch (change.ChangeType)
         {
             case ChangeType.Added:
-                // TODO: Parse the sp_addextendedproperty call to generate sp_dropextendedproperty
-                return $"-- TODO: Generate sp_dropextendedproperty for added property\n-- Original: {change.NewDefinition}";
+                // Reverse of ADD is DROP - parse the definition to generate drop statement
+                return GenerateDropExtendedProperty(change.NewDefinition);
                 
             case ChangeType.Deleted:
                 // Reverse of DROP is ADD - use old definition
                 return change.OldDefinition;
                 
             case ChangeType.Modified:
-                // TODO: Generate sp_updateextendedproperty to restore old value
-                return $"-- TODO: Generate sp_updateextendedproperty to restore old value\n-- Original: {change.OldDefinition}";
+                // Reverse of UPDATE is UPDATE with old value - parse old definition to generate update
+                return GenerateUpdateExtendedProperty(change.OldDefinition);
                 
             default:
                 return $"-- Cannot reverse unknown change type for extended property: {change.ObjectName}";
@@ -292,5 +295,99 @@ public class ReverseDDLGenerator
         }
         
         return fullDefinition;
+    }
+
+    // Helper methods for parsing extended properties
+    string GenerateDropExtendedProperty(string propertyDefinition)
+    {
+        var details = ParseExtendedPropertyCall(propertyDefinition);
+        if (details == null)
+            return $"-- Could not parse extended property definition: {propertyDefinition}";
+            
+        var sb = new StringBuilder();
+        sb.AppendLine("-- Drop extended property");
+        sb.Append("EXEC sys.sp_dropextendedproperty");
+        sb.Append($" @name = N'{details.Value.Name}'");
+        
+        if (!string.IsNullOrEmpty(details.Value.Level0Type))
+        {
+            sb.Append($", @level0type = N'{details.Value.Level0Type}'");
+            sb.Append($", @level0name = N'{details.Value.Level0Name}'");
+        }
+        
+        if (!string.IsNullOrEmpty(details.Value.Level1Type))
+        {
+            sb.Append($", @level1type = N'{details.Value.Level1Type}'");
+            sb.Append($", @level1name = N'{details.Value.Level1Name}'");
+        }
+        
+        if (!string.IsNullOrEmpty(details.Value.Level2Type))
+        {
+            sb.Append($", @level2type = N'{details.Value.Level2Type}'");
+            sb.Append($", @level2name = N'{details.Value.Level2Name}'");
+        }
+        
+        sb.AppendLine(";");
+        return sb.ToString();
+    }
+    
+    string GenerateUpdateExtendedProperty(string propertyDefinition)
+    {
+        var details = ParseExtendedPropertyCall(propertyDefinition);
+        if (details == null)
+            return $"-- Could not parse extended property definition: {propertyDefinition}";
+            
+        // Replace sp_addextendedproperty with sp_updateextendedproperty
+        var updateDefinition = Regex.Replace(propertyDefinition, 
+            @"sp_addextendedproperty", 
+            "sp_updateextendedproperty", 
+            RegexOptions.IgnoreCase);
+            
+        var sb = new StringBuilder();
+        sb.AppendLine("-- Update extended property to restore old value");
+        sb.AppendLine("BEGIN TRY");
+        sb.AppendLine($"    {updateDefinition}");
+        sb.AppendLine("END TRY");
+        sb.AppendLine("BEGIN CATCH");
+        sb.AppendLine("    IF ERROR_NUMBER() = 15217 -- Property does not exist");
+        sb.AppendLine("    BEGIN");
+        sb.AppendLine($"        {propertyDefinition}");
+        sb.AppendLine("    END");
+        sb.AppendLine("    ELSE");
+        sb.AppendLine("    BEGIN");
+        sb.AppendLine("        THROW;");
+        sb.AppendLine("    END");
+        sb.AppendLine("END CATCH");
+        
+        return sb.ToString();
+    }
+    
+    (string Name, string Value, string Level0Type, string Level0Name, string Level1Type, string Level1Name, string Level2Type, string Level2Name)? ParseExtendedPropertyCall(string definition)
+    {
+        // Parse the extended property call to extract all parameters
+        var nameMatch = Regex.Match(definition, @"@name\s*=\s*N?'([^']+)'", RegexOptions.IgnoreCase);
+        var valueMatch = Regex.Match(definition, @"@value\s*=\s*N?'([^']+)'", RegexOptions.IgnoreCase);
+        
+        if (!nameMatch.Success)
+            return null;
+            
+        var result = (
+            Name: nameMatch.Groups[1].Value,
+            Value: valueMatch.Success ? valueMatch.Groups[1].Value : "",
+            Level0Type: ExtractParameter(definition, "level0type"),
+            Level0Name: ExtractParameter(definition, "level0name"),
+            Level1Type: ExtractParameter(definition, "level1type"),
+            Level1Name: ExtractParameter(definition, "level1name"),
+            Level2Type: ExtractParameter(definition, "level2type"),
+            Level2Name: ExtractParameter(definition, "level2name")
+        );
+        
+        return result;
+    }
+    
+    string ExtractParameter(string definition, string parameterName)
+    {
+        var match = Regex.Match(definition, $@"@{parameterName}\s*=\s*N?'([^']+)'", RegexOptions.IgnoreCase);
+        return match.Success ? match.Groups[1].Value : "";
     }
 }

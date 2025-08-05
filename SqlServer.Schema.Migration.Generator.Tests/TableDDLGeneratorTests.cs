@@ -168,8 +168,7 @@ public class TableDDLGeneratorTests
         var ddl = _generator.GenerateColumnDDL(change);
         
         // Assert
-        // Note: This should be handled by the DDLGenerator which would use RenameDDLGenerator
-        // but TableDDLGenerator doesn't handle renames directly
+        // TableDDLGenerator doesn't handle renames - it just does regular column modifications
         Assert.Contains("ALTER COLUMN", ddl);
     }
 

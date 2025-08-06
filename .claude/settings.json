@@ -1,0 +1,5 @@
+{
+  "hooks": {
+    "stop": "dotnet script hooks/stop-verification.csx"
+  }
+}

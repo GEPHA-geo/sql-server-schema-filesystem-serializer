@@ -88,6 +88,8 @@ COMMIT: {git_commit_hash} {marker}
 ...
 ```
 
+**Note**: These === INCLUDED/EXCLUDED CHANGES === sections exist ONLY in the manifest file for organizational purposes. Migration scripts do NOT have these sections - all changes are intermixed in dependency order.
+
 **Rotation Marker System**: 
 To ensure the manifest always appears in PR diffs, each line ends with a rotation marker (`/` or `\`) that alternates with each regeneration:
 - First generation: All lines end with `/`
@@ -252,7 +254,7 @@ Key responsibilities:
 
 ### Migration Script Generation with Exclusions
 
-The migration script builder includes both included and excluded changes in order, with excluded changes commented out. This makes it easy to toggle individual changes by commenting/uncommenting:
+The migration script builder outputs ALL changes in dependency order - included changes as active SQL and excluded changes as comments. There are NO separate sections - all changes are intermixed in their proper execution order:
 
 ```sql
 -- Migration: 20240115_103000_AddOrderColumns.sql
@@ -303,6 +305,8 @@ COMMIT TRANSACTION;
 PRINT 'Migration applied successfully.';
 ```
 
+**Important**: Notice how included and excluded changes are INTERMIXED throughout the script in dependency order. There are no "INCLUDED CHANGES" or "EXCLUDED CHANGES" sections - all changes appear where they would naturally execute, with excluded ones simply commented out.
+
 **Key Benefits of Inline Comments**:
 - **Dependency Order Preserved**: Changes remain in the correct execution order
 - **Easy Individual Toggle**: Uncomment specific changes without affecting others
@@ -336,6 +340,47 @@ This keeps manifest and files in sync automatically.
 
 
 ## Examples
+
+### Key Concept: Manifest vs Migration Script Structure
+
+**Manifest File** (has sections):
+```
+=== INCLUDED CHANGES ===
+dbo.Products.Price - Column type changed
+dbo.Orders.Status - Column added
+
+=== EXCLUDED CHANGES ===
+dbo.Orders.LastModified - Column type changed
+dbo.Orders.UpdatedBy - Column added
+```
+
+**Migration Script** (NO sections - changes intermixed):
+```sql
+-- Modify Products table
+ALTER TABLE [dbo].[Products] 
+ALTER COLUMN [Price] DECIMAL(19,4) NOT NULL;
+GO
+
+-- EXCLUDED: dbo.Orders.LastModified
+/*
+ALTER TABLE [dbo].[Orders] 
+ALTER COLUMN [LastModified] DATETIME2 NOT NULL;
+GO
+*/
+
+-- Add Status column to Orders
+ALTER TABLE [dbo].[Orders]
+ADD [Status] VARCHAR(50) NOT NULL;
+GO
+
+-- EXCLUDED: dbo.Orders.UpdatedBy
+/*
+ALTER TABLE [dbo].[Orders] 
+ADD [UpdatedBy] NVARCHAR(100) NULL;
+GO
+*/
+```
+Notice: ALL changes appear in dependency order, with excluded ones commented out.
 
 ### Example 1: Excluding Environment-Specific Columns
 

@@ -19,23 +19,39 @@ public class GitChangeDetector
         
         using var repo = new Repository(_repositoryPath);
         
-        // Get diff between origin/main and HEAD
+        // Get diff between origin/main and working directory (including uncommitted changes)
         var originMain = repo.Branches["origin/main"];
         if (originMain == null)
             throw new InvalidOperationException("Could not find origin/main branch");
-            
-        var diff = repo.Diff.Compare<TreeChanges>(originMain.Tip.Tree, repo.Head.Tip.Tree);
+        
+        // First, get diff between origin/main and HEAD (committed changes)
+        var committedDiff = repo.Diff.Compare<TreeChanges>(originMain.Tip.Tree, repo.Head.Tip.Tree);
+        
+        // Then, get uncommitted changes in the working directory
+        var workingDiff = repo.Diff.Compare<TreeChanges>(repo.Head.Tip.Tree, DiffTargets.WorkingDirectory);
+        
+        // Combine both diffs to get all changes from origin/main to working directory
+        var allChanges = new List<TreeEntryChanges>();
+        allChanges.AddRange(committedDiff);
+        allChanges.AddRange(workingDiff);
         
         // Filter for the specific database path
         var dbPath = Path.Combine("servers", serverName, databaseName).Replace('\\', '/');
         
-        foreach (var change in diff)
+        // Use a HashSet to avoid duplicates (a file might appear in both diffs)
+        var processedPaths = new HashSet<string>();
+        
+        foreach (var change in allChanges)
         {
             if (!change.Path.StartsWith(dbPath))
                 continue;
                 
             // Skip migration files
             if (change.Path.Contains("/z_migrations/") || change.Path.Contains("/z_migrations_reverse/"))
+                continue;
+            
+            // Skip if we've already processed this path
+            if (!processedPaths.Add(change.Path))
                 continue;
                 
             var manifestChange = await AnalyzeFileChangeAsync(change, repo);

@@ -5,9 +5,9 @@
 **What**: A system to exclude specific database changes from migration scripts without modifying serialization.
 
 **How**: 
-1. **Initial generation**: DACPAC Runner → creates serialized files + migration script, then new tool creates manifest + adds comments
+1. **Initial generation**: DACPAC Runner → creates serialized files + migration script + automatically runs Exclusion Manager
 2. **Exclude changes**: Edit manifest file → move changes to EXCLUDED section → push to PR
-3. **Auto-update**: GitHub workflow runs new tool → updates files with exclusion comments
+3. **Auto-update**: GitHub workflow runs Exclusion Manager → updates files with exclusion comments
 
 **Key files**:
 - **Manifest**: `change-manifest-{server}-{database}.manifest` - lists included/excluded changes
@@ -15,8 +15,8 @@
 - **Migration script**: SQL with excluded changes commented out
 
 **Tools**:
-- **DACPAC Runner** (existing): Handles serialization + migration generation (no changes)
-- **Manifest & Comment Manager** (new): Creates manifest, processes exclusions, updates comments in files
+- **DACPAC Runner** (enhanced): Handles serialization + migration generation + automatically runs Exclusion Manager
+- **Exclusion Manager** (integrated): Creates manifest, processes exclusions, updates comments in files
 
 ## Overview
 
@@ -49,7 +49,7 @@ The solution introduces a **Change Manifest** - a human-readable text file that:
 ### Key Principles
 
 - **Serialization remains accurate** - The database structure is always captured as it truly exists
-- **Initial serialization respects existing manifests** - If a manifest exists, exclusion comments are added during the first serialization - but not by the dacpac.runner tool, by the tool used to analyze the manifest file and apply knowledge from it to the serialized files; this happens either as the last step of the initial serialization or separately, by the tool which GitHub also uses to apply changes in the manifest file
+- **Initial serialization respects existing manifests** - If a manifest exists, exclusion comments are added automatically by the integrated Exclusion Manager that runs as the last step of DACPAC Runner execution
 - **Regeneration never re-serializes** - It only adds/removes comments to existing files
 - **Comments are reversible** - Excluded changes are commented out, not deleted, enabling easy re-inclusion
 - **Serialized files include exclusion comments** - When changes are excluded from migrations, comments are added to the serialized files indicating the exclusion
@@ -145,32 +145,26 @@ which source database the changes originated from, while being stored alongside 
 
 ### Initial Migration Generation
 
-**Phase 1: Generate Initial State**
+**Integrated Workflow (v3.1.0+)**
 1. User modifies database structure
-2. Runs DACPAC Runner (no changes to existing tool):
+2. Runs DACPAC Runner (with integrated Exclusion Manager):
    ```bash
    dotnet run --project SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner -- \
      --source-connection "Server={source_server};Database={source_db};..." \
      --target-connection "Server={target_server};Database={target_db};..." \
      --output-path "/path/to/output"
    ```
+   The tool automatically:
    - Serializes current database state to files
    - Analyzes git diff to detect changes
    - Creates initial migration script with ALL changes active
-3. Runs new Exclusion Manager tool:
-   ```bash
-   dotnet run --project SqlServer.Schema.Exclusion.Manager -- \
-     --output-path "/path/to/output" \
-     --source-server "{source_server}" \
-     --source-database "{source_db}" \
-     --target-server "{target_server}" \
-     --target-database "{target_db}"
-   ```
-   - Creates manifest file with all changes in "INCLUDED" section
-   - Manifest is named after source but stored in target location
-   - Adds initial exclusion comments to files (if any exclusions exist)
+   - **Runs Exclusion Manager automatically**:
+     - Creates manifest file with all changes in "INCLUDED" section (if new)
+     - Applies existing exclusions from manifest (if exists)
+     - Adds exclusion comments to files
+   - Commits all changes in a single atomic commit
 
-**Phase 2: Apply Exclusions (Separate Step)**
+**Manual Exclusion Updates**
 3. If user wants to exclude changes:
    - User edits manifest file (moves changes to EXCLUDED section)
    - Runs with `--update-exclusion-comments` flag:
@@ -348,15 +342,21 @@ PRINT 'Migration applied successfully.';
 
 ### Tool Architecture
 
-**DACPAC Runner** (existing, unchanged):
-- Continues to perform serialization and migration generation
-- No changes to this tool
+**DACPAC Runner** (enhanced in v3.1.0):
+- Performs serialization and migration generation
+- **Automatically runs integrated Exclusion Manager**
+- Commits all changes (schema, migrations, manifest) in single commit
 
-**Manifest & Comment Manager** (new tool):
+**Exclusion Manager Core** (library):
 - Creates manifest file from detected changes
 - Updates exclusion comments in serialized files and migration scripts
-- Can be run manually or by GitHub workflow
-- Handles all manifest-related operations
+- Integrated into DACPAC Runner for automatic execution
+- Also available as standalone CLI tool
+
+**Exclusion Manager CLI** (standalone tool):
+- Thin wrapper around Exclusion Manager Core
+- Can be run manually for updating exclusions
+- Used by GitHub workflow for manifest updates
 
 ## GitHub Workflow Integration (Future Implementation)
 
@@ -869,42 +869,65 @@ Each test should cover realistic scenarios:
 
 ## Tool Responsibilities Summary
 
-### DACPAC Runner (Unchanged)
-- **Existing functionality**: Serialization + migration generation
-- No changes to this tool
-- Continues to work exactly as before
+### DACPAC Runner (Enhanced in v3.1.0)
+- **Core functionality**: Serialization + migration generation
+- **Integrated Exclusion Manager**: Automatically runs after migration generation
+- **Single commit**: All changes committed together
 
-### Manifest & Comment Manager (New Tool)
+### Exclusion Manager Core (New Library)
 - Creates and manages manifest files
 - Updates exclusion comments in both serialized files and migration scripts
 - Analyzes git diff to identify changes
-- Can be run manually after DACPAC Runner or automatically by GitHub workflow
+- Used by both DACPAC Runner and standalone CLI
 
-### Typical Workflow
+### Exclusion Manager CLI (Standalone Tool)
+- Thin wrapper around Core library
+- Can be run manually for exclusion updates
+- Used by GitHub workflow when manifest changes
+
+### Typical Workflow (v3.1.0+)
 
 ```bash
-# 1. Run DACPAC Runner (unchanged)
+# 1. Run DACPAC Runner - Exclusion Manager runs automatically!
 dotnet run --project SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner -- \
   --source-connection "..." \
+  --target-connection "..." \
+  --output-path "."
+
+# That's it! The tool automatically:
+# - Serializes database structure
+# - Generates migrations
+# - Creates/updates manifest
+# - Applies exclusions
+# - Commits everything together
+
+# 2. User edits manifest file manually, pushes to PR
+# 3. GitHub workflow runs Exclusion Manager CLI automatically
+```
+
+### Legacy Workflow (Pre-v3.1.0)
+
+```bash
+# 1. Run DACPAC Runner
+dotnet run --project SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner -- \
+  --source-connection "..." \
+  --output-path "."
+
+# 2. Manually run Exclusion Manager
+dotnet run --project SqlServer.Schema.Exclusion.Manager -- \
   --output-path "." \
+  --source-server "src" \
+  --source-database "MyDB" \
   --target-server "prod" \
   --target-database "MyDB"
-
-# 2. Run Manifest & Comment Manager to create manifest and add comments
-dotnet run --project [ManifestCommentManager] -- \
-  --output-path "." \
-  --target-server "prod" \
-  --target-database "MyDB"
-
-# 3. User edits manifest, pushes to PR
-# 4. GitHub workflow runs Manifest & Comment Manager automatically
 ```
 
 ## Conclusion
 
-Simple system for excluding database changes from migrations:
-- Edit manifest → push to PR → workflow updates files automatically
-- Clean tool separation: initial generation vs. exclusion updates
-- Version control tracks all exclusion decisions
+Simple integrated system for excluding database changes from migrations:
+- **Automatic**: DACPAC Runner automatically creates manifest and applies exclusions (v3.1.0+)
+- **Manual control**: Edit manifest → push to PR → workflow updates files automatically
+- **Single commit**: All changes (schema, migrations, manifest) in one atomic commit
+- **Version control**: Tracks all exclusion decisions in manifest files
 
 *Collaboration by Claude*

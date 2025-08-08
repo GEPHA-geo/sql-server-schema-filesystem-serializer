@@ -1,7 +1,7 @@
 using LibGit2Sharp;
-using SqlServer.Schema.Exclusion.Manager.Models;
+using SqlServer.Schema.Exclusion.Manager.Core.Models;
 
-namespace SqlServer.Schema.Exclusion.Manager.Services;
+namespace SqlServer.Schema.Exclusion.Manager.Core.Services;
 
 public class ManifestManager
 {

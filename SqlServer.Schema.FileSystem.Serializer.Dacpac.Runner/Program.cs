@@ -3,6 +3,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.SqlServer.Dac;
 using SqlServer.Schema.FileSystem.Serializer.Dacpac.Core;
 using SqlServer.Schema.Migration.Generator.GitIntegration;
+using SqlServer.Schema.Exclusion.Manager.Core.Services;
 
 namespace SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner;
 
@@ -244,6 +245,7 @@ internal static class Program
             var actor = Environment.GetEnvironmentVariable("GITHUB_ACTOR") ?? Environment.UserName;
             
             // Pass connection string for validation (use source for validation)
+            // Note: autoCommit is set to false so we can run Exclusion Manager first
             var changesDetected = await migrationGenerator.GenerateMigrationsAsync(
                 outputPath, 
                 targetServer,
@@ -252,9 +254,58 @@ internal static class Program
                 actor,
                 sourceConnectionString,  // Use source connection for validation
                 validateMigration: true,
-                customCommitMessage: commitMessage);
+                customCommitMessage: commitMessage,
+                autoCommit: false);  // Don't commit yet - we'll do it after exclusion management
 
             Console.WriteLine(changesDetected ? $"✓ Migration files generated in: {migrationsPath}" : "No schema changes detected.");
+            
+            // Run Exclusion Manager to create/update manifest and apply exclusions
+            // Source server and database are already extracted above (sourceBuilder, sourceDatabaseName)
+            var sourceServer = sourceBuilder.DataSource.Replace('\\', '-').Replace(':', '-'); // Sanitize for folder names
+            var sourceDatabase = sourceDatabaseName;
+            
+            Console.WriteLine("\n=== Managing Exclusions ===");
+            Console.WriteLine($"Source: {sourceServer}/{sourceDatabase}");
+            Console.WriteLine($"Target: {targetServer}/{targetDatabase}");
+            
+            try
+            {
+                var manifestManager = new ManifestManager(outputPath);
+                
+                // This will:
+                // 1. Create manifest if it doesn't exist (with all changes in INCLUDED section)
+                // 2. If manifest exists, apply existing exclusions to files
+                var exclusionSuccess = await manifestManager.CreateOrUpdateManifestAsync(
+                    sourceServer, 
+                    sourceDatabase, 
+                    targetServer, 
+                    targetDatabase);
+                
+                if (exclusionSuccess)
+                {
+                    Console.WriteLine("✓ Exclusion management completed successfully");
+                }
+                else
+                {
+                    Console.WriteLine("⚠ Exclusion management completed with warnings - check logs above");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠ Exclusion management failed: {ex.Message}");
+                Console.WriteLine("Continuing without exclusion management...");
+            }
+            
+            // Now commit all changes together (schema files, migrations, and manifest)
+            if (changesDetected || gitAnalyzer.GetUncommittedChanges(outputPath, "").Any())
+            {
+                var commitMsg = !string.IsNullOrWhiteSpace(commitMessage) 
+                    ? commitMessage 
+                    : "Schema update with migrations and exclusions";
+                    
+                Console.WriteLine($"\n📝 Committing all changes: {commitMsg}");
+                gitAnalyzer.CommitChanges(outputPath, commitMsg);
+            }
         }
         catch (Exception ex)
         {

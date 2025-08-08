@@ -1,8 +1,8 @@
-using SqlServer.Schema.Exclusion.Manager.Models;
+using SqlServer.Schema.Exclusion.Manager.Core.Models;
 using System.Globalization;
 using System.Text;
 
-namespace SqlServer.Schema.Exclusion.Manager.Services;
+namespace SqlServer.Schema.Exclusion.Manager.Core.Services;
 
 public class ManifestFileHandler
 {

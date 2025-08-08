@@ -1,4 +1,4 @@
-using SqlServer.Schema.Exclusion.Manager.Models;
+using SqlServer.Schema.Exclusion.Manager.Core.Models;
 using Xunit;
 
 namespace SqlServer.Schema.Exclusion.Manager.Tests;

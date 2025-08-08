@@ -1,5 +1,5 @@
-using SqlServer.Schema.Exclusion.Manager.Models;
-using SqlServer.Schema.Exclusion.Manager.Services;
+using SqlServer.Schema.Exclusion.Manager.Core.Models;
+using SqlServer.Schema.Exclusion.Manager.Core.Services;
 using Xunit;
 
 namespace SqlServer.Schema.Exclusion.Manager.Tests;

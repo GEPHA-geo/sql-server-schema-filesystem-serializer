@@ -20,7 +20,8 @@ public class MigrationGenerator
         string? actor = null,
         string? connectionString = null,
         bool validateMigration = true,
-        string? customCommitMessage = null)
+        string? customCommitMessage = null,
+        bool autoCommit = true)
     {
         try
         {
@@ -45,8 +46,11 @@ public class MigrationGenerator
                 Console.WriteLine("Initializing Git repository for change tracking...");
                 _gitAnalyzer.InitializeRepository(outputPath);
                 
-                // Initial commit
-                _gitAnalyzer.CommitChanges(outputPath, $"Initial schema snapshot for {targetServer}/{targetDatabase}");
+                // Initial commit if autoCommit is enabled
+                if (autoCommit)
+                {
+                    _gitAnalyzer.CommitChanges(outputPath, $"Initial schema snapshot for {targetServer}/{targetDatabase}");
+                }
                 return false; // No changes on first run
             }
             
@@ -129,11 +133,14 @@ public class MigrationGenerator
                 return false;
             }
             
-            // Commit changes
-            var commitMessage = !string.IsNullOrWhiteSpace(customCommitMessage) 
-                ? customCommitMessage 
-                : $"Schema update: {description}";
-            _gitAnalyzer.CommitChanges(outputPath, commitMessage);
+            // Commit changes if autoCommit is enabled
+            if (autoCommit)
+            {
+                var commitMessage = !string.IsNullOrWhiteSpace(customCommitMessage) 
+                    ? customCommitMessage 
+                    : $"Schema update: {description}";
+                _gitAnalyzer.CommitChanges(outputPath, commitMessage);
+            }
             
             // Return true since we successfully created migration files
             return true;

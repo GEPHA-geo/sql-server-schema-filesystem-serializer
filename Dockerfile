@@ -15,8 +15,6 @@ COPY SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner/*.csproj ./SqlServer.S
 COPY SqlServer.Schema.FileSystem.Serializer.Dacpac.Core/*.csproj ./SqlServer.Schema.FileSystem.Serializer.Dacpac.Core/
 COPY SqlServer.Schema.Migration.Generator/*.csproj ./SqlServer.Schema.Migration.Generator/
 COPY SqlServer.Schema.Exclusion.Manager/*.csproj ./SqlServer.Schema.Exclusion.Manager/
-COPY SqlServer.Dac.Core/*.csproj ./SqlServer.Dac.Core/
-COPY SqlServer.Dac.Extensions/*.csproj ./SqlServer.Dac.Extensions/
 
 # Restore dependencies
 RUN dotnet restore

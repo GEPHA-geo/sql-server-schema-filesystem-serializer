@@ -38,7 +38,7 @@ RUN dotnet publish SqlServer.Schema.Exclusion.Manager \
     --no-restore
 
 # Runtime stage - use the base image with git
-FROM ghcr.io/gepha-geo/dotnet-runtime-git:9.0
+FROM ghcr.io/gepha-geo/dotnet-runtime-git-docker:9.0
 
 # Install additional runtime dependencies if needed
 RUN apt-get update && \

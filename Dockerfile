@@ -10,13 +10,14 @@ COPY *.sln ./
 COPY Directory.Build.props ./
 COPY VERSION ./
 
-# Copy project files
+# Copy all project files for restore
 COPY SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner/*.csproj ./SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner/
 COPY SqlServer.Schema.FileSystem.Serializer.Dacpac.Core/*.csproj ./SqlServer.Schema.FileSystem.Serializer.Dacpac.Core/
 COPY SqlServer.Schema.Migration.Generator/*.csproj ./SqlServer.Schema.Migration.Generator/
+COPY SqlServer.Schema.Migration.Runner/*.csproj ./SqlServer.Schema.Migration.Runner/
+COPY SqlServer.Schema.Migration.Generator.Tests/*.csproj ./SqlServer.Schema.Migration.Generator.Tests/
 COPY SqlServer.Schema.Exclusion.Manager/*.csproj ./SqlServer.Schema.Exclusion.Manager/
-COPY SqlServer.Dac.Core/*.csproj ./SqlServer.Dac.Core/
-COPY SqlServer.Dac.Extensions/*.csproj ./SqlServer.Dac.Extensions/
+COPY SqlServer.Schema.Exclusion.Manager.Tests/*.csproj ./SqlServer.Schema.Exclusion.Manager.Tests/
 
 # Restore dependencies
 RUN dotnet restore

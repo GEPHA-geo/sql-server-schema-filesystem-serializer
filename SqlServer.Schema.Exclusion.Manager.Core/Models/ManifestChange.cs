@@ -1,4 +1,4 @@
-namespace SqlServer.Schema.Exclusion.Manager.Models;
+namespace SqlServer.Schema.Exclusion.Manager.Core.Models;
 
 public class ManifestChange
 {

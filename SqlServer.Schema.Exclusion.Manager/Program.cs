@@ -1,4 +1,4 @@
-using SqlServer.Schema.Exclusion.Manager.Services;
+using SqlServer.Schema.Exclusion.Manager.Core.Services;
 using System.CommandLine;
 
 var rootCommand = new RootCommand("SQL Server Schema Exclusion Manager - Manages change manifests and exclusion comments");

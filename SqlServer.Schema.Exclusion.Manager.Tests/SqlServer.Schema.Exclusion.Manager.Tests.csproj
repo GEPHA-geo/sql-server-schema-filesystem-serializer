@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SqlServer.Schema.Exclusion.Manager\SqlServer.Schema.Exclusion.Manager.csproj" />
+    <ProjectReference Include="..\SqlServer.Schema.Exclusion.Manager.Core\SqlServer.Schema.Exclusion.Manager.Core.csproj" />
   </ItemGroup>
 
 </Project>

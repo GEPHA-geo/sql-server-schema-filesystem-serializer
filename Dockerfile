@@ -16,6 +16,7 @@ COPY SqlServer.Schema.FileSystem.Serializer.Dacpac.Core/*.csproj ./SqlServer.Sch
 COPY SqlServer.Schema.Migration.Generator/*.csproj ./SqlServer.Schema.Migration.Generator/
 COPY SqlServer.Schema.Migration.Runner/*.csproj ./SqlServer.Schema.Migration.Runner/
 COPY SqlServer.Schema.Migration.Generator.Tests/*.csproj ./SqlServer.Schema.Migration.Generator.Tests/
+COPY SqlServer.Schema.Exclusion.Manager.Core/*.csproj ./SqlServer.Schema.Exclusion.Manager.Core/
 COPY SqlServer.Schema.Exclusion.Manager/*.csproj ./SqlServer.Schema.Exclusion.Manager/
 COPY SqlServer.Schema.Exclusion.Manager.Tests/*.csproj ./SqlServer.Schema.Exclusion.Manager.Tests/
 

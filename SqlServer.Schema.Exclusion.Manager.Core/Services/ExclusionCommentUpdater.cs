@@ -6,24 +6,24 @@ namespace SqlServer.Schema.Exclusion.Manager.Core.Services;
 
 public class ExclusionCommentUpdater
 {
-    private readonly string[] _exclusionCommentPatterns = new[]
-    {
-        @"^\s*--\s*EXCLUDED FROM MIGRATION:.*\r?\n?",
-        @"^\s*--\s*MIGRATION EXCLUDED:.*\r?\n?",
-        @"^\s*--\s*This change is NOT included in current migration.*\r?\n?",
-        @"^\s*--\s*Reason: Defined in _change-manifests/.*\r?\n?",
-        @"^\s*--\s*See: _change-manifests/.*\r?\n?"
-    };
+    // No longer needed - we remove all comments instead of specific patterns
+    // Kept for potential future use if we need selective comment removal
     
     public async Task UpdateSerializedFilesAsync(string outputPath, string serverName, string databaseName, ChangeManifest manifest)
     {
         var dbPath = Path.Combine(outputPath, "servers", serverName, databaseName);
         if (!Directory.Exists(dbPath))
+        {
+            Console.WriteLine($"Database path not found: {dbPath}");
             return;
+        }
             
         // Only update files that are related to changes in the manifest
         // This includes both included and excluded changes
         var allChanges = manifest.IncludedChanges.Concat(manifest.ExcludedChanges).ToList();
+        
+        Console.WriteLine($"Processing {allChanges.Count} changes from manifest...");
+        var filesModified = 0;
         
         foreach (var change in allChanges)
         {
@@ -34,9 +34,23 @@ public class ExclusionCommentUpdater
             {
                 if (File.Exists(filePath))
                 {
-                    await UpdateFileCommentsAsync(filePath, manifest);
+                    var wasModified = await UpdateFileCommentsAsync(filePath, manifest);
+                    if (wasModified)
+                    {
+                        filesModified++;
+                        Console.WriteLine($"  Modified: {GetRelativePathFromDb(filePath, dbPath)}");
+                    }
                 }
             }
+        }
+        
+        if (filesModified == 0)
+        {
+            Console.WriteLine("  No serialized files were modified.");
+        }
+        else
+        {
+            Console.WriteLine($"  Total serialized files modified: {filesModified}");
         }
     }
 
@@ -124,11 +138,18 @@ public class ExclusionCommentUpdater
     public async Task UpdateMigrationScriptAsync(string migrationFilePath, ChangeManifest manifest)
     {
         if (!File.Exists(migrationFilePath))
+        {
+            Console.WriteLine($"  Migration file not found: {migrationFilePath}");
             return;
+        }
             
         var lines = await File.ReadAllLinesAsync(migrationFilePath);
         var output = new List<string>();
         var i = 0;
+        
+        var changesExcluded = new List<string>();
+        var changesIncluded = new List<string>();
+        var fileName = Path.GetFileName(migrationFilePath);
         
         while (i < lines.Length)
         {
@@ -140,6 +161,8 @@ public class ExclusionCommentUpdater
             {
                 // Comment out this change
                 var change = manifest.ExcludedChanges.First(c => c.Identifier == identifier);
+                changesExcluded.Add($"{identifier} - {change.Description}");
+                
                 output.Add($"-- EXCLUDED: {identifier} - {change.Description}");
                 output.Add($"-- Source: {manifest.GetManifestFileName()}");
                 output.Add("/*");
@@ -185,6 +208,7 @@ public class ExclusionCommentUpdater
                 else if (excludedIdentifier != null)
                 {
                     // Un-exclude it - extract the SQL from the comment block
+                    changesIncluded.Add(excludedIdentifier);
                     output.Add($"-- {excludedIdentifier} - Now included in migration");
                     
                     var inSql = false;
@@ -219,19 +243,51 @@ public class ExclusionCommentUpdater
             i++;
         }
         
-        await File.WriteAllLinesAsync(migrationFilePath, output);
+        // Only write if there were changes
+        var newContent = string.Join(Environment.NewLine, output);
+        var originalContent = string.Join(Environment.NewLine, lines);
+        
+        if (newContent != originalContent)
+        {
+            await File.WriteAllLinesAsync(migrationFilePath, output);
+            
+            Console.WriteLine($"  Modified migration: {fileName}");
+            
+            if (changesExcluded.Any())
+            {
+                Console.WriteLine($"    Excluded changes:");
+                foreach (var change in changesExcluded)
+                {
+                    Console.WriteLine($"      - {change}");
+                }
+            }
+            
+            if (changesIncluded.Any())
+            {
+                Console.WriteLine($"    Re-included changes:");
+                foreach (var change in changesIncluded)
+                {
+                    Console.WriteLine($"      - {change}");
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine($"  No changes needed for migration: {fileName}");
+        }
     }
     
-    private async Task UpdateFileCommentsAsync(string filePath, ChangeManifest manifest)
+    private async Task<bool> UpdateFileCommentsAsync(string filePath, ChangeManifest manifest)
     {
         var content = await File.ReadAllTextAsync(filePath);
         var originalContent = content;
         
-        // Remove existing exclusion comments and clean up extra blank lines
-        foreach (var pattern in _exclusionCommentPatterns)
-        {
-            content = Regex.Replace(content, pattern, "", RegexOptions.Multiline);
-        }
+        // Remove ALL comment lines and inline comments related to exclusions
+        // First remove standalone comment lines
+        content = Regex.Replace(content, @"^\s*--.*\r?\n", "", RegexOptions.Multiline);
+        
+        // Remove inline EXCLUDED comments
+        content = Regex.Replace(content, @"\s*--\s*EXCLUDED:.*$", "", RegexOptions.Multiline);
         
         // Clean up any consecutive blank lines left after removing comments
         content = Regex.Replace(content, @"(\r?\n){3,}", "\n\n", RegexOptions.Multiline);
@@ -243,29 +299,60 @@ public class ExclusionCommentUpdater
         var fileName = Path.GetFileNameWithoutExtension(filePath);
         var relativePath = GetRelativePath(filePath);
         
+        var exclusionsAdded = new List<string>();
         foreach (var excludedChange in manifest.ExcludedChanges)
         {
             if (IsChangeRelatedToFile(excludedChange, relativePath, fileName))
             {
                 content = AddExclusionComment(content, excludedChange, manifest.GetManifestFileName());
+                exclusionsAdded.Add(excludedChange.Identifier);
             }
         }
         
         if (content != originalContent)
         {
             await File.WriteAllTextAsync(filePath, content);
+            
+            // Log specific changes made
+            if (exclusionsAdded.Any())
+            {
+                Console.WriteLine($"    Added exclusions: {string.Join(", ", exclusionsAdded)}");
+            }
+            
+            return true;
         }
+        
+        return false;
     }
     
     private bool IsChangeRelatedToFile(ManifestChange change, string filePath, string fileName)
     {
-        // Simple matching based on identifier
+        // Match based on identifier structure
         var parts = change.Identifier.Split('.');
-        if (parts.Length >= 2)
+        
+        if (parts.Length == 3)
         {
-            var objectName = parts[^1];
+            // Column change: schema.table.column
+            // Match against table name (parts[1])
+            var tableName = parts[1];
+            
+            // Handle both TBL_ prefix and direct table name
+            return fileName.Equals($"TBL_{tableName}", StringComparison.OrdinalIgnoreCase) ||
+                   fileName.Equals(tableName, StringComparison.OrdinalIgnoreCase) ||
+                   filePath.Contains($"/{tableName}/", StringComparison.OrdinalIgnoreCase);
+        }
+        else if (parts.Length == 2)
+        {
+            // Object change: schema.object
+            var objectName = parts[1];
+            
+            // Handle various prefixes (TBL_, IDX_, FK_, etc.)
             return fileName.Equals(objectName, StringComparison.OrdinalIgnoreCase) ||
-                   filePath.Contains(objectName, StringComparison.OrdinalIgnoreCase);
+                   fileName.Equals($"TBL_{objectName}", StringComparison.OrdinalIgnoreCase) ||
+                   fileName.Equals($"IDX_{objectName}", StringComparison.OrdinalIgnoreCase) ||
+                   fileName.Equals($"FK_{objectName}", StringComparison.OrdinalIgnoreCase) ||
+                   fileName.Equals($"DF_{objectName}", StringComparison.OrdinalIgnoreCase) ||
+                   filePath.Contains($"/{objectName}/", StringComparison.OrdinalIgnoreCase);
         }
         
         return false;
@@ -273,28 +360,52 @@ public class ExclusionCommentUpdater
     
     private string AddExclusionComment(string content, ManifestChange change, string manifestFileName)
     {
-        // For table files, add comments near column definitions
-        if (change.ObjectType == "Table" && change.Identifier.Count(c => c == '.') == 2)
+        // Check if this is a column-specific exclusion (3 parts: schema.table.column)
+        var parts = change.Identifier.Split('.');
+        if (parts.Length == 3 && change.ObjectType == "Table")
         {
-            // Column change
-            var columnName = change.Identifier.Split('.')[^1];
-            var pattern = $@"(\[\s*{columnName}\s*\][^\r\n]+)";
-            var replacement = $@"    -- MIGRATION EXCLUDED: {change.Description}
-    -- This change is NOT included in current migration
-    -- See: {manifestFileName}
-$1";
+            // Column-specific exclusion - add inline comment
+            var columnName = parts[2];
             
-            return Regex.Replace(content, pattern, replacement, RegexOptions.IgnoreCase);
+            // Remove TBL_ prefix if present to get the actual column name
+            if (columnName.StartsWith("TBL_", StringComparison.OrdinalIgnoreCase))
+                columnName = columnName.Substring(4);
+            
+            // Pattern to match the column definition line
+            // Matches: [columnName] followed by everything up to the end of line
+            // Captures: (column definition)(whitespace)(optional comma)(end of line whitespace)
+            var pattern = $@"(\[\s*{Regex.Escape(columnName)}\s*\].*?)(\s*)(,?)(\s*$)";
+            
+            // Add inline comment to the column definition, preserving comma and whitespace
+            var replacement = $"$1  -- EXCLUDED: {change.Description}$2$3$4";
+            
+            var modifiedContent = Regex.Replace(content, pattern, replacement, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            
+            // If no match found, fall back to header comment
+            if (modifiedContent == content)
+            {
+                // Pattern didn't match, add header comment as fallback
+                var lines = content.Split('\n').ToList();
+                lines.Insert(0, $"-- MIGRATION EXCLUDED: Column '{columnName}' - {change.Description}");
+                lines.Insert(1, $"-- This change is NOT included in current migration");
+                lines.Insert(2, $"-- See: {manifestFileName}");
+                lines.Insert(3, "");
+                return string.Join('\n', lines);
+            }
+            
+            return modifiedContent;
         }
-        
-        // For other objects, add comment at the beginning
-        var lines = content.Split('\n').ToList();
-        lines.Insert(0, $"-- MIGRATION EXCLUDED: {change.Description}");
-        lines.Insert(1, $"-- This change is NOT included in current migration");
-        lines.Insert(2, $"-- See: {manifestFileName}");
-        lines.Insert(3, "");
-        
-        return string.Join('\n', lines);
+        else
+        {
+            // Non-column exclusion - add header comment
+            var lines = content.Split('\n').ToList();
+            lines.Insert(0, $"-- MIGRATION EXCLUDED: {change.Description}");
+            lines.Insert(1, $"-- This change is NOT included in current migration");
+            lines.Insert(2, $"-- See: {manifestFileName}");
+            lines.Insert(3, "");
+            
+            return string.Join('\n', lines);
+        }
     }
     
     private string GetRelativePath(string fullPath)
@@ -302,6 +413,10 @@ $1";
         var serversIndex = fullPath.IndexOf("servers");
         return serversIndex >= 0 ? fullPath.Substring(serversIndex) : fullPath;
     }
+
+    // Helper method to get relative path from database directory
+    string GetRelativePathFromDb(string fullPath, string dbPath) =>
+        Path.GetRelativePath(dbPath, fullPath).Replace(Path.DirectorySeparatorChar, '/');
     
     private string? ExtractIdentifierFromComment(string comment)
     {
@@ -311,7 +426,28 @@ $1";
     
     private string? ExtractIdentifierFromSql(string sql)
     {
-        // Try to extract object identifier from SQL statement
+        // Try to extract column identifier from ALTER TABLE ADD/DROP column statements
+        var alterTableAddMatch = Regex.Match(sql, @"ALTER\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?\s+ADD\s+\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (alterTableAddMatch.Success)
+        {
+            return $"{alterTableAddMatch.Groups[1].Value}.{alterTableAddMatch.Groups[2].Value}.{alterTableAddMatch.Groups[3].Value}";
+        }
+        
+        // Try ALTER TABLE DROP COLUMN
+        var alterTableDropMatch = Regex.Match(sql, @"ALTER\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?\s+DROP\s+COLUMN\s+\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (alterTableDropMatch.Success)
+        {
+            return $"{alterTableDropMatch.Groups[1].Value}.{alterTableDropMatch.Groups[2].Value}.{alterTableDropMatch.Groups[3].Value}";
+        }
+        
+        // Try ALTER TABLE ALTER COLUMN
+        var alterTableAlterMatch = Regex.Match(sql, @"ALTER\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?\s+ALTER\s+COLUMN\s+\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (alterTableAlterMatch.Success)
+        {
+            return $"{alterTableAlterMatch.Groups[1].Value}.{alterTableAlterMatch.Groups[2].Value}.{alterTableAlterMatch.Groups[3].Value}";
+        }
+        
+        // Try generic ALTER TABLE (without column - for other types of alterations)
         var alterTableMatch = Regex.Match(sql, @"ALTER\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
         if (alterTableMatch.Success)
         {

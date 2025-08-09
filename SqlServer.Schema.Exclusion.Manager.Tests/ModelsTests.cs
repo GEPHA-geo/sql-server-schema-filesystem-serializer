@@ -1,4 +1,5 @@
 using SqlServer.Schema.Exclusion.Manager.Core.Models;
+using System.IO;
 using Xunit;
 
 namespace SqlServer.Schema.Exclusion.Manager.Tests;
@@ -40,7 +41,8 @@ public class ModelsTests
         var fileName = manifest.GetManifestFileName();
 
         // Assert
-        Assert.Equal("_change-manifests/MyServer_MyDatabase.manifest", fileName);
+        var expected = Path.Combine("_change-manifests", "MyServer_MyDatabase.manifest");
+        Assert.Equal(expected, fileName);
     }
 
     [Fact]
@@ -187,6 +189,7 @@ public class ModelsTests
         var fileName = manifest.GetManifestFileName();
 
         // Assert
-        Assert.Equal("_change-manifests/Server.Name_My-Database.manifest", fileName);
+        var expected = Path.Combine("_change-manifests", "Server.Name_My-Database.manifest");
+        Assert.Equal(expected, fileName);
     }
 }

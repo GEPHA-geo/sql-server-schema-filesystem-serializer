@@ -145,7 +145,7 @@ public class ManifestManagerTests : IDisposable
         
         // Act - manifest should be in target location but named after source
         var expectedPath = Path.Combine(_testDirectory, "servers", targetServer, targetDatabase, 
-            $"change-manifest-{sourceServer}-{sourceDatabase}.manifest");
+            "_change-manifests", $"{sourceServer}_{sourceDatabase}.manifest");
         var actualPath = Path.Combine(_testDirectory, "servers", targetServer, targetDatabase, 
             manifest.GetManifestFileName());
         

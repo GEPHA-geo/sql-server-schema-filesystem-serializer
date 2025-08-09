@@ -40,7 +40,7 @@ public class ModelsTests
         var fileName = manifest.GetManifestFileName();
 
         // Assert
-        Assert.Equal("change-manifest-MyServer-MyDatabase.manifest", fileName);
+        Assert.Equal("_change-manifests/MyServer_MyDatabase.manifest", fileName);
     }
 
     [Fact]
@@ -187,6 +187,6 @@ public class ModelsTests
         var fileName = manifest.GetManifestFileName();
 
         // Assert
-        Assert.Equal("change-manifest-Server.Name-My-Database.manifest", fileName);
+        Assert.Equal("_change-manifests/Server.Name_My-Database.manifest", fileName);
     }
 }

@@ -47,7 +47,7 @@ This will:
 ## Manifest File Format
 
 The tool creates manifest files at:
-`servers/{server}/{database}/change-manifest-{server}-{database}.manifest`
+`servers/{server}/{database}/_change-manifests/{server}_{database}.manifest`
 
 Example:
 ```

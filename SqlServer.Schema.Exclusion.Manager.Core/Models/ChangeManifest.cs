@@ -12,5 +12,5 @@ public class ChangeManifest
     public List<ManifestChange> ExcludedChanges { get; } = new();
     
     public string GetManifestFileName() => 
-        $"change-manifest-{ServerName}-{DatabaseName}.manifest";
+        $"_change-manifests/{ServerName}_{DatabaseName}.manifest";
 }

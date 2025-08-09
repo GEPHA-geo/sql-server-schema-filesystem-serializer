@@ -10,7 +10,7 @@
 3. **Auto-update**: GitHub workflow runs Exclusion Manager → updates files with exclusion comments
 
 **Key files**:
-- **Manifest**: `change-manifest-{server}-{database}.manifest` - lists included/excluded changes
+- **Manifest**: `_change-manifests/{server}_{database}.manifest` - lists included/excluded changes
 - **Serialized files**: SQL files with exclusion comments 
 - **Migration script**: SQL with excluded changes commented out
 
@@ -62,7 +62,7 @@ The solution introduces a **Change Manifest** - a human-readable text file that:
 
 ### File Format
 
-**Filename**: `change-manifest-{server_name}-{database_name}.manifest`
+**Filename**: `_change-manifests/{server_name}_{database_name}.manifest`
 
 This naming convention ensures that:
 - Each database has its own manifest file
@@ -132,7 +132,7 @@ The manifest file is stored in the **target** database location but named after 
 servers/
   {target_server}/
     {target_database}/
-      change-manifest-{source_server}-{source_database}.manifest
+      _change-manifests/{source_server}_{source_database}.manifest
       schemas/
       z_migrations/
 ```
@@ -297,7 +297,7 @@ ALTER COLUMN [Price] DECIMAL(19,4) NOT NULL;
 GO
 
 -- EXCLUDED: dbo.Orders.LastModified - Column type changed from DATETIME to DATETIME2
--- Source: change-manifest-prod-server-ProductionDB.manifest
+-- Source: _change-manifests/prod-server_ProductionDB.manifest
 -- To include: Uncomment the following statement
 /*
 ALTER TABLE [dbo].[Orders] 
@@ -311,7 +311,7 @@ ADD [OrderStatus] VARCHAR(50) NOT NULL DEFAULT 'Pending';
 GO
 
 -- EXCLUDED: dbo.Orders.UpdatedBy - Column added
--- Source: change-manifest-prod-server-ProductionDB.manifest
+-- Source: _change-manifests/prod-server_ProductionDB.manifest
 /*
 ALTER TABLE [dbo].[Orders] 
 ADD [UpdatedBy] NVARCHAR(100) NULL;
@@ -319,7 +319,7 @@ GO
 */
 
 -- EXCLUDED: dbo.IX_Orders_Performance - Index added
--- Source: change-manifest-prod-server-ProductionDB.manifest
+-- Source: _change-manifests/prod-server_ProductionDB.manifest
 /*
 CREATE NONCLUSTERED INDEX [IX_Orders_Performance] 
 ON [dbo].[Orders] ([OrderDate], [Status])
@@ -524,7 +524,7 @@ When migration generation runs for the first time:
    CREATE TABLE [dbo].[Orders] (
        [OrderID] INT IDENTITY(1,1) NOT NULL,
        -- EXCLUDED FROM MIGRATION: Column type changed from DATETIME to DATETIME2
-       -- Reason: Defined in change-manifest-prod-server-ProductionDB.manifest
+       -- Reason: Defined in _change-manifests/prod-server_ProductionDB.manifest
        [LastModified] DATETIME2 NOT NULL,
        ...
    )
@@ -556,11 +556,11 @@ CREATE TABLE [dbo].[Orders] (
     [OrderDate] DATETIME NOT NULL,
     -- MIGRATION EXCLUDED: Column type changed from DATETIME to DATETIME2
     -- This change is NOT included in current migration
-    -- See: change-manifest-prod-server-ProductionDB.manifest
+    -- See: _change-manifests/prod-server_ProductionDB.manifest
     [LastModified] DATETIME2 NOT NULL,
     -- MIGRATION EXCLUDED: New column 
     -- This change is NOT included in current migration
-    -- See: change-manifest-prod-server-ProductionDB.manifest
+    -- See: _change-manifests/prod-server_ProductionDB.manifest
     [UpdatedBy] NVARCHAR(100) NULL,
     CONSTRAINT [PK_Orders] PRIMARY KEY CLUSTERED ([OrderID])
 );
@@ -577,7 +577,7 @@ Current indexes:
 
 ## Excluded from Migration
 - IX_Orders_Performance - Performance index not included in current migration
-  See: change-manifest-prod-server-ProductionDB.manifest
+  See: _change-manifests/prod-server_ProductionDB.manifest
 ```
 
 ### Implementation Note
@@ -778,7 +778,7 @@ public void ManifestFilename_ContainsServerAndDatabase()
 {
     // Given: Server "prod-01" and database "OrdersDB"
     // When: Manifest filename generated
-    // Then: Returns "change-manifest-prod-01-OrdersDB.manifest"
+    // Then: Returns "_change-manifests/prod-01_OrdersDB.manifest"
 }
 
 [Fact]

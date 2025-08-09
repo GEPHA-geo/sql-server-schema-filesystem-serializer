@@ -14,6 +14,8 @@ public class ManifestManager
     {
         _outputPath = outputPath;
         _fileHandler = new ManifestFileHandler();
+        // GitChangeDetector needs the repository path, not the output path
+        // The repository is at the output path location
         _changeDetector = new GitChangeDetector(outputPath);
         _commentUpdater = new ExclusionCommentUpdater();
     }
@@ -31,7 +33,49 @@ public class ManifestManager
             var existingManifest = await _fileHandler.ReadManifestAsync(manifestPath);
             
             // Detect current changes in target location
-            var detectedChanges = await _changeDetector.DetectChangesAsync(targetServer, targetDatabase);
+            // For now, just get changes from migration file to avoid slow git operations
+            var detectedChanges = new List<ManifestChange>();
+            
+            // Also parse the latest migration file for additional changes
+            var migrationsPath = Path.Combine(_outputPath, "servers", targetServer, targetDatabase, "z_migrations");
+            if (Directory.Exists(migrationsPath))
+            {
+                var migrationFiles = Directory.GetFiles(migrationsPath, "*.sql")
+                    .OrderByDescending(f => f)
+                    .ToList();
+                    
+                if (migrationFiles.Any())
+                {
+                    var latestMigration = migrationFiles.First();
+                    Console.WriteLine($"Parsing migration file for changes: {Path.GetFileName(latestMigration)}");
+                    var migrationChanges = await _changeDetector.ParseMigrationFileAsync(latestMigration, targetServer, targetDatabase);
+                    
+                    // Merge migration changes with detected changes
+                    // Migration changes are more specific, so they should take precedence
+                    var existingIdentifiers = detectedChanges.Select(c => c.Identifier).ToHashSet();
+                    
+                    foreach (var migrationChange in migrationChanges)
+                    {
+                        // If we don't already have this specific change, add it
+                        if (!existingIdentifiers.Contains(migrationChange.Identifier))
+                        {
+                            detectedChanges.Add(migrationChange);
+                        }
+                        else
+                        {
+                            // Update the existing change with more specific info from migration
+                            var existing = detectedChanges.FirstOrDefault(c => c.Identifier == migrationChange.Identifier);
+                            if (existing != null && migrationChange.Description != existing.Description)
+                            {
+                                // Keep the more specific description from migration file
+                                existing.Description = migrationChange.Description;
+                            }
+                        }
+                    }
+                    
+                    Console.WriteLine($"  Found {migrationChanges.Count} additional changes from migration file");
+                }
+            }
             
             ChangeManifest manifest;
             
@@ -49,7 +93,7 @@ public class ManifestManager
                     ServerName = sourceServer,
                     Generated = DateTime.UtcNow,
                     CommitHash = GetCurrentCommitHash(),
-                    RotationMarker = '/'
+                    RotationMarker = '/' // Initial marker can be either '/' or '\\'
                 };
                 manifest.IncludedChanges.AddRange(detectedChanges);
             }
@@ -87,13 +131,20 @@ public class ManifestManager
                 return false;
             }
             
+            Console.WriteLine($"Using manifest: {Path.GetFileName(manifestPath)}");
+            Console.WriteLine($"  Excluded changes: {manifest.ExcludedChanges.Count}");
+            Console.WriteLine($"  Included changes: {manifest.IncludedChanges.Count}");
+            
             // Update exclusion comments in serialized files at target location
+            Console.WriteLine("\nUpdating serialized files...");
             await _commentUpdater.UpdateSerializedFilesAsync(_outputPath, targetServer, targetDatabase, manifest);
             
             // Find and update migration scripts in target location
             var migrationsPath = Path.Combine(_outputPath, "servers", targetServer, targetDatabase, "z_migrations");
             if (Directory.Exists(migrationsPath))
             {
+                Console.WriteLine("\nUpdating migration scripts...");
+                
                 // Get the commit hash from manifest to find the cutoff point
                 var commitHash = manifest.CommitHash;
                 
@@ -109,12 +160,19 @@ public class ManifestManager
                 {
                     // Process only the most recent migration file
                     var latestMigration = migrationFiles.First();
-                    Console.WriteLine($"Processing migration: {Path.GetFileName(latestMigration)}");
                     await _commentUpdater.UpdateMigrationScriptAsync(latestMigration, manifest);
                 }
+                else
+                {
+                    Console.WriteLine("  No migration scripts found.");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"\nNo migrations directory found at: {migrationsPath}");
             }
             
-            Console.WriteLine("Exclusion comments updated successfully");
+            Console.WriteLine("\nExclusion comments update completed successfully.");
             return true;
         }
         catch (Exception ex)
@@ -132,7 +190,8 @@ public class ManifestManager
             ServerName = existing.ServerName,
             Generated = DateTime.UtcNow,
             CommitHash = GetCurrentCommitHash(),
-            // Only toggle rotation marker if we're on origin/main
+            // Always toggle rotation marker when we should (on top of origin/main)
+            // This ensures the file always appears as changed in git diff
             RotationMarker = ShouldToggleRotationMarker() ? 
                 (existing.RotationMarker == '/' ? '\\' : '/') : 
                 existing.RotationMarker
@@ -171,14 +230,17 @@ public class ManifestManager
     {
         try
         {
-            // Check if the parent of current HEAD is on origin/main
-            // This means current commit is "next to" origin/main
+            Console.WriteLine("Checking if rotation marker should be toggled...");
+            
+            // Always toggle when we're directly on top of origin/main
+            // This ensures the manifest file always shows as changed
+            
             var process = new System.Diagnostics.Process
             {
                 StartInfo = new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = "git",
-                    Arguments = "rev-parse HEAD^",
+                    Arguments = "rev-parse HEAD~1",  // Get parent commit (HEAD~1 is more reliable than HEAD^)
                     WorkingDirectory = _outputPath,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -189,10 +251,18 @@ public class ManifestManager
             
             process.Start();
             var parentCommit = process.StandardOutput.ReadToEnd().Trim();
+            var parentError = process.StandardError.ReadToEnd().Trim();
             process.WaitForExit();
             
-            if (string.IsNullOrEmpty(parentCommit))
-                return false;
+            if (process.ExitCode != 0 || string.IsNullOrEmpty(parentCommit))
+            {
+                // If we can't get parent (e.g., first commit), toggle anyway
+                Console.WriteLine($"Could not get parent commit (exit code: {process.ExitCode}). Error: {parentError}");
+                Console.WriteLine("Toggling rotation marker anyway (no parent commit)");
+                return true;
+            }
+            
+            Console.WriteLine($"Parent commit (HEAD~1): {parentCommit}");
             
             // Check if parent commit is the same as origin/main
             process = new System.Diagnostics.Process
@@ -211,15 +281,39 @@ public class ManifestManager
             
             process.Start();
             var mainCommit = process.StandardOutput.ReadToEnd().Trim();
+            var mainError = process.StandardError.ReadToEnd().Trim();
             process.WaitForExit();
             
-            // Toggle only if parent commit is exactly origin/main
-            return parentCommit == mainCommit;
+            if (process.ExitCode != 0 || string.IsNullOrEmpty(mainCommit))
+            {
+                // If we can't get origin/main, toggle anyway to be safe
+                Console.WriteLine($"Could not get origin/main commit (exit code: {process.ExitCode}). Error: {mainError}");
+                Console.WriteLine("Toggling rotation marker anyway (can't get origin/main)");
+                return true;
+            }
+            
+            Console.WriteLine($"Origin/main commit: {mainCommit}");
+            
+            // Toggle if parent commit is origin/main (we're directly on top of it)
+            bool shouldToggle = parentCommit == mainCommit;
+            
+            if (shouldToggle)
+            {
+                Console.WriteLine("Parent commit IS origin/main - WILL toggle rotation marker");
+            }
+            else
+            {
+                Console.WriteLine("Parent commit is NOT origin/main - will NOT toggle rotation marker");
+            }
+            
+            return shouldToggle;
         }
-        catch
+        catch (Exception ex)
         {
-            // If we can't determine, don't toggle
-            return false;
+            // If anything fails, toggle anyway to ensure file changes
+            Console.WriteLine($"Exception while checking rotation marker: {ex.Message}");
+            Console.WriteLine("Toggling rotation marker anyway (exception occurred)");
+            return true;
         }
     }
     

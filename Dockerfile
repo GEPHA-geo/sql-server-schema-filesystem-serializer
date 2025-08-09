@@ -1,8 +1,15 @@
-# Multi-stage build for SQL Server Schema Tools
+# Single-stage build for SQL Server Schema Tools
 # Combines DACPAC Runner and Exclusion Manager in a single image
 
-# Build stage
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM ghcr.io/gepha-geo/dotnet-sdk-git-docker:9.0
+
+# Install additional dependencies if needed
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libicu-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /src
 
 # Copy solution and project files first for better caching
@@ -29,29 +36,13 @@ COPY . .
 # Build and publish both tools
 RUN dotnet publish SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner \
     -c Release \
-    -o /app/dacpac \
+    -o /app \
     --no-restore
 
 RUN dotnet publish SqlServer.Schema.Exclusion.Manager \
     -c Release \
     -o /app/exclusion-manager \
     --no-restore
-
-# Runtime stage - use the base image with git
-FROM ghcr.io/gepha-geo/dotnet-runtime-git-docker:9.0
-
-# Install additional runtime dependencies if needed
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    libicu-dev \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# Copy both applications
-COPY --from=build /app/dacpac .
-COPY --from=build /app/exclusion-manager ./exclusion-manager
 
 # Create wrapper script for Exclusion Manager
 RUN echo '#!/bin/bash' > /usr/local/bin/exclusion-manager && \

@@ -11,8 +11,8 @@ public class ExclusionCommentUpdater
         @"^\s*--\s*EXCLUDED FROM MIGRATION:.*\r?\n?",
         @"^\s*--\s*MIGRATION EXCLUDED:.*\r?\n?",
         @"^\s*--\s*This change is NOT included in current migration.*\r?\n?",
-        @"^\s*--\s*Reason: Defined in change-manifest.*\r?\n?",
-        @"^\s*--\s*See: change-manifest.*\r?\n?"
+        @"^\s*--\s*Reason: Defined in _change-manifests/.*\r?\n?",
+        @"^\s*--\s*See: _change-manifests/.*\r?\n?"
     };
     
     public async Task UpdateSerializedFilesAsync(string outputPath, string serverName, string databaseName, ChangeManifest manifest)

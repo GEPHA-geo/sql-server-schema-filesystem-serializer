@@ -25,7 +25,7 @@ dotnet run --project SqlServer.Schema.Exclusion.Manager -- \
   --target-database "MyDB"
 ```
 
-This creates: `servers/prod/MyDB/change-manifest-prod-MyDB.manifest`
+This creates: `servers/prod/MyDB/_change-manifests/prod_MyDB.manifest`
 
 ## Step 3: Edit manifest to exclude changes
 
@@ -91,11 +91,11 @@ CREATE TABLE [dbo].[Orders] (
     [OrderID] INT IDENTITY(1,1) NOT NULL,
     -- MIGRATION EXCLUDED: Column type changed from DATETIME to DATETIME2
     -- This change is NOT included in current migration
-    -- See: change-manifest-prod-MyDB.manifest
+    -- See: _change-manifests/prod_MyDB.manifest
     [LastModified] DATETIME2 NOT NULL,
     -- MIGRATION EXCLUDED: Column added
     -- This change is NOT included in current migration
-    -- See: change-manifest-prod-MyDB.manifest
+    -- See: _change-manifests/prod_MyDB.manifest
     [UpdatedBy] NVARCHAR(100) NULL,
     ...
 )
@@ -109,7 +109,7 @@ ALTER COLUMN [Price] DECIMAL(19,4) NOT NULL;
 GO
 
 -- EXCLUDED: dbo.Orders.LastModified - Column type changed from DATETIME to DATETIME2
--- Source: change-manifest-prod-MyDB.manifest
+-- Source: _change-manifests/prod_MyDB.manifest
 /*
 ALTER TABLE [dbo].[Orders] 
 ALTER COLUMN [LastModified] DATETIME2 NOT NULL;
@@ -117,7 +117,7 @@ GO
 */
 
 -- EXCLUDED: dbo.Orders.UpdatedBy - Column added
--- Source: change-manifest-prod-MyDB.manifest
+-- Source: _change-manifests/prod_MyDB.manifest
 /*
 ALTER TABLE [dbo].[Orders] 
 ADD [UpdatedBy] NVARCHAR(100) NULL;

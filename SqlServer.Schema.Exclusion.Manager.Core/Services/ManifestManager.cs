@@ -225,9 +225,10 @@ public class ManifestManager
     
     private string GetManifestPath(string sourceServer, string sourceDatabase, string targetServer, string targetDatabase)
     {
-        // Manifest is stored in target location but named after source
+        // Manifest is stored in _change-manifests folder within target location
+        // Named with both server and database for clarity
         return Path.Combine(_outputPath, "servers", targetServer, targetDatabase, 
-            $"change-manifest-{sourceServer}-{sourceDatabase}.manifest");
+            "_change-manifests", $"{sourceServer}_{sourceDatabase}.manifest");
     }
     
     private string GetCurrentCommitHash()

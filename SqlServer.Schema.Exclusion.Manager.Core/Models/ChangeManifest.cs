@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace SqlServer.Schema.Exclusion.Manager.Core.Models;
 
 public class ChangeManifest
@@ -12,5 +14,5 @@ public class ChangeManifest
     public List<ManifestChange> ExcludedChanges { get; } = new();
     
     public string GetManifestFileName() => 
-        $"_change-manifests/{ServerName}_{DatabaseName}.manifest";
+        Path.Combine("_change-manifests", $"{ServerName}_{DatabaseName}.manifest");
 }

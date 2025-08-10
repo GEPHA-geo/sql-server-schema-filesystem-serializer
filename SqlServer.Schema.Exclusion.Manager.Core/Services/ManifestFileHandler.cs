@@ -63,6 +63,30 @@ public class ManifestFileHandler
                     Description = parts[1].TrimEnd(' ', '/', '\\')
                 };
                 
+                // Infer ObjectType from identifier structure
+                var idParts = identifier.Split('.');
+                if (idParts.Length == 3)
+                {
+                    // Column change - set ObjectType to Table
+                    change.ObjectType = "Table";
+                }
+                else if (idParts.Length == 2)
+                {
+                    // Could be table, view, procedure, etc.
+                    // Check for common prefixes
+                    var objectName = idParts[1];
+                    if (objectName.StartsWith("TBL_") || objectName.Contains("Table"))
+                        change.ObjectType = "Table";
+                    else if (objectName.StartsWith("VW_") || objectName.Contains("View"))
+                        change.ObjectType = "View";
+                    else if (objectName.StartsWith("SP_") || objectName.StartsWith("sp_"))
+                        change.ObjectType = "StoredProcedure";
+                    else if (objectName.StartsWith("IDX_") || objectName.Contains("Index"))
+                        change.ObjectType = "Index";
+                    else
+                        change.ObjectType = "Unknown";
+                }
+                
                 if (currentSection == "included")
                     manifest.IncludedChanges.Add(change);
                 else

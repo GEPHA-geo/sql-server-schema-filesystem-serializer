@@ -40,7 +40,7 @@ rootCommand.AddOption(targetServerOption);
 rootCommand.AddOption(targetDatabaseOption);
 rootCommand.AddOption(updateCommentsOption);
 
-rootCommand.SetHandler(async (string outputPath, string sourceServer, string sourceDatabase, string targetServer, string targetDatabase, bool updateComments) =>
+rootCommand.SetHandler(async (outputPath, sourceServer, sourceDatabase, targetServer, targetDatabase, updateComments) =>
 {
     try
     {

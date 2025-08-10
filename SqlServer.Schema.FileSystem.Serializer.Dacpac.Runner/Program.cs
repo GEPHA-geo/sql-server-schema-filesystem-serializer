@@ -17,73 +17,64 @@ internal static class Program
         
         // Define required options
         var sourceConnectionOption = new Option<string>(
-            aliases: new[] { "--source-connection", "-s" },
+            aliases: new[] { "--source-connection" },
             description: "Source database connection string"
         ) { IsRequired = true };
         
-        var targetConnectionOption = new Option<string>(
-            aliases: new[] { "--target-connection", "-t" },
-            description: "Target database connection string (used for organizing output)"
+        var targetServerOption = new Option<string>(
+            aliases: new[] { "--target-server" },
+            description: "Target server name (used for organizing output directory structure)"
+        ) { IsRequired = true };
+        
+        var targetDatabaseOption = new Option<string>(
+            aliases: new[] { "--target-database" },
+            description: "Target database name (used for organizing output directory structure)"
         ) { IsRequired = true };
         
         var outputPathOption = new Option<string>(
-            aliases: new[] { "--output-path", "-o" },
+            aliases: new[] { "--output-path" },
             description: "Output directory path for generated schema files"
         ) { IsRequired = true };
         
         var commitMessageOption = new Option<string?>(
-            aliases: new[] { "--commit-message", "-m" },
+            aliases: new[] { "--commit-message" },
             description: "Custom commit message for migration generation (optional)"
+        ) { IsRequired = false };
+        
+        // Define skip exclusion manager option
+        var skipExclusionManagerOption = new Option<bool>(
+            aliases: new[] { "--skip-exclusion-manager" },
+            description: "Skip running the exclusion manager after schema extraction"
         ) { IsRequired = false };
         
         // Add options to root command
         rootCommand.AddOption(sourceConnectionOption);
-        rootCommand.AddOption(targetConnectionOption);
+        rootCommand.AddOption(targetServerOption);
+        rootCommand.AddOption(targetDatabaseOption);
         rootCommand.AddOption(outputPathOption);
         rootCommand.AddOption(commitMessageOption);
+        rootCommand.AddOption(skipExclusionManagerOption);
         
-        // Set handler
-        rootCommand.SetHandler(async (string sourceConnection, string targetConnection, string outputPath, string? commitMessage) =>
+        // Set handler - now with separate target server and database parameters
+        rootCommand.SetHandler(async (string sourceConnection, string targetServer, string targetDatabase, string outputPath, string? commitMessage, bool skipExclusionManager) =>
         {
-            await RunDacpacExtraction(sourceConnection, targetConnection, outputPath, commitMessage);
-        }, sourceConnectionOption, targetConnectionOption, outputPathOption, commitMessageOption);
+            await RunDacpacExtraction(sourceConnection, targetServer, targetDatabase, outputPath, commitMessage, skipExclusionManager);
+        }, sourceConnectionOption, targetServerOption, targetDatabaseOption, outputPathOption, commitMessageOption, skipExclusionManagerOption);
         
-        // Support legacy positional arguments for backward compatibility
-        if (args.Length >= 3 && !args.Any(arg => arg.StartsWith("-")))
-        {
-            // Convert positional arguments to named options
-            var newArgs = new List<string>
-            {
-                "--source-connection", args[0],
-                "--target-connection", args[1],
-                "--output-path", args[2]
-            };
-            
-            // Add optional commit message if provided as 4th parameter
-            if (args.Length >= 4)
-            {
-                newArgs.Add("--commit-message");
-                newArgs.Add(args[3]);
-            }
-            
-            args = newArgs.ToArray();
-        }
-        
+        // Named parameters are now required - no positional argument support
         return await rootCommand.InvokeAsync(args);
     }
     
-    static async Task RunDacpacExtraction(string sourceConnectionString, string targetConnectionString, string outputPath, string? commitMessage = null)
+    static async Task RunDacpacExtraction(string sourceConnectionString, string targetServer, string targetDatabase, string outputPath, string? commitMessage = null, bool skipExclusionManager = false)
     {
-        // Extract target server and database from target connection string
-        var targetBuilder = new SqlConnectionStringBuilder(targetConnectionString);
-        var targetServer = targetBuilder.DataSource.Replace('\\', '-').Replace(':', '-'); // Sanitize for folder names
-        var targetDatabase = targetBuilder.InitialCatalog;
+        // Sanitize target server name for use in folder names
+        var sanitizedTargetServer = targetServer.Replace('\\', '-').Replace(':', '-');
         
         // Log the resolved server name and target path
-        Console.WriteLine($"Target Server (from connection): {targetBuilder.DataSource}");
-        Console.WriteLine($"Target Server (sanitized): {targetServer}");
+        Console.WriteLine($"Target Server: {targetServer}");
+        Console.WriteLine($"Target Server (sanitized): {sanitizedTargetServer}");
         Console.WriteLine($"Target Database: {targetDatabase}");
-        Console.WriteLine($"Target Path: servers/{targetServer}/{targetDatabase}/");
+        Console.WriteLine($"Target Path: servers/{sanitizedTargetServer}/{targetDatabase}/");
 
         // Configure Git safe directory for Docker environments
         ConfigureGitSafeDirectory(outputPath);
@@ -191,7 +182,7 @@ internal static class Program
             Console.WriteLine($"Script saved to generated_script.sql ({script.Length} characters)");
             
             // Clean only the database-specific directory (preserving migrations)
-            var targetOutputPath = Path.Combine(outputPath, "servers", targetServer, targetDatabase);
+            var targetOutputPath = Path.Combine(outputPath, "servers", sanitizedTargetServer, targetDatabase);
             Console.WriteLine($"Full target output path: {targetOutputPath}");
             
             if (Directory.Exists(targetOutputPath))
@@ -220,7 +211,7 @@ internal static class Program
             // Parse and organize the script into separate files
             Console.WriteLine("Parsing and organizing scripts...");
             var parser = new DacpacScriptParser();
-            parser.ParseAndOrganizeScripts(script, outputPath, targetServer, targetDatabase);
+            parser.ParseAndOrganizeScripts(script, outputPath, sanitizedTargetServer, targetDatabase);
             
             // Clean up temporary script file
             if (File.Exists("generated_script.sql"))
@@ -248,7 +239,7 @@ internal static class Program
             // Note: autoCommit is set to false so we can run Exclusion Manager first
             var changesDetected = await migrationGenerator.GenerateMigrationsAsync(
                 outputPath, 
-                targetServer,
+                sanitizedTargetServer,
                 targetDatabase, 
                 migrationsPath,
                 actor,
@@ -259,41 +250,49 @@ internal static class Program
 
             Console.WriteLine(changesDetected ? $"✓ Migration files generated in: {migrationsPath}" : "No schema changes detected.");
             
-            // Run Exclusion Manager to create/update manifest and apply exclusions
-            // Source server and database are already extracted above (sourceBuilder, sourceDatabaseName)
-            var sourceServer = sourceBuilder.DataSource.Replace('\\', '-').Replace(':', '-'); // Sanitize for folder names
-            var sourceDatabase = sourceDatabaseName;
-            
-            Console.WriteLine("\n=== Managing Exclusions ===");
-            Console.WriteLine($"Source: {sourceServer}/{sourceDatabase}");
-            Console.WriteLine($"Target: {targetServer}/{targetDatabase}");
-            
-            try
+            // Run Exclusion Manager to create/update manifest and apply exclusions (unless skipped)
+            if (!skipExclusionManager)
             {
-                var manifestManager = new ManifestManager(outputPath);
+                // Source server and database are already extracted above (sourceBuilder, sourceDatabaseName)
+                var sourceServer = sourceBuilder.DataSource.Replace('\\', '-').Replace(':', '-'); // Sanitize for folder names
+                var sourceDatabase = sourceDatabaseName;
                 
-                // This will:
-                // 1. Create manifest if it doesn't exist (with all changes in INCLUDED section)
-                // 2. If manifest exists, apply existing exclusions to files
-                var exclusionSuccess = await manifestManager.CreateOrUpdateManifestAsync(
-                    sourceServer, 
-                    sourceDatabase, 
-                    targetServer, 
-                    targetDatabase);
+                Console.WriteLine("\n=== Managing Exclusions ===");
+                Console.WriteLine($"Source: {sourceServer}/{sourceDatabase}");
+                Console.WriteLine($"Target: {targetServer}/{targetDatabase}");
                 
-                if (exclusionSuccess)
+                try
                 {
-                    Console.WriteLine("✓ Exclusion management completed successfully");
+                    var manifestManager = new ManifestManager(outputPath);
+                    
+                    // This will:
+                    // 1. Create manifest if it doesn't exist (with all changes in INCLUDED section)
+                    // 2. If manifest exists, apply existing exclusions to files
+                    var exclusionSuccess = await manifestManager.CreateOrUpdateManifestAsync(
+                        sourceServer, 
+                        sourceDatabase, 
+                        sanitizedTargetServer, 
+                        targetDatabase);
+                    
+                    if (exclusionSuccess)
+                    {
+                        Console.WriteLine("✓ Exclusion management completed successfully");
+                    }
+                    else
+                    {
+                        Console.WriteLine("⚠ Exclusion management completed with warnings - check logs above");
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Console.WriteLine("⚠ Exclusion management completed with warnings - check logs above");
+                    Console.WriteLine($"⚠ Exclusion management failed: {ex.Message}");
+                    Console.WriteLine("Continuing without exclusion management...");
                 }
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"⚠ Exclusion management failed: {ex.Message}");
-                Console.WriteLine("Continuing without exclusion management...");
+                Console.WriteLine("\n=== Exclusion Manager Skipped ===");
+                Console.WriteLine("Exclusion manager was skipped as requested via --skip-exclusion-manager flag");
             }
             
             // Now commit all changes together (schema files, migrations, and manifest)
@@ -349,7 +348,7 @@ internal static class Program
     
     static MigrationValidationResult ValidateMigrationGeneration(
         string outputPath, 
-        string targetServer, 
+        string sanitizedTargetServer, 
         string targetDatabase,
         string migrationsPath,
         bool migrationExpected)
@@ -357,7 +356,7 @@ internal static class Program
         try
         {
             var gitAnalyzer = new GitDiffAnalyzer();
-            var dbPath = Path.Combine("servers", targetServer, targetDatabase);
+            var dbPath = Path.Combine("servers", sanitizedTargetServer, targetDatabase);
             
             // Get list of migration files created in this run
             var migrationFiles = Directory.GetFiles(migrationsPath, "*.sql")

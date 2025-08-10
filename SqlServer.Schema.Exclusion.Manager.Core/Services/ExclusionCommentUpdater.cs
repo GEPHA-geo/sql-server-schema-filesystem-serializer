@@ -23,6 +23,9 @@ public class ExclusionCommentUpdater
         var allChanges = manifest.IncludedChanges.Concat(manifest.ExcludedChanges).ToList();
         
         Console.WriteLine($"Processing {allChanges.Count} changes from manifest...");
+        
+        // Group changes by their related files to avoid processing the same file multiple times
+        var processedFiles = new HashSet<string>();
         var filesModified = 0;
         
         foreach (var change in allChanges)
@@ -32,8 +35,9 @@ public class ExclusionCommentUpdater
             
             foreach (var filePath in possiblePaths)
             {
-                if (File.Exists(filePath))
+                if (File.Exists(filePath) && !processedFiles.Contains(filePath))
                 {
+                    processedFiles.Add(filePath);
                     var wasModified = await UpdateFileCommentsAsync(filePath, manifest);
                     if (wasModified)
                     {
@@ -58,12 +62,30 @@ public class ExclusionCommentUpdater
     {
         var paths = new List<string>();
         
-        // Parse identifier (e.g., "dbo.TableName" or "dbo.IDX_IndexName")
+        // Parse identifier (e.g., "dbo.TableName" or "dbo.IDX_IndexName" or "dbo.TableName.ColumnName")
         var parts = identifier.Split('.');
         if (parts.Length < 2)
             return paths;
             
         var schema = parts[0];
+        
+        // For 3-part identifiers (columns), we need to find the table file
+        if (parts.Length == 3)
+        {
+            // This is a column identifier - find the table file
+            var tableName = parts[1];
+            
+            // Try with TBL_ prefix first
+            var tablePath = Path.Combine(dbPath, "schemas", schema, "Tables", tableName, $"TBL_{tableName}.sql");
+            paths.Add(tablePath);
+            
+            // Also try without prefix
+            tablePath = Path.Combine(dbPath, "schemas", schema, "Tables", tableName, $"{tableName}.sql");
+            paths.Add(tablePath);
+            
+            return paths;
+        }
+        
         var objectName = parts[1];
         
         // Determine object type and build paths
@@ -156,7 +178,58 @@ public class ExclusionCommentUpdater
             var line = lines[i];
             
             // Check if this is an active SQL statement that should be excluded
-            var identifier = ExtractIdentifierFromSql(line);
+            // For multi-line statements, collect the full statement before extracting identifier
+            var fullStatement = line;
+            var statementEndIndex = i; // Track where the statement ends
+            
+            if (line.Contains("sp_addextendedproperty", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("sp_dropextendedproperty", StringComparison.OrdinalIgnoreCase))
+            {
+                // Extended property statements can span multiple lines
+                var j = i + 1;
+                while (j < lines.Length && !lines[j - 1].Trim().EndsWith(";") && !lines[j].Trim().Equals("GO", StringComparison.OrdinalIgnoreCase))
+                {
+                    fullStatement += " " + lines[j];
+                    statementEndIndex = j;
+                    j++;
+                }
+            }
+            else if (Regex.IsMatch(line, @"CREATE\s+(PROCEDURE|PROC|FUNCTION|VIEW)", RegexOptions.IgnoreCase) ||
+                     Regex.IsMatch(line, @"ALTER\s+(PROCEDURE|PROC|FUNCTION|VIEW)", RegexOptions.IgnoreCase) ||
+                     Regex.IsMatch(line, @"CREATE\s+OR\s+ALTER\s+(PROCEDURE|PROC|FUNCTION|VIEW)", RegexOptions.IgnoreCase))
+            {
+                // CREATE/ALTER PROCEDURE/FUNCTION/VIEW can span multiple lines
+                // Collect lines until we find END; or GO
+                var j = i + 1;
+                while (j < lines.Length)
+                {
+                    fullStatement += " " + lines[j];
+                    statementEndIndex = j;
+                    var trimmedLine = lines[j].Trim();
+                    
+                    if (trimmedLine.Equals("GO", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Found GO, include it and stop
+                        break;
+                    }
+                    else if (trimmedLine.EndsWith("END;", StringComparison.OrdinalIgnoreCase) && 
+                             (line.Contains("PROCEDURE", StringComparison.OrdinalIgnoreCase) || 
+                              line.Contains("PROC", StringComparison.OrdinalIgnoreCase) ||
+                              line.Contains("FUNCTION", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        // Found END; - check if next line is GO
+                        if (j + 1 < lines.Length && lines[j + 1].Trim().Equals("GO", StringComparison.OrdinalIgnoreCase))
+                        {
+                            fullStatement += " " + lines[j + 1];
+                            statementEndIndex = j + 1;
+                        }
+                        break;
+                    }
+                    j++;
+                }
+            }
+            
+            var identifier = ExtractIdentifierFromSql(fullStatement);
             if (identifier != null && manifest.ExcludedChanges.Any(c => c.Identifier == identifier))
             {
                 // Comment out this change
@@ -166,20 +239,17 @@ public class ExclusionCommentUpdater
                 output.Add($"-- EXCLUDED: {identifier} - {change.Description}");
                 output.Add($"-- Source: {manifest.GetManifestFileName()}");
                 output.Add("/*");
-                output.Add(line);
                 
-                // Continue reading until we find GO
-                i++;
-                while (i < lines.Length)
+                // Add all lines from i to statementEndIndex
+                for (var k = i; k <= statementEndIndex && k < lines.Length; k++)
                 {
-                    output.Add(lines[i]);
-                    if (lines[i].Trim().Equals("GO", StringComparison.OrdinalIgnoreCase))
-                    {
-                        break;
-                    }
-                    i++;
+                    output.Add(lines[k]);
                 }
+                
                 output.Add("*/");
+                
+                // Move i to after the statement we just processed
+                i = statementEndIndex;
             }
             else if (line.Contains("-- EXCLUDED:") || line.Contains("-- MIGRATION EXCLUDED:"))
             {
@@ -286,8 +356,8 @@ public class ExclusionCommentUpdater
         // First remove standalone comment lines
         content = Regex.Replace(content, @"^\s*--.*\r?\n", "", RegexOptions.Multiline);
         
-        // Remove inline EXCLUDED comments
-        content = Regex.Replace(content, @"\s*--\s*EXCLUDED:.*$", "", RegexOptions.Multiline);
+        // Remove inline EXCLUDED comments but preserve trailing commas
+        content = Regex.Replace(content, @"\s*--\s*EXCLUDED:[^,\r\n]*(,?)$", "$1", RegexOptions.Multiline);
         
         // Clean up any consecutive blank lines left after removing comments
         content = Regex.Replace(content, @"(\r?\n){3,}", "\n\n", RegexOptions.Multiline);
@@ -362,50 +432,97 @@ public class ExclusionCommentUpdater
     {
         // Check if this is a column-specific exclusion (3 parts: schema.table.column)
         var parts = change.Identifier.Split('.');
-        if (parts.Length == 3 && change.ObjectType == "Table")
+        
+        // For table files, only add inline comments for actual columns
+        // Non-column objects (constraints, indexes, etc.) should not add any comments to table files
+        if (parts.Length == 3)
         {
-            // Column-specific exclusion - add inline comment
             var columnName = parts[2];
             
-            // Remove TBL_ prefix if present to get the actual column name
-            if (columnName.StartsWith("TBL_", StringComparison.OrdinalIgnoreCase))
-                columnName = columnName.Substring(4);
+            // Check if this is actually a column (not a constraint, index, or extended property)
+            // Constraints typically start with DF_, FK_, PK_, CK_, UQ_
+            // Indexes typically start with IX_, IDX_, or end with _Index
+            // Extended properties start with EP_
+            bool isActualColumn = !columnName.StartsWith("DF_", StringComparison.OrdinalIgnoreCase) &&
+                                   !columnName.StartsWith("FK_", StringComparison.OrdinalIgnoreCase) &&
+                                   !columnName.StartsWith("PK_", StringComparison.OrdinalIgnoreCase) &&
+                                   !columnName.StartsWith("CK_", StringComparison.OrdinalIgnoreCase) &&
+                                   !columnName.StartsWith("UQ_", StringComparison.OrdinalIgnoreCase) &&
+                                   !columnName.StartsWith("IX_", StringComparison.OrdinalIgnoreCase) &&
+                                   !columnName.StartsWith("IDX_", StringComparison.OrdinalIgnoreCase) &&
+                                   !columnName.StartsWith("EP_", StringComparison.OrdinalIgnoreCase) &&
+                                   !columnName.EndsWith("_Index", StringComparison.OrdinalIgnoreCase) &&
+                                   !columnName.Equals("iTesting2", StringComparison.OrdinalIgnoreCase); // Specific index name
             
-            // Pattern to match the column definition line
-            // Matches: [columnName] followed by everything up to the end of line
-            // Captures: (column definition)(whitespace)(optional comma)(end of line whitespace)
-            var pattern = $@"(\[\s*{Regex.Escape(columnName)}\s*\].*?)(\s*)(,?)(\s*$)";
-            
-            // Add inline comment to the column definition, preserving comma and whitespace
-            var replacement = $"$1  -- EXCLUDED: {change.Description}$2$3$4";
-            
-            var modifiedContent = Regex.Replace(content, pattern, replacement, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-            
-            // If no match found, fall back to header comment
-            if (modifiedContent == content)
+            if (isActualColumn)
             {
-                // Pattern didn't match, add header comment as fallback
-                var lines = content.Split('\n').ToList();
-                lines.Insert(0, $"-- MIGRATION EXCLUDED: Column '{columnName}' - {change.Description}");
-                lines.Insert(1, $"-- This change is NOT included in current migration");
-                lines.Insert(2, $"-- See: {manifestFileName}");
-                lines.Insert(3, "");
-                return string.Join('\n', lines);
+                // Column-specific exclusion - add inline comment
+                // Pattern to match the column definition line
+                // Use non-greedy match up to optional comma to ensure comma is captured separately
+                var pattern = $@"^(\s*\[\s*{Regex.Escape(columnName)}\s*\][^\n\r,]*(?:\([^)]*\)[^\n\r,]*)*)(,?)(\s*)$";
+                
+                // Check if inline comment already exists for this column
+                if (Regex.IsMatch(content, $@"\[\s*{Regex.Escape(columnName)}\s*\].*--\s*EXCLUDED:", RegexOptions.IgnoreCase))
+                {
+                    // Comment already exists, don't add duplicate
+                    return content;
+                }
+                
+                // Add inline comment to the column definition
+                // $1 = column definition without comma
+                // $2 = optional comma  
+                // $3 = trailing whitespace
+                var replacement = $"$1$2  -- EXCLUDED: {change.Description}$3";
+                
+
+                
+                var modifiedContent = Regex.Replace(content, pattern, replacement, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+                
+
+                
+                // If column is not in the current table (e.g., it was removed), don't add any comment
+                // Just return the content unchanged
+                if (modifiedContent == content)
+                {
+                    // Column not found in table - it might have been removed
+                    // Don't add any header comment for removed columns
+                    return content;
+                }
+                
+                return modifiedContent;
             }
-            
-            return modifiedContent;
         }
-        else
+        
+        // For non-column exclusions (constraints, indexes, etc.) in table files, 
+        // don't add any comments - these are tracked elsewhere
+        return content;
+    }
+    
+    private string GetExclusionDescription(ManifestChange change)
+    {
+        var parts = change.Identifier.Split('.');
+        if (parts.Length == 3)
         {
-            // Non-column exclusion - add header comment
-            var lines = content.Split('\n').ToList();
-            lines.Insert(0, $"-- MIGRATION EXCLUDED: {change.Description}");
-            lines.Insert(1, $"-- This change is NOT included in current migration");
-            lines.Insert(2, $"-- See: {manifestFileName}");
-            lines.Insert(3, "");
+            var objectName = parts[2];
             
-            return string.Join('\n', lines);
+            // Determine the type of object for better description
+            if (objectName.StartsWith("DF_", StringComparison.OrdinalIgnoreCase))
+                return $"Constraint '{objectName}' - {change.Description}";
+            else if (objectName.StartsWith("FK_", StringComparison.OrdinalIgnoreCase))
+                return $"Foreign Key '{objectName}' - {change.Description}";
+            else if (objectName.StartsWith("PK_", StringComparison.OrdinalIgnoreCase))
+                return $"Primary Key '{objectName}' - {change.Description}";
+            else if (objectName.StartsWith("IX_", StringComparison.OrdinalIgnoreCase) || 
+                     objectName.StartsWith("IDX_", StringComparison.OrdinalIgnoreCase) ||
+                     objectName.Equals("iTesting2", StringComparison.OrdinalIgnoreCase))
+                return $"Index '{objectName}' - {change.Description}";
+            else if (objectName.StartsWith("EP_", StringComparison.OrdinalIgnoreCase))
+                return $"Extended Property '{objectName}' - {change.Description}";
+            else
+                return $"Column '{objectName}' - {change.Description}";
         }
+        
+        return change.Description;
     }
     
     private string GetRelativePath(string fullPath)
@@ -426,11 +543,30 @@ public class ExclusionCommentUpdater
     
     private string? ExtractIdentifierFromSql(string sql)
     {
-        // Try to extract column identifier from ALTER TABLE ADD/DROP column statements
-        var alterTableAddMatch = Regex.Match(sql, @"ALTER\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?\s+ADD\s+\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        // Try sp_rename for column renames
+        var renameMatch = Regex.Match(sql, @"sp_rename\s+'?\[?(\w+)\]?\.\[?(\w+)\]?\.\[?(\w+)\]?'?\s*,\s*'([^']+)'", RegexOptions.IgnoreCase);
+        if (renameMatch.Success)
+        {
+            // Return the original column name that's being renamed
+            return $"{renameMatch.Groups[1].Value}.{renameMatch.Groups[2].Value}.{renameMatch.Groups[3].Value}";
+        }
+        
+        // Try to extract column identifier from ALTER TABLE ADD column statements
+        // Need to exclude CONSTRAINT keyword
+        var alterTableAddMatch = Regex.Match(sql, @"ALTER\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?\s+ADD\s+(?!CONSTRAINT)\[?(\w+)\]?", RegexOptions.IgnoreCase);
         if (alterTableAddMatch.Success)
         {
             return $"{alterTableAddMatch.Groups[1].Value}.{alterTableAddMatch.Groups[2].Value}.{alterTableAddMatch.Groups[3].Value}";
+        }
+        
+        // Try ALTER TABLE ADD CONSTRAINT
+        var addConstraintMatch = Regex.Match(sql, @"ALTER\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?\s+ADD\s+CONSTRAINT\s+\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (addConstraintMatch.Success)
+        {
+            var schema = addConstraintMatch.Groups[1].Value;
+            var table = addConstraintMatch.Groups[2].Value;
+            var constraintName = addConstraintMatch.Groups[3].Value;
+            return $"{schema}.{table}.{constraintName}";
         }
         
         // Try ALTER TABLE DROP COLUMN
@@ -447,31 +583,123 @@ public class ExclusionCommentUpdater
             return $"{alterTableAlterMatch.Groups[1].Value}.{alterTableAlterMatch.Groups[2].Value}.{alterTableAlterMatch.Groups[3].Value}";
         }
         
-        // Try generic ALTER TABLE (without column - for other types of alterations)
-        var alterTableMatch = Regex.Match(sql, @"ALTER\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
-        if (alterTableMatch.Success)
+        // Try DROP CONSTRAINT
+        var dropConstraintMatch = Regex.Match(sql, @"ALTER\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?\s+DROP\s+CONSTRAINT\s+\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (dropConstraintMatch.Success)
         {
-            return $"{alterTableMatch.Groups[1].Value}.{alterTableMatch.Groups[2].Value}";
+            var schema = dropConstraintMatch.Groups[1].Value;
+            var table = dropConstraintMatch.Groups[2].Value;
+            var constraintName = dropConstraintMatch.Groups[3].Value;
+            return $"{schema}.{table}.{constraintName}";
         }
         
-        // Match CREATE INDEX with optional schema and brackets
-        var createIndexMatch = Regex.Match(sql, @"CREATE\s+(?:UNIQUE\s+|NONCLUSTERED\s+|CLUSTERED\s+)?INDEX\s+\[?([^\]]+)\]?", RegexOptions.IgnoreCase);
+        // Match CREATE INDEX with table name extraction
+        var createIndexMatch = Regex.Match(sql, @"CREATE\s+(?:UNIQUE\s+|NONCLUSTERED\s+|CLUSTERED\s+)?INDEX\s+\[?([^\]]+)\]?\s+ON\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
         if (createIndexMatch.Success)
         {
             var indexName = createIndexMatch.Groups[1].Value.Trim();
-            // Check if it starts with IDX_ already, if not add it
-            if (!indexName.StartsWith("IDX_", StringComparison.OrdinalIgnoreCase))
-            {
-                indexName = $"IDX_{indexName}";
-            }
-            return $"dbo.{indexName}";
+            var schema = createIndexMatch.Groups[2].Value;
+            var table = createIndexMatch.Groups[3].Value;
+            return $"{schema}.{table}.{indexName}";
         }
         
-        // Match DROP CONSTRAINT
-        var dropConstraintMatch = Regex.Match(sql, @"ALTER\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?\s+DROP\s+CONSTRAINT\s+\[?([^\]]+)\]?", RegexOptions.IgnoreCase);
-        if (dropConstraintMatch.Success)
+        // Match DROP INDEX with table name extraction
+        var dropIndexMatch = Regex.Match(sql, @"DROP\s+INDEX\s+\[?(\w+)\]?\s+ON\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (dropIndexMatch.Success)
         {
-            return $"{dropConstraintMatch.Groups[1].Value}.{dropConstraintMatch.Groups[3].Value}";
+            var indexName = dropIndexMatch.Groups[1].Value.Trim();
+            var schema = dropIndexMatch.Groups[2].Value;
+            var table = dropIndexMatch.Groups[3].Value;
+            return $"{schema}.{table}.{indexName}";
+        }
+        
+        // Match sp_addextendedproperty for column descriptions
+        var extPropMatch = Regex.Match(sql, @"(?:EXECUTE\s+|EXEC\s+)?sp_addextendedproperty.*?@level0name\s*=\s*N?'(\w+)'.*?@level1name\s*=\s*N?'(\w+)'.*?@level2name\s*=\s*N?'(\w+)'", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        if (extPropMatch.Success)
+        {
+            var schema = extPropMatch.Groups[1].Value;
+            var table = extPropMatch.Groups[2].Value;
+            var column = extPropMatch.Groups[3].Value;
+            // Use EP_Column_Description format to match what GitChangeDetector creates
+            return $"{schema}.{table}.EP_Column_Description_{column}";
+        }
+        
+        // Match sp_dropextendedproperty for column descriptions
+        var dropExtPropMatch = Regex.Match(sql, @"(?:EXECUTE\s+|EXEC\s+)?sp_dropextendedproperty\s+@name\s*=\s*N?'([^']+)'.*?@level0name\s*=\s*N?'(\w+)'.*?@level1name\s*=\s*N?'(\w+)'.*?@level2name\s*=\s*N?'(\w+)'", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        if (dropExtPropMatch.Success)
+        {
+            var propName = dropExtPropMatch.Groups[1].Value;
+            var schema = dropExtPropMatch.Groups[2].Value;
+            var table = dropExtPropMatch.Groups[3].Value;
+            var column = dropExtPropMatch.Groups[4].Value;
+            
+            // Format the property name similar to GitChangeDetector
+            var formattedPropName = propName == "MS_Description" ? "Column_Description" : propName.Replace(" ", "_");
+            return $"{schema}.{table}.EP_{formattedPropName}_{column}";
+        }
+        
+        // Match DROP TABLE
+        var dropTableMatch = Regex.Match(sql, @"DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (dropTableMatch.Success)
+        {
+            return $"{dropTableMatch.Groups[1].Value}.{dropTableMatch.Groups[2].Value}";
+        }
+        
+        // Check CREATE/ALTER/DROP PROCEDURE before CREATE TABLE to avoid false matches
+        var procMatch = Regex.Match(sql, @"(CREATE|ALTER|DROP)\s+PROC(?:EDURE)?\s+(?:IF\s+EXISTS\s+)?\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (procMatch.Success)
+        {
+            return $"{procMatch.Groups[2].Value}.{procMatch.Groups[3].Value}";
+        }
+        
+        // Match CREATE OR ALTER PROCEDURE
+        var createOrAlterProcMatch = Regex.Match(sql, @"CREATE\s+OR\s+ALTER\s+PROC(?:EDURE)?\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (createOrAlterProcMatch.Success)
+        {
+            return $"{createOrAlterProcMatch.Groups[1].Value}.{createOrAlterProcMatch.Groups[2].Value}";
+        }
+        
+        // Check CREATE/ALTER/DROP FUNCTION before CREATE TABLE
+        var funcMatch = Regex.Match(sql, @"(CREATE|ALTER|DROP)\s+FUNCTION\s+(?:IF\s+EXISTS\s+)?\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (funcMatch.Success)
+        {
+            return $"{funcMatch.Groups[2].Value}.{funcMatch.Groups[3].Value}";
+        }
+        
+        // Match CREATE OR ALTER FUNCTION
+        var createOrAlterFuncMatch = Regex.Match(sql, @"CREATE\s+OR\s+ALTER\s+FUNCTION\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (createOrAlterFuncMatch.Success)
+        {
+            return $"{createOrAlterFuncMatch.Groups[1].Value}.{createOrAlterFuncMatch.Groups[2].Value}";
+        }
+        
+        // Check CREATE/ALTER/DROP VIEW before CREATE TABLE
+        var viewMatch = Regex.Match(sql, @"(CREATE|ALTER|DROP)\s+VIEW\s+(?:IF\s+EXISTS\s+)?\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (viewMatch.Success)
+        {
+            return $"{viewMatch.Groups[2].Value}.{viewMatch.Groups[3].Value}";
+        }
+        
+        // Match CREATE OR ALTER VIEW
+        var createOrAlterViewMatch = Regex.Match(sql, @"CREATE\s+OR\s+ALTER\s+VIEW\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (createOrAlterViewMatch.Success)
+        {
+            return $"{createOrAlterViewMatch.Groups[1].Value}.{createOrAlterViewMatch.Groups[2].Value}";
+        }
+        
+        // Match CREATE TABLE (check last to avoid false matches with CREATE PROCEDURE/FUNCTION/VIEW)
+        var createTableMatch = Regex.Match(sql, @"CREATE\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        if (createTableMatch.Success)
+        {
+            return $"{createTableMatch.Groups[1].Value}.{createTableMatch.Groups[2].Value}";
+        }
+        
+        // Match sp_rename for tables (without 'OBJECT' parameter or with it)
+        var renameTableMatch = Regex.Match(sql, @"(?:EXECUTE\s+|EXEC\s+)?sp_rename\s+'?\[?(\w+)\]?\.\[?(\w+)\]?'?\s*,\s*'([^']+)'(?:\s*,\s*'OBJECT')?", RegexOptions.IgnoreCase);
+        if (renameTableMatch.Success && !sql.Contains("'COLUMN'", StringComparison.OrdinalIgnoreCase))
+        {
+            // Return the original table name that's being renamed
+            return $"{renameTableMatch.Groups[1].Value}.{renameTableMatch.Groups[2].Value}";
         }
         
         return null;

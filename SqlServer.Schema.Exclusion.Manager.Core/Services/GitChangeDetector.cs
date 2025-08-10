@@ -291,6 +291,52 @@ public class GitChangeDetector
             
         var content = await File.ReadAllTextAsync(migrationFilePath);
         
+        // Parse CREATE TABLE operations
+        var createTableMatches = Regex.Matches(content, @"CREATE\s+TABLE\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        foreach (Match match in createTableMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var table = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{table}",
+                Description = "added",
+                ObjectType = "Table"
+            });
+        }
+        
+        // Parse DROP TABLE operations
+        var dropTableMatches = Regex.Matches(content, @"DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        foreach (Match match in dropTableMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var table = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{table}",
+                Description = "removed",
+                ObjectType = "Table"
+            });
+        }
+        
+        // Parse table renames from EXEC sp_rename (without 'COLUMN' parameter)
+        var tableRenameMatches = Regex.Matches(content, @"EXEC\s+sp_rename\s+'?\[?(\w+)\]?\.\[?(\w+)\]?'?,\s+'?(\w+)'?\s*(?:,\s+'OBJECT')?\s*(?:;|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        foreach (Match match in tableRenameMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var oldTable = match.Groups[2].Value;
+            var newTable = match.Groups[3].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{oldTable}",
+                Description = $"renamed to {newTable}",
+                ObjectType = "Table"
+            });
+        }
+        
         // Parse column renames from EXEC sp_rename
         var renameMatches = Regex.Matches(content, @"EXEC\s+sp_rename\s+'?\[?(\w+)\]?\.\[?(\w+)\]?\.\[?(\w+)\]?'?,\s+'?(\w+)'?,\s+'COLUMN'", RegexOptions.IgnoreCase);
         foreach (Match match in renameMatches)
@@ -413,6 +459,22 @@ public class GitChangeDetector
             });
         }
         
+        // Parse index drops
+        var indexDropMatches = Regex.Matches(content, @"DROP\s+INDEX\s+\[?(\w+)\]?\s+ON\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        foreach (Match match in indexDropMatches)
+        {
+            var indexName = match.Groups[1].Value;
+            var schema = match.Groups[2].Value;
+            var table = match.Groups[3].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{table}.{indexName}",
+                Description = "removed",
+                ObjectType = "Index"
+            });
+        }
+        
         // Parse extended properties (like EP_Column_Description_zura)
         var extPropMatches = Regex.Matches(content, @"EXECUTE\s+sp_addextendedproperty\s+@name\s*=\s*N'(\w+)'.*?@level0name\s*=\s*N'(\w+)'.*?@level1name\s*=\s*N'(\w+)'.*?@level2name\s*=\s*N'(\w+)'", RegexOptions.IgnoreCase | RegexOptions.Singleline);
         foreach (Match match in extPropMatches)
@@ -433,7 +495,221 @@ public class GitChangeDetector
             });
         }
         
-        return changes;
+        // Parse extended property drops
+        var extPropDropMatches = Regex.Matches(content, @"EXECUTE\s+sp_dropextendedproperty\s+@name\s*=\s*N'(\w+)'.*?@level0name\s*=\s*N'(\w+)'.*?@level1name\s*=\s*N'(\w+)'.*?@level2name\s*=\s*N'(\w+)'", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        foreach (Match match in extPropDropMatches)
+        {
+            var propName = match.Groups[1].Value;
+            var schema = match.Groups[2].Value;
+            var tableName = match.Groups[3].Value;
+            var columnName = match.Groups[4].Value;
+            
+            // Use a descriptive identifier that includes table name
+            var propIdentifier = propName == "MS_Description" ? $"EP_Column_Description_{columnName}" : $"EP_{propName}_{columnName}";
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{tableName}.{propIdentifier}",
+                Description = "removed",
+                ObjectType = "ExtendedProperty"
+            });
+        }
+        
+        // Parse VIEW operations
+        // Match CREATE VIEW (but not CREATE OR ALTER VIEW)
+        var createViewMatches = Regex.Matches(content, @"CREATE\s+(?!OR\s+ALTER\s+)VIEW\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        foreach (Match match in createViewMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var viewName = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{viewName}",
+                Description = "added",
+                ObjectType = "View"
+            });
+        }
+        
+        // Match CREATE OR ALTER VIEW separately
+        var createOrAlterViewMatches = Regex.Matches(content, @"CREATE\s+OR\s+ALTER\s+VIEW\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        foreach (Match match in createOrAlterViewMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var viewName = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{viewName}",
+                Description = "modified",
+                ObjectType = "View"
+            });
+        }
+        
+        // Match ALTER VIEW separately (but not CREATE OR ALTER which is already handled above)
+        var alterViewMatches = Regex.Matches(content, @"ALTER\s+VIEW\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        foreach (Match match in alterViewMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var viewName = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{viewName}",
+                Description = "modified",
+                ObjectType = "View"
+            });
+        }
+        
+        var dropViewMatches = Regex.Matches(content, @"DROP\s+VIEW\s+(?:IF\s+EXISTS\s+)?\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        foreach (Match match in dropViewMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var viewName = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{viewName}",
+                Description = "removed",
+                ObjectType = "View"
+            });
+        }
+        
+        // Parse STORED PROCEDURE operations
+        // Match CREATE PROC (but not CREATE OR ALTER PROC)
+        var createProcMatches = Regex.Matches(content, @"CREATE\s+(?!OR\s+ALTER\s+)PROC(?:EDURE)?\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        foreach (Match match in createProcMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var procName = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{procName}",
+                Description = "added",
+                ObjectType = "StoredProcedure"
+            });
+        }
+        
+        // Match CREATE OR ALTER PROC separately
+        var createOrAlterProcMatches = Regex.Matches(content, @"CREATE\s+OR\s+ALTER\s+PROC(?:EDURE)?\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        foreach (Match match in createOrAlterProcMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var procName = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{procName}",
+                Description = "modified",
+                ObjectType = "StoredProcedure"
+            });
+        }
+        
+        // Match ALTER PROC separately (but not CREATE OR ALTER which is already handled above)
+        var alterProcMatches = Regex.Matches(content, @"ALTER\s+PROC(?:EDURE)?\s+\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        foreach (Match match in alterProcMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var procName = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{procName}",
+                Description = "modified",
+                ObjectType = "StoredProcedure"
+            });
+        }
+        
+        var dropProcMatches = Regex.Matches(content, @"DROP\s+PROC(?:EDURE)?\s+(?:IF\s+EXISTS\s+)?\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        foreach (Match match in dropProcMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var procName = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{procName}",
+                Description = "removed",
+                ObjectType = "StoredProcedure"
+            });
+        }
+        
+        // Parse FUNCTION operations
+        // Match CREATE FUNCTION (but not CREATE OR ALTER FUNCTION)
+        // Functions can have parameters right after the name, so match until (
+        var createFuncMatches = Regex.Matches(content, @"CREATE\s+(?!OR\s+ALTER\s+)FUNCTION\s+\[?(\w+)\]?\.\[?(\w+)\]?\s*\(", RegexOptions.IgnoreCase);
+        foreach (Match match in createFuncMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var funcName = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{funcName}",
+                Description = "added",
+                ObjectType = "Function"
+            });
+        }
+        
+        // Match CREATE OR ALTER FUNCTION separately
+        var createOrAlterFuncMatches = Regex.Matches(content, @"CREATE\s+OR\s+ALTER\s+FUNCTION\s+\[?(\w+)\]?\.\[?(\w+)\]?\s*\(", RegexOptions.IgnoreCase);
+        foreach (Match match in createOrAlterFuncMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var funcName = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{funcName}",
+                Description = "modified",
+                ObjectType = "Function"
+            });
+        }
+        
+        // Match ALTER FUNCTION separately (but not CREATE OR ALTER which is already handled above)
+        var alterFuncMatches = Regex.Matches(content, @"ALTER\s+FUNCTION\s+\[?(\w+)\]?\.\[?(\w+)\]?\s*\(", RegexOptions.IgnoreCase);
+        foreach (Match match in alterFuncMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var funcName = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{funcName}",
+                Description = "modified",
+                ObjectType = "Function"
+            });
+        }
+        
+        var dropFuncMatches = Regex.Matches(content, @"DROP\s+FUNCTION\s+(?:IF\s+EXISTS\s+)?\[?(\w+)\]?\.\[?(\w+)\]?", RegexOptions.IgnoreCase);
+        foreach (Match match in dropFuncMatches)
+        {
+            var schema = match.Groups[1].Value;
+            var funcName = match.Groups[2].Value;
+            
+            changes.Add(new ManifestChange
+            {
+                Identifier = $"{schema}.{funcName}",
+                Description = "removed",
+                ObjectType = "Function"
+            });
+        }
+        
+        // Remove duplicates - keep the first occurrence of each identifier
+        // This handles cases where CREATE OR ALTER might match both CREATE and ALTER patterns
+        var uniqueChanges = new List<ManifestChange>();
+        var seenIdentifiers = new HashSet<string>();
+        
+        foreach (var change in changes)
+        {
+            if (seenIdentifiers.Add(change.Identifier))
+            {
+                uniqueChanges.Add(change);
+            }
+        }
+        
+        return uniqueChanges;
     }
     
     private string NormalizeColumnDefinition(string definition)

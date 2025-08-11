@@ -10,6 +10,11 @@
   <ItemGroup>
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0" />
+    <PackageReference Include="Microsoft.SqlServer.DacFx" Version="*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SqlServer.Schema.Exclusion.Manager.Core\SqlServer.Schema.Exclusion.Manager.Core.csproj" />
   </ItemGroup>
 
 </Project>

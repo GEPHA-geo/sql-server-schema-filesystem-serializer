@@ -4,6 +4,7 @@ using Microsoft.SqlServer.Dac;
 using SqlServer.Schema.FileSystem.Serializer.Dacpac.Core;
 using SqlServer.Schema.Migration.Generator.GitIntegration;
 using SqlServer.Schema.Exclusion.Manager.Core.Services;
+using SqlServer.Schema.Exclusion.Manager.Core.Models;
 
 namespace SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner;
 
@@ -15,21 +16,21 @@ internal static class Program
     {
         var rootCommand = new RootCommand("SQL Server DACPAC Structure Generator - Extracts database schema and generates file-based representation");
         
-        // Define required options
-        var sourceConnectionOption = new Option<string>(
+        // Define options - now optional when SCMP is provided
+        var sourceConnectionOption = new Option<string?>(
             aliases: new[] { "--source-connection" },
-            description: "Source database connection string"
-        ) { IsRequired = true };
+            description: "Source database connection string (optional if SCMP file is provided)"
+        ) { IsRequired = false };
         
-        var targetServerOption = new Option<string>(
+        var targetServerOption = new Option<string?>(
             aliases: new[] { "--target-server" },
-            description: "Target server name (used for organizing output directory structure)"
-        ) { IsRequired = true };
+            description: "Target server name for output directory (optional if SCMP file is provided)"
+        ) { IsRequired = false };
         
-        var targetDatabaseOption = new Option<string>(
+        var targetDatabaseOption = new Option<string?>(
             aliases: new[] { "--target-database" },
-            description: "Target database name (used for organizing output directory structure)"
-        ) { IsRequired = true };
+            description: "Target database name for output directory (optional if SCMP file is provided)"
+        ) { IsRequired = false };
         
         var outputPathOption = new Option<string>(
             aliases: new[] { "--output-path" },
@@ -47,6 +48,18 @@ internal static class Program
             description: "Skip running the exclusion manager after schema extraction"
         ) { IsRequired = false };
         
+        // Define SCMP file option for exclusion management
+        var scmpFileOption = new Option<string?>(
+            aliases: new[] { "--scmp" },
+            description: "Path to SCMP file containing comparison settings and exclusions (optional)"
+        ) { IsRequired = false };
+        
+        // Define source password option for SCMP scenarios
+        var sourcePasswordOption = new Option<string?>(
+            aliases: new[] { "--source-password" },
+            description: "Password for source database connection (required when using SCMP file with SQL authentication)"
+        ) { IsRequired = false };
+        
         // Add options to root command
         rootCommand.AddOption(sourceConnectionOption);
         rootCommand.AddOption(targetServerOption);
@@ -54,19 +67,118 @@ internal static class Program
         rootCommand.AddOption(outputPathOption);
         rootCommand.AddOption(commitMessageOption);
         rootCommand.AddOption(skipExclusionManagerOption);
+        rootCommand.AddOption(scmpFileOption);
+        rootCommand.AddOption(sourcePasswordOption);
         
-        // Set handler - now with separate target server and database parameters
-        rootCommand.SetHandler(async (string sourceConnection, string targetServer, string targetDatabase, string outputPath, string? commitMessage, bool skipExclusionManager) =>
+        // Set handler - now with SCMP support and optional source/target parameters
+        rootCommand.SetHandler(async (string? sourceConnection, string? targetServer, string? targetDatabase, string outputPath, string? commitMessage, bool skipExclusionManager, string? scmpFile, string? sourcePassword) =>
         {
-            await RunDacpacExtraction(sourceConnection, targetServer, targetDatabase, outputPath, commitMessage, skipExclusionManager);
-        }, sourceConnectionOption, targetServerOption, targetDatabaseOption, outputPathOption, commitMessageOption, skipExclusionManagerOption);
+            await RunDacpacExtraction(sourceConnection, targetServer, targetDatabase, outputPath, commitMessage, skipExclusionManager, scmpFile, sourcePassword);
+        }, sourceConnectionOption, targetServerOption, targetDatabaseOption, outputPathOption, commitMessageOption, skipExclusionManagerOption, scmpFileOption, sourcePasswordOption);
         
         // Named parameters are now required - no positional argument support
         return await rootCommand.InvokeAsync(args);
     }
     
-    static async Task RunDacpacExtraction(string sourceConnectionString, string targetServer, string targetDatabase, string outputPath, string? commitMessage = null, bool skipExclusionManager = false)
+    static async Task RunDacpacExtraction(string? sourceConnectionString, string? targetServer, string? targetDatabase, string outputPath, string? commitMessage = null, bool skipExclusionManager = false, string? scmpFilePath = null, string? sourcePassword = null)
     {
+        // Store the loaded SCMP comparison for later use
+        SchemaComparison? scmpComparison = null;
+        
+        // If SCMP file is provided, extract connection information from it
+        if (!string.IsNullOrEmpty(scmpFilePath))
+        {
+            Console.WriteLine($"Loading SCMP file to extract connection information: {scmpFilePath}");
+            
+            try
+            {
+                var scmpHandler = new ScmpManifestHandler();
+                scmpComparison = await scmpHandler.LoadManifestAsync(scmpFilePath);
+                
+                if (scmpComparison != null)
+                {
+                    // Extract server and database information from SCMP
+                    var (scmpSourceServer, scmpTargetServer) = scmpHandler.GetServerInfo(scmpComparison);
+                    var (scmpSourceDb, scmpTargetDb) = scmpHandler.GetDatabaseInfo(scmpComparison);
+                    
+                    // If parameters weren't provided explicitly, use values from SCMP
+                    if (string.IsNullOrEmpty(sourceConnectionString))
+                    {
+                        // Get connection string from SCMP source
+                        sourceConnectionString = scmpComparison.SourceModelProvider?.ConnectionBasedModelProvider?.ConnectionString;
+                        
+                        // If a password was provided separately, update the connection string
+                        if (!string.IsNullOrEmpty(sourceConnectionString) && !string.IsNullOrEmpty(sourcePassword))
+                        {
+                            var builder = new SqlConnectionStringBuilder(sourceConnectionString);
+                            
+                            // Only update password if the connection string uses SQL authentication
+                            if (!builder.IntegratedSecurity)
+                            {
+                                builder.Password = sourcePassword;
+                                sourceConnectionString = builder.ConnectionString;
+                                Console.WriteLine($"Using source connection from SCMP with provided password: {scmpSourceServer}/{scmpSourceDb}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Using source connection from SCMP (Windows auth): {scmpSourceServer}/{scmpSourceDb}");
+                            }
+                        }
+                        else if (!string.IsNullOrEmpty(sourceConnectionString))
+                        {
+                            Console.WriteLine($"Using source connection from SCMP: {scmpSourceServer}/{scmpSourceDb}");
+                        }
+                    }
+                    
+                    if (string.IsNullOrEmpty(targetServer))
+                    {
+                        targetServer = scmpTargetServer;
+                        if (!string.IsNullOrEmpty(targetServer))
+                        {
+                            Console.WriteLine($"Using target server from SCMP: {targetServer}");
+                        }
+                    }
+                    
+                    if (string.IsNullOrEmpty(targetDatabase))
+                    {
+                        targetDatabase = scmpTargetDb;
+                        if (!string.IsNullOrEmpty(targetDatabase))
+                        {
+                            Console.WriteLine($"Using target database from SCMP: {targetDatabase}");
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"⚠ Warning: Could not load SCMP file: {scmpFilePath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠ Warning: Error loading SCMP file: {ex.Message}");
+                // Continue with explicitly provided parameters if SCMP load fails
+            }
+        }
+        
+        // Validate that we have all required parameters (either from CLI or SCMP)
+        if (string.IsNullOrEmpty(sourceConnectionString))
+        {
+            Console.WriteLine("❌ Error: Source connection string is required. Provide it via --source-connection or through an SCMP file.");
+            Environment.Exit(1);
+        }
+        
+        if (string.IsNullOrEmpty(targetServer))
+        {
+            Console.WriteLine("❌ Error: Target server is required. Provide it via --target-server or through an SCMP file.");
+            Environment.Exit(1);
+        }
+        
+        if (string.IsNullOrEmpty(targetDatabase))
+        {
+            Console.WriteLine("❌ Error: Target database is required. Provide it via --target-database or through an SCMP file.");
+            Environment.Exit(1);
+        }
+        
         // Sanitize target server name for use in folder names
         var sanitizedTargetServer = targetServer.Replace('\\', '-').Replace(':', '-');
         
@@ -151,23 +263,44 @@ internal static class Program
             // Load the DACPAC
             var dacpac = DacPackage.Load(dacpacPath);
             
-            // Configure deployment options to generate full schema scripts
-            var deployOptions = new DacDeployOptions
+            // Configure deployment options
+            DacDeployOptions deployOptions;
+            
+            // If SCMP was loaded, use its configuration options
+            if (scmpComparison != null)
             {
-                CreateNewDatabase = true,
-                IgnorePermissions = true,
-                IgnoreUserSettingsObjects = true,
-                IgnoreLoginSids = true,
-                IgnoreRoleMembership = true,
-                IgnoreExtendedProperties = false,  // Include column descriptions and other extended properties
-                ExcludeObjectTypes =
-                [
-                    Microsoft.SqlServer.Dac.ObjectType.Users,
-                    Microsoft.SqlServer.Dac.ObjectType.Logins,
-                    Microsoft.SqlServer.Dac.ObjectType.RoleMembership,
-                    Microsoft.SqlServer.Dac.ObjectType.Permissions
-                ]
-            };
+                Console.WriteLine("Using deployment options from SCMP file...");
+                var mapper = new ScmpToDeployOptions();
+                deployOptions = mapper.MapOptions(scmpComparison);
+                
+                // Ensure we're generating full schema scripts
+                deployOptions.CreateNewDatabase = true;
+                
+                // Log key settings
+                Console.WriteLine($"  Block on data loss: {deployOptions.BlockOnPossibleDataLoss}");
+                Console.WriteLine($"  Drop objects not in source: {deployOptions.DropObjectsNotInSource}");
+                Console.WriteLine($"  Ignore permissions: {deployOptions.IgnorePermissions}");
+            }
+            else
+            {
+                // Use default conservative options
+                deployOptions = new DacDeployOptions
+                {
+                    CreateNewDatabase = true,
+                    IgnorePermissions = true,
+                    IgnoreUserSettingsObjects = true,
+                    IgnoreLoginSids = true,
+                    IgnoreRoleMembership = true,
+                    IgnoreExtendedProperties = false,  // Include column descriptions and other extended properties
+                    ExcludeObjectTypes =
+                    [
+                        Microsoft.SqlServer.Dac.ObjectType.Users,
+                        Microsoft.SqlServer.Dac.ObjectType.Logins,
+                        Microsoft.SqlServer.Dac.ObjectType.RoleMembership,
+                        Microsoft.SqlServer.Dac.ObjectType.Permissions
+                    ]
+                };
+            }
             
             // Generate deployment script
             Console.WriteLine("Generating deployment script...");
@@ -228,67 +361,104 @@ internal static class Program
             
             Console.WriteLine($"Database structure generated successfully at: {targetOutputPath}");
             
-            // Generate migrations
-            Console.WriteLine("\nChecking for schema changes...");
-            var migrationGenerator = new Migration.Generator.MigrationGenerator();
+            // Generate migrations using DACPAC comparison
+            Console.WriteLine("\nGenerating DACPAC-based migrations...");
+            var migrationGenerator = new Migration.Generator.DacpacMigrationGenerator();
             var migrationsPath = Path.Combine(targetOutputPath, "z_migrations");
+            
+            // Ensure migrations directory exists
+            Directory.CreateDirectory(migrationsPath);
             
             // Get actor from environment variable (GitHub Actions provides GITHUB_ACTOR)
             var actor = Environment.GetEnvironmentVariable("GITHUB_ACTOR") ?? Environment.UserName;
             
-            // Pass connection string for validation (use source for validation)
-            // Note: autoCommit is set to false so we can run Exclusion Manager first
-            var changesDetected = await migrationGenerator.GenerateMigrationsAsync(
-                outputPath, 
+            // Generate migration using DACPAC comparison (committed vs uncommitted)
+            var migrationResult = await migrationGenerator.GenerateMigrationAsync(
+                outputPath,
                 sanitizedTargetServer,
-                targetDatabase, 
+                targetDatabase,
                 migrationsPath,
+                scmpComparison,  // Pass SCMP comparison for settings
                 actor,
-                sourceConnectionString,  // Use source connection for validation
                 validateMigration: true,
-                customCommitMessage: commitMessage,
-                autoCommit: false);  // Don't commit yet - we'll do it after exclusion management
-
+                connectionString: sourceConnectionString);
+            
+            var changesDetected = migrationResult.Success && migrationResult.HasChanges;
             Console.WriteLine(changesDetected ? $"✓ Migration files generated in: {migrationsPath}" : "No schema changes detected.");
             
             // Run Exclusion Manager to create/update manifest and apply exclusions (unless skipped)
-            if (!skipExclusionManager)
+            if (!skipExclusionManager && scmpComparison != null)
             {
                 // Source server and database are already extracted above (sourceBuilder, sourceDatabaseName)
                 var sourceServer = sourceBuilder.DataSource.Replace('\\', '-').Replace(':', '-'); // Sanitize for folder names
                 var sourceDatabase = sourceDatabaseName;
                 
-                Console.WriteLine("\n=== Managing Exclusions ===");
+                Console.WriteLine("\n=== Managing Exclusions from SCMP ===");
                 Console.WriteLine($"Source: {sourceServer}/{sourceDatabase}");
                 Console.WriteLine($"Target: {targetServer}/{targetDatabase}");
                 
                 try
                 {
-                    var manifestManager = new ManifestManager(outputPath);
+                    var scmpHandler = new ScmpManifestHandler();
                     
-                    // This will:
-                    // 1. Create manifest if it doesn't exist (with all changes in INCLUDED section)
-                    // 2. If manifest exists, apply existing exclusions to files
-                    var exclusionSuccess = await manifestManager.CreateOrUpdateManifestAsync(
-                        sourceServer, 
-                        sourceDatabase, 
-                        sanitizedTargetServer, 
-                        targetDatabase);
+                    // Extract exclusions from the already-loaded SCMP comparison
+                    var excludedObjects = scmpHandler.GetExcludedObjects(scmpComparison);
                     
-                    if (exclusionSuccess)
+                    if (excludedObjects.Any())
                     {
-                        Console.WriteLine("✓ Exclusion management completed successfully");
+                        Console.WriteLine($"Found {excludedObjects.Count} excluded objects in SCMP file:");
+                        foreach (var obj in excludedObjects.Take(10))
+                        {
+                            Console.WriteLine($"  - {obj}");
+                        }
+                        if (excludedObjects.Count > 10)
+                        {
+                            Console.WriteLine($"  ... and {excludedObjects.Count - 10} more");
+                        }
+                        
+                        // Apply exclusions to generated SQL files
+                        Console.WriteLine("\nApplying exclusions to generated SQL files...");
+                        
+                        // Parse excluded objects and apply exclusion comments
+                        foreach (var excludedObj in excludedObjects)
+                        {
+                            // Remove the (Source) or (Target) suffix to get the actual object name
+                            var objectName = excludedObj.Replace(" (Source)", "").Replace(" (Target)", "").Trim();
+                            
+                            // Split the object name (e.g., "dbo.TableName" or "dbo.sp_ProcedureName")
+                            var parts = objectName.Split('.');
+                            if (parts.Length >= 2)
+                            {
+                                var schema = parts[0];
+                                var objName = string.Join(".", parts.Skip(1));
+                                
+                                // Try to find and mark the corresponding file
+                                var sqlFilePath = FindSqlFileForObject(targetOutputPath, schema, objName);
+                                if (!string.IsNullOrEmpty(sqlFilePath) && File.Exists(sqlFilePath))
+                                {
+                                    await ApplyExclusionToFile(sqlFilePath, objectName);
+                                }
+                            }
+                        }
+                        
+                        Console.WriteLine("✓ Exclusions applied to SQL files");
                     }
                     else
                     {
-                        Console.WriteLine("⚠ Exclusion management completed with warnings - check logs above");
+                        Console.WriteLine("No exclusions found in SCMP file");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"⚠ Exclusion management failed: {ex.Message}");
+                    Console.WriteLine($"⚠ Error applying SCMP exclusions: {ex.Message}");
                     Console.WriteLine("Continuing without exclusion management...");
                 }
+            }
+            else if (!skipExclusionManager)
+            {
+                Console.WriteLine("\n=== Exclusion Manager Skipped ===");
+                Console.WriteLine("No SCMP file provided - exclusion management skipped");
+                Console.WriteLine("Use --scmp parameter to provide an SCMP file with exclusions");
             }
             else
             {
@@ -344,6 +514,52 @@ internal static class Program
         {
             // Ignore Git configuration errors - it's not critical for DACPAC extraction
             // This is just to help with migration generation later
+        }
+    }
+    
+    static string? FindSqlFileForObject(string basePath, string schema, string objectName)
+    {
+        // Common object type mappings
+        var possiblePaths = new List<string>
+        {
+            Path.Combine(basePath, "tables", schema, $"{objectName}.sql"),
+            Path.Combine(basePath, "views", schema, $"{objectName}.sql"),
+            Path.Combine(basePath, "stored-procedures", schema, $"{objectName}.sql"),
+            Path.Combine(basePath, "functions", schema, $"{objectName}.sql"),
+            Path.Combine(basePath, "triggers", schema, $"{objectName}.sql"),
+            Path.Combine(basePath, "indexes", schema, $"{objectName}.sql"),
+            Path.Combine(basePath, "synonyms", schema, $"{objectName}.sql"),
+            Path.Combine(basePath, "sequences", schema, $"{objectName}.sql"),
+            Path.Combine(basePath, "types", schema, $"{objectName}.sql"),
+            Path.Combine(basePath, "schemas", $"{schema}.sql")
+        };
+        
+        // Find the first existing file
+        return possiblePaths.FirstOrDefault(File.Exists);
+    }
+    
+    static async Task ApplyExclusionToFile(string filePath, string objectName)
+    {
+        try
+        {
+            var content = await File.ReadAllTextAsync(filePath);
+            
+            // Check if already excluded
+            if (content.StartsWith("-- EXCLUDED:"))
+            {
+                Console.WriteLine($"  ✓ {objectName} already marked as excluded");
+                return;
+            }
+            
+            // Add exclusion comment at the beginning
+            var excludedContent = $"-- EXCLUDED: {objectName}\n-- This object is excluded from deployment based on SCMP configuration\n-- Remove this comment to include the object in deployments\n\n{content}";
+            
+            await File.WriteAllTextAsync(filePath, excludedContent);
+            Console.WriteLine($"  ✓ Marked {objectName} as excluded in {Path.GetFileName(filePath)}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"  ⚠ Could not apply exclusion to {objectName}: {ex.Message}");
         }
     }
     

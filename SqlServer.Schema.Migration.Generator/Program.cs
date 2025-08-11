@@ -50,10 +50,11 @@ internal class Program
                     }
                 }
                 
-                var generator = new MigrationGenerator();
+                var generator = new DacpacMigrationGenerator();
                 var migrationsPath = Path.Combine(outputPath, "servers", targetServer, targetDatabase, "z_migrations");
                 
-                var changesDetected = generator.GenerateMigrations(outputPath, targetServer, targetDatabase, migrationsPath, actor);
+                var result = generator.GenerateMigrationAsync(outputPath, targetServer, targetDatabase, migrationsPath, null, actor).Result;
+                var changesDetected = result.Success && result.HasChanges;
                 
                 if (changesDetected)
                 {

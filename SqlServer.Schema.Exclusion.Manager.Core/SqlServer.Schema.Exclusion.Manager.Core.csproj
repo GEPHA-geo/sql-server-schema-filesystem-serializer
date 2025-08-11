@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="LibGit2Sharp" Version="0.27.2" />
+    <PackageReference Include="Microsoft.SqlServer.DacFx" Version="*" />
   </ItemGroup>
 
 </Project>

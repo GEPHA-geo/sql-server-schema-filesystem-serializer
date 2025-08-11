@@ -232,74 +232,61 @@ public class ManifestManager
         {
             Console.WriteLine("Checking if rotation marker should be toggled...");
             
-            // Always toggle when we're directly on top of origin/main
-            // This ensures the manifest file always shows as changed
+            // Toggle ONLY when we're the first commit directly on top of origin/main
+            // This ensures the manifest file shows as changed in the PR
+            // Subsequent commits should NOT toggle to avoid canceling out the rotation effect
             
-            var process = new System.Diagnostics.Process
+            using var repo = new Repository(_outputPath);
+            
+            // Get the current HEAD commit
+            var head = repo.Head.Tip;
+            
+            if (head == null)
             {
-                StartInfo = new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = "git",
-                    Arguments = "rev-parse HEAD~1",  // Get parent commit (HEAD~1 is more reliable than HEAD^)
-                    WorkingDirectory = _outputPath,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-            
-            process.Start();
-            var parentCommit = process.StandardOutput.ReadToEnd().Trim();
-            var parentError = process.StandardError.ReadToEnd().Trim();
-            process.WaitForExit();
-            
-            if (process.ExitCode != 0 || string.IsNullOrEmpty(parentCommit))
-            {
-                // If we can't get parent (e.g., first commit), toggle anyway
-                Console.WriteLine($"Could not get parent commit (exit code: {process.ExitCode}). Error: {parentError}");
-                Console.WriteLine("Toggling rotation marker anyway (no parent commit)");
-                return true;
+                Console.WriteLine("No HEAD commit found. Will NOT toggle rotation marker.");
+                return false;
             }
             
-            Console.WriteLine($"Parent commit (HEAD~1): {parentCommit}");
+            // Get origin/main branch
+            var originMain = repo.Branches["origin/main"];
             
-            // Check if parent commit is the same as origin/main
-            process = new System.Diagnostics.Process
+            if (originMain == null)
             {
-                StartInfo = new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = "git",
-                    Arguments = "rev-parse origin/main",
-                    WorkingDirectory = _outputPath,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-            
-            process.Start();
-            var mainCommit = process.StandardOutput.ReadToEnd().Trim();
-            var mainError = process.StandardError.ReadToEnd().Trim();
-            process.WaitForExit();
-            
-            if (process.ExitCode != 0 || string.IsNullOrEmpty(mainCommit))
-            {
-                // If we can't get origin/main, toggle anyway to be safe
-                Console.WriteLine($"Could not get origin/main commit (exit code: {process.ExitCode}). Error: {mainError}");
-                Console.WriteLine("Toggling rotation marker anyway (can't get origin/main)");
-                return true;
+                Console.WriteLine("Origin/main branch not found. Will NOT toggle rotation marker.");
+                return false;
             }
             
-            Console.WriteLine($"Origin/main commit: {mainCommit}");
+            var originMainCommit = originMain.Tip;
             
-            // Toggle if parent commit is origin/main (we're directly on top of it)
-            bool shouldToggle = parentCommit == mainCommit;
+            if (originMainCommit == null)
+            {
+                Console.WriteLine("Origin/main has no commits. Will NOT toggle rotation marker.");
+                return false;
+            }
+            
+            // Check if HEAD has a parent
+            var parents = head.Parents.ToList();
+            
+            if (!parents.Any())
+            {
+                // No parent - check if HEAD is origin/main (we're about to create first commit)
+                bool isAtOriginMain = head.Sha == originMainCommit.Sha;
+                Console.WriteLine($"No parent commit, HEAD == origin/main: {isAtOriginMain}");
+                return isAtOriginMain;
+            }
+            
+            // Get the first parent
+            var parentCommit = parents.First();
+            
+            Console.WriteLine($"Parent commit: {parentCommit.Sha.Substring(0, 8)}");
+            Console.WriteLine($"Origin/main commit: {originMainCommit.Sha.Substring(0, 8)}");
+            
+            // Toggle ONLY if parent commit is origin/main (we're the first commit on top)
+            bool shouldToggle = parentCommit.Sha == originMainCommit.Sha;
             
             if (shouldToggle)
             {
-                Console.WriteLine("Parent commit IS origin/main - WILL toggle rotation marker");
+                Console.WriteLine("Parent commit IS origin/main - WILL toggle rotation marker (first commit on top)");
             }
             else
             {
@@ -310,10 +297,10 @@ public class ManifestManager
         }
         catch (Exception ex)
         {
-            // If anything fails, toggle anyway to ensure file changes
+            // If anything fails, don't toggle to be safe
             Console.WriteLine($"Exception while checking rotation marker: {ex.Message}");
-            Console.WriteLine("Toggling rotation marker anyway (exception occurred)");
-            return true;
+            Console.WriteLine("Will NOT toggle rotation marker (exception occurred)");
+            return false;
         }
     }
     

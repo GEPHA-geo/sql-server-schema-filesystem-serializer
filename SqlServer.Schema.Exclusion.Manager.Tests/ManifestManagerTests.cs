@@ -171,6 +171,8 @@ public class ManifestManagerTests : IDisposable
         }
     }
 
+
+
     public void Dispose()
     {
         try

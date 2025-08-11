@@ -1,5 +1,6 @@
 using SqlServer.Schema.Exclusion.Manager.Core.Models;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 
 namespace SqlServer.Schema.Exclusion.Manager.Core.Services;
@@ -108,14 +109,16 @@ public class ManifestFileHandler
         sb.AppendLine();
         
         sb.AppendLine("=== INCLUDED CHANGES ===");
-        foreach (var change in manifest.IncludedChanges)
+        // Sort included changes alphabetically by their string representation
+        foreach (var change in manifest.IncludedChanges.OrderBy(c => c.ToString()))
         {
             sb.AppendLine($"{change} {manifest.RotationMarker}");
         }
         
         sb.AppendLine();
         sb.AppendLine("=== EXCLUDED CHANGES ===");
-        foreach (var change in manifest.ExcludedChanges)
+        // Sort excluded changes alphabetically by their string representation for consistency
+        foreach (var change in manifest.ExcludedChanges.OrderBy(c => c.ToString()))
         {
             sb.AppendLine($"{change} {manifest.RotationMarker}");
         }

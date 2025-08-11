@@ -762,7 +762,9 @@ public class DDLGeneratorTests
         var ddl = _generator.GenerateDDL(change);
         
         // Assert
-        Assert.Equal(change.NewDefinition, ddl);
+        // The extended property operation should be commented out
+        Assert.Contains("-- EXEC sys.sp_addextendedproperty", ddl);
+        Assert.DoesNotContain("EXEC sys.sp_addextendedproperty @name", ddl.Replace("-- EXEC", ""));
     }
     
     [Fact]
@@ -783,8 +785,9 @@ public class DDLGeneratorTests
         var ddl = _generator.GenerateDDL(change);
         
         // Assert
-        Assert.Contains("Drop extended property", ddl);
-        Assert.Contains("sp_dropextendedproperty", ddl);
+        // The extended property drop operation should be commented out
+        Assert.Contains("-- EXEC sys.sp_dropextendedproperty", ddl);
+        Assert.DoesNotContain("EXEC sys.sp_dropextendedproperty @name", ddl.Replace("-- EXEC", ""));
         Assert.Contains("@name = N'MS_Description'", ddl);
         Assert.Contains("@level0type = N'SCHEMA'", ddl);
         Assert.Contains("@level0name = N'dbo'", ddl);
@@ -811,9 +814,12 @@ public class DDLGeneratorTests
         var ddl = _generator.GenerateDDL(change);
         
         // Assert
-        // Should only use sp_updateextendedproperty without any TRY/CATCH logic
+        // Should use sp_updateextendedproperty but commented out
+        Assert.Contains("-- EXEC", ddl);
         Assert.Contains("sp_updateextendedproperty", ddl);
         Assert.Contains("@value = N'Customer information and contact details'", ddl);
+        // Ensure it's actually commented out (not executable)
+        Assert.DoesNotContain("EXEC sys.sp_updateextendedproperty @name", ddl.Replace("-- EXEC", ""));
         Assert.DoesNotContain("BEGIN TRY", ddl);
         Assert.DoesNotContain("END TRY", ddl);
         Assert.DoesNotContain("BEGIN CATCH", ddl);
@@ -840,7 +846,12 @@ public class DDLGeneratorTests
         var ddl = _generator.GenerateDDL(change);
         
         // Assert
-        Assert.Equal(change.NewDefinition, ddl);
+        // The extended property operation should be commented out
+        Assert.Contains("-- EXEC sys.sp_addextendedproperty", ddl);
+        Assert.Contains("@level2type = N'COLUMN'", ddl);
+        Assert.Contains("@level2name = N'Email'", ddl);
+        // Ensure it's actually commented out (not executable)
+        Assert.DoesNotContain("EXEC sys.sp_addextendedproperty @name", ddl.Replace("-- EXEC", ""));
     }
     
     [Fact]
@@ -861,9 +872,12 @@ public class DDLGeneratorTests
         var ddl = _generator.GenerateDDL(change);
         
         // Assert
-        Assert.Contains("sp_dropextendedproperty", ddl);
+        // The extended property drop operation should be commented out
+        Assert.Contains("-- EXEC sys.sp_dropextendedproperty", ddl);
         Assert.Contains("@level2type = N'COLUMN'", ddl);
         Assert.Contains("@level2name = N'Email'", ddl);
+        // Ensure it's actually commented out (not executable)
+        Assert.DoesNotContain("EXEC sys.sp_dropextendedproperty @name", ddl.Replace("-- EXEC", ""));
     }
     
     [Fact]
@@ -906,7 +920,8 @@ public class DDLGeneratorTests
         var ddl = _generator.GenerateDDL(change);
         
         // Assert
-        // Should only use sp_updateextendedproperty without any TRY/CATCH logic
+        // Should use sp_updateextendedproperty but commented out
+        Assert.Contains("-- EXEC", ddl);
         Assert.Contains("sp_updateextendedproperty", ddl);
         Assert.DoesNotContain("BEGIN TRY", ddl);
         Assert.DoesNotContain("END TRY", ddl);

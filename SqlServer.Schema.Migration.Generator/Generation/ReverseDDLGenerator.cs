@@ -246,23 +246,48 @@ public class ReverseDDLGenerator
     
     string GenerateReverseExtendedPropertyDDL(SchemaChange change)
     {
+        string result;
         switch (change.ChangeType)
         {
             case ChangeType.Added:
                 // Reverse of ADD is DROP - parse the definition to generate drop statement
-                return GenerateDropExtendedProperty(change.NewDefinition);
+                result = GenerateDropExtendedProperty(change.NewDefinition);
+                break;
                 
             case ChangeType.Deleted:
                 // Reverse of DROP is ADD - use old definition
-                return change.OldDefinition;
+                result = change.OldDefinition;
+                break;
                 
             case ChangeType.Modified:
                 // Reverse of UPDATE is UPDATE with old value - parse old definition to generate update
-                return GenerateUpdateExtendedProperty(change.OldDefinition);
+                result = GenerateUpdateExtendedProperty(change.OldDefinition);
+                break;
                 
             default:
                 return $"-- Cannot reverse unknown change type for extended property: {change.ObjectName}";
         }
+        
+        // Comment out all extended property operations
+        return CommentOutExtendedPropertyOperation(result);
+    }
+
+    private string CommentOutExtendedPropertyOperation(string sql)
+    {
+        if (string.IsNullOrWhiteSpace(sql))
+            return sql;
+            
+        // Comment out each line of the SQL statement
+        var lines = sql.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        var commentedLines = lines.Select(line => 
+        {
+            // Skip lines that are already comments or empty
+            if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("--"))
+                return line;
+            return "-- " + line;
+        });
+        
+        return string.Join(Environment.NewLine, commentedLines);
     }
 
     // Helper method to extract column definition - copied from TableDDLGenerator
@@ -305,7 +330,7 @@ public class ReverseDDLGenerator
             return $"-- Could not parse extended property definition: {propertyDefinition}";
             
         var sb = new StringBuilder();
-        sb.AppendLine("-- Drop extended property");
+        // Remove the comment line as it will be added when the entire operation is commented out
         sb.Append("EXEC sys.sp_dropextendedproperty");
         sb.Append($" @name = N'{details.Value.Name}'");
         

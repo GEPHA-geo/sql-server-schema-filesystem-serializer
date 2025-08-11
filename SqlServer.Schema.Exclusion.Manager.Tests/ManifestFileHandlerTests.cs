@@ -189,4 +189,81 @@ dbo.Orders - View modified \
         Assert.Equal(original.IncludedChanges.Count, read.IncludedChanges.Count);
         Assert.Equal(original.ExcludedChanges.Count, read.ExcludedChanges.Count);
     }
+
+    [Fact]
+    public async Task WriteManifestAsync_SortsChangesAlphabetically()
+    {
+        // Arrange - Create manifest with unsorted changes
+        var manifest = new ChangeManifest
+        {
+            DatabaseName = "TestDB",
+            ServerName = "TestServer",
+            Generated = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc),
+            CommitHash = "abc123",
+            RotationMarker = '/'
+        };
+        
+        // Add included changes in non-alphabetical order
+        manifest.IncludedChanges.Add(new ManifestChange
+        {
+            Identifier = "dbo.ZebraTable",
+            Description = "Table added",
+            ObjectType = "Table"
+        });
+        manifest.IncludedChanges.Add(new ManifestChange
+        {
+            Identifier = "dbo.AppleTable",
+            Description = "Table added",
+            ObjectType = "Table"
+        });
+        manifest.IncludedChanges.Add(new ManifestChange
+        {
+            Identifier = "dbo.MonkeyTable",
+            Description = "Table added",
+            ObjectType = "Table"
+        });
+        
+        // Add excluded changes in non-alphabetical order
+        manifest.ExcludedChanges.Add(new ManifestChange
+        {
+            Identifier = "dbo.YellowProc",
+            Description = "Procedure removed",
+            ObjectType = "StoredProcedure"
+        });
+        manifest.ExcludedChanges.Add(new ManifestChange
+        {
+            Identifier = "dbo.BlueProc",
+            Description = "Procedure removed",
+            ObjectType = "StoredProcedure"
+        });
+        manifest.ExcludedChanges.Add(new ManifestChange
+        {
+            Identifier = "dbo.RedProc",
+            Description = "Procedure removed",
+            ObjectType = "StoredProcedure"
+        });
+        
+        var filePath = Path.Combine(_testDirectory, "sorted_test.manifest");
+        
+        // Act
+        await _handler.WriteManifestAsync(filePath, manifest);
+        
+        // Assert - Read the file and verify order
+        var content = await File.ReadAllTextAsync(filePath);
+        var lines = content.Split('\n');
+        
+        // Find the indices of the sections
+        var includedIndex = Array.IndexOf(lines, "=== INCLUDED CHANGES ===");
+        var excludedIndex = Array.IndexOf(lines, "=== EXCLUDED CHANGES ===");
+        
+        // Check included changes are sorted alphabetically
+        Assert.Contains("dbo.AppleTable - Table added /", lines[includedIndex + 1]);
+        Assert.Contains("dbo.MonkeyTable - Table added /", lines[includedIndex + 2]);
+        Assert.Contains("dbo.ZebraTable - Table added /", lines[includedIndex + 3]);
+        
+        // Check excluded changes are sorted alphabetically
+        Assert.Contains("dbo.BlueProc - Procedure removed /", lines[excludedIndex + 1]);
+        Assert.Contains("dbo.RedProc - Procedure removed /", lines[excludedIndex + 2]);
+        Assert.Contains("dbo.YellowProc - Procedure removed /", lines[excludedIndex + 3]);
+    }
 }

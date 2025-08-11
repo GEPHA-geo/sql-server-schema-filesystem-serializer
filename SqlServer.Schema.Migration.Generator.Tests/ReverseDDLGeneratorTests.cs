@@ -243,8 +243,9 @@ public class ReverseDDLGeneratorTests
         var result = _generator.GenerateReverseDDL(change);
 
         // Assert
-        Assert.Contains("Drop extended property", result);
-        Assert.Contains("sp_dropextendedproperty", result);
+        // The extended property drop operation should be commented out
+        Assert.Contains("-- EXEC sys.sp_dropextendedproperty", result);
+        Assert.DoesNotContain("EXEC sys.sp_dropextendedproperty @name", result.Replace("-- EXEC", ""));
         Assert.Contains("@name = N'MS_Description'", result);
         Assert.Contains("@level0type = N'SCHEMA'", result);
         Assert.Contains("@level0name = N'dbo'", result);
@@ -270,7 +271,9 @@ public class ReverseDDLGeneratorTests
         var result = _generator.GenerateReverseDDL(change);
 
         // Assert
-        Assert.Equal(change.OldDefinition, result);
+        // The extended property add operation should be commented out
+        Assert.Contains("-- EXEC sys.sp_addextendedproperty", result);
+        Assert.DoesNotContain("EXEC sys.sp_addextendedproperty @name", result.Replace("-- EXEC", ""));
     }
     
     [Fact]
@@ -292,7 +295,8 @@ public class ReverseDDLGeneratorTests
         var result = _generator.GenerateReverseDDL(change);
 
         // Assert
-        // Should only use sp_updateextendedproperty without any TRY/CATCH logic
+        // Should use sp_updateextendedproperty but commented out
+        Assert.Contains("-- EXEC", result);
         Assert.Contains("sp_updateextendedproperty", result);
         Assert.Contains("@value = N'Customer information table'", result); // Old value
         Assert.DoesNotContain("BEGIN TRY", result);
@@ -321,9 +325,12 @@ public class ReverseDDLGeneratorTests
         var result = _generator.GenerateReverseDDL(change);
 
         // Assert
-        Assert.Contains("sp_dropextendedproperty", result);
+        // The extended property drop operation should be commented out
+        Assert.Contains("-- EXEC sys.sp_dropextendedproperty", result);
         Assert.Contains("@level2type = N'COLUMN'", result);
         Assert.Contains("@level2name = N'Email'", result);
+        // Ensure it's actually commented out (not executable)
+        Assert.DoesNotContain("EXEC sys.sp_dropextendedproperty @name", result.Replace("-- EXEC", ""));
     }
     
     [Fact]

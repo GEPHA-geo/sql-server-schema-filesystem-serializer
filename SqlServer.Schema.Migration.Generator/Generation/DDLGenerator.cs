@@ -239,23 +239,49 @@ public class DDLGenerator
     
     string GenerateExtendedPropertyDDL(SchemaChange change)
     {
+        string result;
         switch (change.ChangeType)
         {
             case ChangeType.Added:
                 // Extended properties are created using their full definition (sp_addextendedproperty)
-                return change.NewDefinition;
+                // Comment out the extended property operation
+                result = change.NewDefinition;
+                break;
                 
             case ChangeType.Deleted:
                 // Parse the old definition to extract property details and generate drop statement
-                return GenerateDropExtendedProperty(change.OldDefinition ?? change.NewDefinition);
+                result = GenerateDropExtendedProperty(change.OldDefinition ?? change.NewDefinition);
+                break;
                 
             case ChangeType.Modified:
                 // Parse the new definition to extract property details and generate update statement
-                return GenerateUpdateExtendedProperty(change.NewDefinition);
+                result = GenerateUpdateExtendedProperty(change.NewDefinition);
+                break;
                 
             default:
                 return $"-- Unknown change type for extended property: {change.ObjectName}";
         }
+        
+        // Comment out all extended property operations
+        return CommentOutExtendedPropertyOperation(result);
+    }
+
+    private string CommentOutExtendedPropertyOperation(string sql)
+    {
+        if (string.IsNullOrWhiteSpace(sql))
+            return sql;
+            
+        // Comment out each line of the SQL statement
+        var lines = sql.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        var commentedLines = lines.Select(line => 
+        {
+            // Skip lines that are already comments or empty
+            if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("--"))
+                return line;
+            return "-- " + line;
+        });
+        
+        return string.Join(Environment.NewLine, commentedLines);
     }
     
     string GenerateTriggerDDL(SchemaChange change)
@@ -314,7 +340,7 @@ public class DDLGenerator
             return $"-- Could not parse extended property definition: {propertyDefinition}";
             
         var sb = new StringBuilder();
-        sb.AppendLine("-- Drop extended property");
+        // Remove the comment line as it will be added when the entire operation is commented out
         sb.Append("EXEC sys.sp_dropextendedproperty");
         sb.Append($" @name = N'{details.Value.Name}'");
         

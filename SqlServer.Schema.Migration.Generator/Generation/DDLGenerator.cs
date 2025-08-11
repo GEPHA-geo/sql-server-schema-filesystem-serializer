@@ -346,29 +346,14 @@ public class DDLGenerator
         if (details == null)
             return $"-- Could not parse extended property definition: {propertyDefinition}";
             
-        // Replace sp_addextendedproperty with sp_updateextendedproperty
+        // Simply replace sp_addextendedproperty with sp_updateextendedproperty
+        // No TRY/CATCH logic needed as per requirement
         var updateDefinition = Regex.Replace(propertyDefinition, 
             @"sp_addextendedproperty", 
             "sp_updateextendedproperty", 
             RegexOptions.IgnoreCase);
             
-        var sb = new StringBuilder();
-        sb.AppendLine("-- Update extended property (drop and recreate if update fails)");
-        sb.AppendLine("BEGIN TRY");
-        sb.AppendLine($"    {updateDefinition}");
-        sb.AppendLine("END TRY");
-        sb.AppendLine("BEGIN CATCH");
-        sb.AppendLine("    IF ERROR_NUMBER() = 15217 -- Property does not exist");
-        sb.AppendLine("    BEGIN");
-        sb.AppendLine($"        {propertyDefinition}");
-        sb.AppendLine("    END");
-        sb.AppendLine("    ELSE");
-        sb.AppendLine("    BEGIN");
-        sb.AppendLine("        THROW;");
-        sb.AppendLine("    END");
-        sb.AppendLine("END CATCH");
-        
-        return sb.ToString();
+        return updateDefinition;
     }
     
     (string Name, string Value, string Level0Type, string Level0Name, string Level1Type, string Level1Name, string Level2Type, string Level2Name)? ParseExtendedPropertyCall(string definition)

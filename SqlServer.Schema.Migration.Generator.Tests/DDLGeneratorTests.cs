@@ -811,13 +811,15 @@ public class DDLGeneratorTests
         var ddl = _generator.GenerateDDL(change);
         
         // Assert
-        Assert.Contains("Update extended property", ddl);
+        // Should only use sp_updateextendedproperty without any TRY/CATCH logic
         Assert.Contains("sp_updateextendedproperty", ddl);
-        Assert.Contains("BEGIN TRY", ddl);
-        Assert.Contains("END TRY", ddl);
-        Assert.Contains("BEGIN CATCH", ddl);
-        Assert.Contains("IF ERROR_NUMBER() = 15217", ddl); // Property does not exist error
         Assert.Contains("@value = N'Customer information and contact details'", ddl);
+        Assert.DoesNotContain("BEGIN TRY", ddl);
+        Assert.DoesNotContain("END TRY", ddl);
+        Assert.DoesNotContain("BEGIN CATCH", ddl);
+        Assert.DoesNotContain("END CATCH", ddl);
+        Assert.DoesNotContain("ERROR_NUMBER", ddl);
+        Assert.DoesNotContain("THROW", ddl);
     }
     
     [Fact]
@@ -887,7 +889,7 @@ public class DDLGeneratorTests
     }
     
     [Fact]
-    public void GenerateDDL_ForExtendedProperty_ModifyWithTryCatch_ShouldHandleBothUpdateAndAdd()
+    public void GenerateDDL_ForExtendedProperty_Modify_ShouldUseUpdateOnly()
     {
         // Arrange
         var change = new SchemaChange
@@ -904,17 +906,15 @@ public class DDLGeneratorTests
         var ddl = _generator.GenerateDDL(change);
         
         // Assert
-        // Should try update first
-        Assert.Contains("BEGIN TRY", ddl);
+        // Should only use sp_updateextendedproperty without any TRY/CATCH logic
         Assert.Contains("sp_updateextendedproperty", ddl);
-        Assert.Contains("END TRY", ddl);
-        
-        // Should fall back to add if property doesn't exist
-        Assert.Contains("BEGIN CATCH", ddl);
-        Assert.Contains("IF ERROR_NUMBER() = 15217", ddl);
-        Assert.Contains("sp_addextendedproperty", ddl);
-        Assert.Contains("THROW", ddl); // Re-throw other errors
-        Assert.Contains("END CATCH", ddl);
+        Assert.DoesNotContain("BEGIN TRY", ddl);
+        Assert.DoesNotContain("END TRY", ddl);
+        Assert.DoesNotContain("BEGIN CATCH", ddl);
+        Assert.DoesNotContain("END CATCH", ddl);
+        Assert.DoesNotContain("ERROR_NUMBER", ddl);
+        Assert.DoesNotContain("sp_addextendedproperty", ddl);
+        Assert.DoesNotContain("THROW", ddl);
     }
     
     [Fact]

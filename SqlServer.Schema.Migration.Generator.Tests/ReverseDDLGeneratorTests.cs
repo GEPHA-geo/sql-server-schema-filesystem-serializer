@@ -292,13 +292,15 @@ public class ReverseDDLGeneratorTests
         var result = _generator.GenerateReverseDDL(change);
 
         // Assert
-        Assert.Contains("Update extended property to restore old value", result);
+        // Should only use sp_updateextendedproperty without any TRY/CATCH logic
         Assert.Contains("sp_updateextendedproperty", result);
         Assert.Contains("@value = N'Customer information table'", result); // Old value
-        Assert.Contains("BEGIN TRY", result);
-        Assert.Contains("END TRY", result);
-        Assert.Contains("BEGIN CATCH", result);
-        Assert.Contains("IF ERROR_NUMBER() = 15217", result); // Property does not exist
+        Assert.DoesNotContain("BEGIN TRY", result);
+        Assert.DoesNotContain("END TRY", result);
+        Assert.DoesNotContain("BEGIN CATCH", result);
+        Assert.DoesNotContain("END CATCH", result);
+        Assert.DoesNotContain("ERROR_NUMBER", result);
+        Assert.DoesNotContain("THROW", result);
     }
     
     [Fact]

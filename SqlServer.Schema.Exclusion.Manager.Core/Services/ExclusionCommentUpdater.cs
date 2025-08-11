@@ -182,7 +182,33 @@ public class ExclusionCommentUpdater
             var fullStatement = line;
             var statementEndIndex = i; // Track where the statement ends
             
-            if (line.Contains("sp_addextendedproperty", StringComparison.OrdinalIgnoreCase) ||
+            // Handle CREATE INDEX statements that can span multiple lines
+            if (line.Contains("CREATE ", StringComparison.OrdinalIgnoreCase) && 
+                (line.Contains(" INDEX ", StringComparison.OrdinalIgnoreCase) || 
+                 line.Contains(" INDEX[", StringComparison.OrdinalIgnoreCase)))
+            {
+                // CREATE INDEX can span multiple lines until semicolon or GO
+                var j = i + 1;
+                while (j < lines.Length && !lines[j - 1].Trim().EndsWith(";") && !lines[j].Trim().Equals("GO", StringComparison.OrdinalIgnoreCase))
+                {
+                    fullStatement += " " + lines[j];
+                    statementEndIndex = j;
+                    j++;
+                }
+            }
+            // Handle ALTER TABLE statements that can span multiple lines
+            else if (line.StartsWith("ALTER TABLE", StringComparison.OrdinalIgnoreCase))
+            {
+                // ALTER TABLE can span multiple lines until semicolon or GO
+                var j = i + 1;
+                while (j < lines.Length && !lines[j - 1].Trim().EndsWith(";") && !lines[j].Trim().Equals("GO", StringComparison.OrdinalIgnoreCase))
+                {
+                    fullStatement += " " + lines[j];
+                    statementEndIndex = j;
+                    j++;
+                }
+            }
+            else if (line.Contains("sp_addextendedproperty", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("sp_dropextendedproperty", StringComparison.OrdinalIgnoreCase))
             {
                 // Extended property statements can span multiple lines

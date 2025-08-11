@@ -379,7 +379,8 @@ public class GitChangeDetector
             var table = match.Groups[2].Value;
             var constraintName = match.Groups[3].Value;
             
-            // Check if this constraint was dropped earlier in the same migration (it's a recreation, not a new addition)
+            // Check if this constraint was dropped earlier in the same migration (it's a modification, already handled above)
+            // Only add as "added" if it wasn't dropped (i.e., it's a new constraint)
             if (!content.Contains($"DROP CONSTRAINT [{constraintName}]") && !content.Contains($"DROP CONSTRAINT {constraintName}"))
             {
                 changes.Add(new ManifestChange
@@ -389,6 +390,7 @@ public class GitChangeDetector
                     ObjectType = "Constraint"
                 });
             }
+            // If it was dropped, it's already been handled as a modification in the DROP section
         }
         
         // Parse column drops from ALTER TABLE DROP COLUMN
@@ -431,9 +433,20 @@ public class GitChangeDetector
             var table = match.Groups[2].Value;
             var constraintName = match.Groups[3].Value;
             
-            // Only add if it's being dropped without being re-added
-            if (!content.Contains($"ADD CONSTRAINT [{constraintName}]") && !content.Contains($"ADD CONSTRAINT {constraintName}"))
+            // Check if this constraint is being re-added (modification)
+            if (content.Contains($"ADD CONSTRAINT [{constraintName}]") || content.Contains($"ADD CONSTRAINT {constraintName}"))
             {
+                // It's being modified (dropped and re-added)
+                changes.Add(new ManifestChange
+                {
+                    Identifier = $"{schema}.{table}.{constraintName}",
+                    Description = "modified",
+                    ObjectType = "Constraint"
+                });
+            }
+            else
+            {
+                // It's only being dropped
                 changes.Add(new ManifestChange
                 {
                     Identifier = $"{schema}.{table}.{constraintName}",
@@ -451,12 +464,17 @@ public class GitChangeDetector
             var schema = match.Groups[2].Value;
             var table = match.Groups[3].Value;
             
-            changes.Add(new ManifestChange
+            // Only add as "added" if it wasn't dropped (i.e., it's a new index)
+            if (!Regex.IsMatch(content, $@"DROP\s+INDEX\s+\[?{Regex.Escape(indexName)}\]?\s+ON\s+\[?{Regex.Escape(schema)}\]?\.\[?{Regex.Escape(table)}\]?", RegexOptions.IgnoreCase))
             {
-                Identifier = $"{schema}.{table}.{indexName}",
-                Description = "added",
-                ObjectType = "Index"
-            });
+                changes.Add(new ManifestChange
+                {
+                    Identifier = $"{schema}.{table}.{indexName}",
+                    Description = "added",
+                    ObjectType = "Index"
+                });
+            }
+            // If it was dropped, it's already been handled as a modification in the DROP section
         }
         
         // Parse index drops
@@ -467,12 +485,27 @@ public class GitChangeDetector
             var schema = match.Groups[2].Value;
             var table = match.Groups[3].Value;
             
-            changes.Add(new ManifestChange
+            // Check if this index is being recreated (modification)
+            if (Regex.IsMatch(content, $@"CREATE\s+(?:UNIQUE\s+|NONCLUSTERED\s+|CLUSTERED\s+)?INDEX\s+\[?{Regex.Escape(indexName)}\]?\s+ON\s+\[?{Regex.Escape(schema)}\]?\.\[?{Regex.Escape(table)}\]?", RegexOptions.IgnoreCase))
             {
-                Identifier = $"{schema}.{table}.{indexName}",
-                Description = "removed",
-                ObjectType = "Index"
-            });
+                // It's being modified (dropped and recreated)
+                changes.Add(new ManifestChange
+                {
+                    Identifier = $"{schema}.{table}.{indexName}",
+                    Description = "modified",
+                    ObjectType = "Index"
+                });
+            }
+            else
+            {
+                // It's only being dropped
+                changes.Add(new ManifestChange
+                {
+                    Identifier = $"{schema}.{table}.{indexName}",
+                    Description = "removed",
+                    ObjectType = "Index"
+                });
+            }
         }
         
         // Parse extended properties (like EP_Column_Description_zura)
@@ -523,12 +556,17 @@ public class GitChangeDetector
             var schema = match.Groups[1].Value;
             var viewName = match.Groups[2].Value;
             
-            changes.Add(new ManifestChange
+            // Only add as "added" if it wasn't dropped (i.e., it's a new view)
+            if (!Regex.IsMatch(content, $@"DROP\s+VIEW\s+(?:IF\s+EXISTS\s+)?\[?{Regex.Escape(schema)}\]?\.\[?{Regex.Escape(viewName)}\]?", RegexOptions.IgnoreCase))
             {
-                Identifier = $"{schema}.{viewName}",
-                Description = "added",
-                ObjectType = "View"
-            });
+                changes.Add(new ManifestChange
+                {
+                    Identifier = $"{schema}.{viewName}",
+                    Description = "added",
+                    ObjectType = "View"
+                });
+            }
+            // If it was dropped, it's already been handled as a modification in the DROP section
         }
         
         // Match CREATE OR ALTER VIEW separately
@@ -567,12 +605,27 @@ public class GitChangeDetector
             var schema = match.Groups[1].Value;
             var viewName = match.Groups[2].Value;
             
-            changes.Add(new ManifestChange
+            // Check if this view is being recreated (modification)
+            if (Regex.IsMatch(content, $@"CREATE\s+(?:OR\s+ALTER\s+)?VIEW\s+\[?{Regex.Escape(schema)}\]?\.\[?{Regex.Escape(viewName)}\]?", RegexOptions.IgnoreCase))
             {
-                Identifier = $"{schema}.{viewName}",
-                Description = "removed",
-                ObjectType = "View"
-            });
+                // It's being modified (dropped and recreated)
+                changes.Add(new ManifestChange
+                {
+                    Identifier = $"{schema}.{viewName}",
+                    Description = "modified",
+                    ObjectType = "View"
+                });
+            }
+            else
+            {
+                // It's only being dropped
+                changes.Add(new ManifestChange
+                {
+                    Identifier = $"{schema}.{viewName}",
+                    Description = "removed",
+                    ObjectType = "View"
+                });
+            }
         }
         
         // Parse STORED PROCEDURE operations
@@ -583,12 +636,17 @@ public class GitChangeDetector
             var schema = match.Groups[1].Value;
             var procName = match.Groups[2].Value;
             
-            changes.Add(new ManifestChange
+            // Only add as "added" if it wasn't dropped (i.e., it's a new procedure)
+            if (!Regex.IsMatch(content, $@"DROP\s+PROC(?:EDURE)?\s+(?:IF\s+EXISTS\s+)?\[?{Regex.Escape(schema)}\]?\.\[?{Regex.Escape(procName)}\]?", RegexOptions.IgnoreCase))
             {
-                Identifier = $"{schema}.{procName}",
-                Description = "added",
-                ObjectType = "StoredProcedure"
-            });
+                changes.Add(new ManifestChange
+                {
+                    Identifier = $"{schema}.{procName}",
+                    Description = "added",
+                    ObjectType = "StoredProcedure"
+                });
+            }
+            // If it was dropped, it's already been handled as a modification in the DROP section
         }
         
         // Match CREATE OR ALTER PROC separately
@@ -627,12 +685,27 @@ public class GitChangeDetector
             var schema = match.Groups[1].Value;
             var procName = match.Groups[2].Value;
             
-            changes.Add(new ManifestChange
+            // Check if this procedure is being recreated (modification)
+            if (Regex.IsMatch(content, $@"CREATE\s+(?:OR\s+ALTER\s+)?PROC(?:EDURE)?\s+\[?{Regex.Escape(schema)}\]?\.\[?{Regex.Escape(procName)}\]?", RegexOptions.IgnoreCase))
             {
-                Identifier = $"{schema}.{procName}",
-                Description = "removed",
-                ObjectType = "StoredProcedure"
-            });
+                // It's being modified (dropped and recreated)
+                changes.Add(new ManifestChange
+                {
+                    Identifier = $"{schema}.{procName}",
+                    Description = "modified",
+                    ObjectType = "StoredProcedure"
+                });
+            }
+            else
+            {
+                // It's only being dropped
+                changes.Add(new ManifestChange
+                {
+                    Identifier = $"{schema}.{procName}",
+                    Description = "removed",
+                    ObjectType = "StoredProcedure"
+                });
+            }
         }
         
         // Parse FUNCTION operations
@@ -644,12 +717,17 @@ public class GitChangeDetector
             var schema = match.Groups[1].Value;
             var funcName = match.Groups[2].Value;
             
-            changes.Add(new ManifestChange
+            // Only add as "added" if it wasn't dropped (i.e., it's a new function)
+            if (!Regex.IsMatch(content, $@"DROP\s+FUNCTION\s+(?:IF\s+EXISTS\s+)?\[?{Regex.Escape(schema)}\]?\.\[?{Regex.Escape(funcName)}\]?", RegexOptions.IgnoreCase))
             {
-                Identifier = $"{schema}.{funcName}",
-                Description = "added",
-                ObjectType = "Function"
-            });
+                changes.Add(new ManifestChange
+                {
+                    Identifier = $"{schema}.{funcName}",
+                    Description = "added",
+                    ObjectType = "Function"
+                });
+            }
+            // If it was dropped, it's already been handled as a modification in the DROP section
         }
         
         // Match CREATE OR ALTER FUNCTION separately
@@ -688,12 +766,27 @@ public class GitChangeDetector
             var schema = match.Groups[1].Value;
             var funcName = match.Groups[2].Value;
             
-            changes.Add(new ManifestChange
+            // Check if this function is being recreated (modification)
+            if (Regex.IsMatch(content, $@"CREATE\s+(?:OR\s+ALTER\s+)?FUNCTION\s+\[?{Regex.Escape(schema)}\]?\.\[?{Regex.Escape(funcName)}\]?\s*\(", RegexOptions.IgnoreCase))
             {
-                Identifier = $"{schema}.{funcName}",
-                Description = "removed",
-                ObjectType = "Function"
-            });
+                // It's being modified (dropped and recreated)
+                changes.Add(new ManifestChange
+                {
+                    Identifier = $"{schema}.{funcName}",
+                    Description = "modified",
+                    ObjectType = "Function"
+                });
+            }
+            else
+            {
+                // It's only being dropped
+                changes.Add(new ManifestChange
+                {
+                    Identifier = $"{schema}.{funcName}",
+                    Description = "removed",
+                    ObjectType = "Function"
+                });
+            }
         }
         
         // Remove duplicates - keep the first occurrence of each identifier

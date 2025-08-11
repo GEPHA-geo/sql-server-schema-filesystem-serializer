@@ -1,5 +1,6 @@
 using SqlServer.Schema.Exclusion.Manager.Core.Models;
 using SqlServer.Schema.Exclusion.Manager.Core.Services;
+using System;
 using System.Text.RegularExpressions;
 using Xunit;
 using Xunit.Abstractions;
@@ -480,7 +481,11 @@ CREATE TABLE [dbo].[TestTable] (
             ("CREATE NONCLUSTERED INDEX [iTesting2] ON [dbo].[test_migrations]([zura] ASC);", "dbo.test_migrations.iTesting2"),
             ("CREATE INDEX IX_Users_Email ON dbo.Users(Email);", "dbo.Users.IX_Users_Email"),
             ("CREATE UNIQUE INDEX [UQ_Products_SKU] ON [dbo].[Products]([SKU] ASC);", "dbo.Products.UQ_Products_SKU"),
-            ("CREATE CLUSTERED INDEX IX_Orders_Date ON dbo.Orders(OrderDate DESC);", "dbo.Orders.IX_Orders_Date")
+            ("CREATE CLUSTERED INDEX IX_Orders_Date ON dbo.Orders(OrderDate DESC);", "dbo.Orders.IX_Orders_Date"),
+            // Add test case for multi-line CREATE INDEX with INCLUDE clause (like IX_nasti_performance)
+            (@"CREATE NONCLUSTERED INDEX [IX_nasti_performance]
+    ON [dbo].[nasti]([na_kod] ASC, [na_tar] ASC, [na_saw] ASC)
+    INCLUDE([na_raod], [na_k]);", "dbo.nasti.IX_nasti_performance")
         };
         
         var method = typeof(ExclusionCommentUpdater).GetMethod("ExtractIdentifierFromSql", 
@@ -774,28 +779,44 @@ GO";
         
         // Assert - All operations should be commented out
         Assert.Contains("-- EXCLUDED: dbo.test_migrations.bb1", updatedContent);
-        Assert.Contains("/*\nEXEC sp_rename", updatedContent);
+        Assert.True(updatedContent.Contains("/*\nEXEC sp_rename") || 
+                    updatedContent.Contains("/*\r\nEXEC sp_rename"),
+                    "Should contain commented out EXEC sp_rename");
         
         Assert.Contains("-- EXCLUDED: dbo.test_migrations.DF_test_migrations_gsdf", updatedContent);
-        Assert.Contains("/*\nALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT", updatedContent);
+        Assert.True(updatedContent.Contains("/*\nALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT") || 
+                    updatedContent.Contains("/*\r\nALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT"),
+                    "Should contain commented out DROP CONSTRAINT");
         
         Assert.Contains("-- EXCLUDED: dbo.test_migrations.ga", updatedContent);
-        Assert.Contains("/*\nALTER TABLE [dbo].[test_migrations] DROP COLUMN [ga]", updatedContent);
+        Assert.True(updatedContent.Contains("/*\nALTER TABLE [dbo].[test_migrations] DROP COLUMN [ga]") || 
+                    updatedContent.Contains("/*\r\nALTER TABLE [dbo].[test_migrations] DROP COLUMN [ga]"),
+                    "Should contain commented out DROP COLUMN [ga]");
         
         Assert.Contains("-- EXCLUDED: dbo.test_migrations.zura", updatedContent);
-        Assert.Contains("/*\nALTER TABLE [dbo].[test_migrations] ALTER COLUMN [zura]", updatedContent);
+        Assert.True(updatedContent.Contains("/*\nALTER TABLE [dbo].[test_migrations] ALTER COLUMN [zura]") || 
+                    updatedContent.Contains("/*\r\nALTER TABLE [dbo].[test_migrations] ALTER COLUMN [zura]"),
+                    "Should contain commented out ALTER COLUMN [zura]");
         
         Assert.Contains("-- EXCLUDED: dbo.test_migrations.gjglksdf", updatedContent);
-        Assert.Contains("/*\nALTER TABLE [dbo].[test_migrations] ADD [gjglksdf]", updatedContent);
+        Assert.True(updatedContent.Contains("/*\nALTER TABLE [dbo].[test_migrations] ADD [gjglksdf]") || 
+                    updatedContent.Contains("/*\r\nALTER TABLE [dbo].[test_migrations] ADD [gjglksdf]"),
+                    "Should contain commented out ADD [gjglksdf]");
         
         Assert.Contains("-- EXCLUDED: dbo.test_migrations.DF_test_migrations_zura", updatedContent);
-        Assert.Contains("/*\nALTER TABLE [dbo].[test_migrations] ADD CONSTRAINT [DF_test_migrations_zura]", updatedContent);
+        Assert.True(updatedContent.Contains("/*\nALTER TABLE [dbo].[test_migrations] ADD CONSTRAINT [DF_test_migrations_zura]") || 
+                    updatedContent.Contains("/*\r\nALTER TABLE [dbo].[test_migrations] ADD CONSTRAINT [DF_test_migrations_zura]"),
+                    "Should contain commented out ADD CONSTRAINT [DF_test_migrations_zura]");
         
         Assert.Contains("-- EXCLUDED: dbo.test_migrations.iTesting2", updatedContent);
-        Assert.Contains("/*\nCREATE NONCLUSTERED INDEX", updatedContent);
+        Assert.True(updatedContent.Contains("/*\nCREATE NONCLUSTERED INDEX") || 
+                    updatedContent.Contains("/*\r\nCREATE NONCLUSTERED INDEX"),
+                    "Should contain commented out CREATE NONCLUSTERED INDEX");
         
         Assert.Contains("-- EXCLUDED: dbo.test_migrations.EP_Column_Description_zura", updatedContent);
-        Assert.Contains("/*\nEXECUTE sp_addextendedproperty", updatedContent);
+        Assert.True(updatedContent.Contains("/*\nEXECUTE sp_addextendedproperty") || 
+                    updatedContent.Contains("/*\r\nEXECUTE sp_addextendedproperty"),
+                    "Should contain commented out EXECUTE sp_addextendedproperty");
     }
     
     [Fact]
@@ -837,18 +858,28 @@ GO";
         
         // Assert - Only rename and index should be commented
         Assert.Contains("-- EXCLUDED: dbo.test_migrations.bb1", updatedContent);
-        Assert.Contains("/*\nEXEC sp_rename", updatedContent);
+        Assert.True(updatedContent.Contains("/*\nEXEC sp_rename") || 
+                    updatedContent.Contains("/*\r\nEXEC sp_rename"),
+                    "Should contain commented out EXEC sp_rename");
         
         Assert.Contains("-- EXCLUDED: dbo.test_migrations.iTesting2", updatedContent);
-        Assert.Contains("/*\nCREATE NONCLUSTERED INDEX", updatedContent);
+        Assert.True(updatedContent.Contains("/*\nCREATE NONCLUSTERED INDEX") || 
+                    updatedContent.Contains("/*\r\nCREATE NONCLUSTERED INDEX"),
+                    "Should contain commented out CREATE NONCLUSTERED INDEX");
         
         // These should NOT be commented
         Assert.DoesNotContain("-- EXCLUDED: dbo.test_migrations.DF_test_migrations_gsdf", updatedContent);
         Assert.DoesNotContain("-- EXCLUDED: dbo.test_migrations.ga", updatedContent);
         Assert.DoesNotContain("-- EXCLUDED: dbo.test_migrations.zura", updatedContent);
-        Assert.DoesNotContain("/*\nALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT", updatedContent);
-        Assert.DoesNotContain("/*\nALTER TABLE [dbo].[test_migrations] DROP COLUMN", updatedContent);
-        Assert.DoesNotContain("/*\nALTER TABLE [dbo].[test_migrations] ALTER COLUMN", updatedContent);
+        Assert.False(updatedContent.Contains("/*\nALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT") ||
+                     updatedContent.Contains("/*\r\nALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT"),
+                     "Should not contain commented out DROP CONSTRAINT");
+        Assert.False(updatedContent.Contains("/*\nALTER TABLE [dbo].[test_migrations] DROP COLUMN") ||
+                     updatedContent.Contains("/*\r\nALTER TABLE [dbo].[test_migrations] DROP COLUMN"),
+                     "Should not contain commented out DROP COLUMN");
+        Assert.False(updatedContent.Contains("/*\nALTER TABLE [dbo].[test_migrations] ALTER COLUMN") ||
+                     updatedContent.Contains("/*\r\nALTER TABLE [dbo].[test_migrations] ALTER COLUMN"),
+                     "Should not contain commented out ALTER COLUMN");
     }
     
     [Fact]
@@ -1799,15 +1830,85 @@ GO";
         
         // Assert - DROP INDEX operations should be commented out
         Assert.Contains("-- EXCLUDED: dbo.test_migrations.iTesting2 - removed", updatedContent);
-        Assert.Contains("/*\nDROP INDEX [iTesting2]", updatedContent);
+        // Check for both Unix and Windows line endings
+        Assert.True(updatedContent.Contains("/*\nDROP INDEX [iTesting2]") || 
+                    updatedContent.Contains("/*\r\nDROP INDEX [iTesting2]") ||
+                    updatedContent.Contains("/*" + Environment.NewLine + "DROP INDEX [iTesting2]"),
+                    "Should contain commented out DROP INDEX [iTesting2]");
         
         Assert.Contains("-- EXCLUDED: dbo.Users.IX_Users_Email - removed", updatedContent);
-        Assert.Contains("/*\nDROP INDEX [IX_Users_Email]", updatedContent);
+        // Check for both Unix and Windows line endings
+        Assert.True(updatedContent.Contains("/*\nDROP INDEX [IX_Users_Email]") || 
+                    updatedContent.Contains("/*\r\nDROP INDEX [IX_Users_Email]") ||
+                    updatedContent.Contains("/*" + Environment.NewLine + "DROP INDEX [IX_Users_Email]"),
+                    "Should contain commented out DROP INDEX [IX_Users_Email]");
         
         // Other operations should NOT be commented
         Assert.DoesNotContain("-- EXCLUDED: dbo.test_migrations.newColumn", updatedContent);
+        // Check that these are not commented with any line ending style
+        Assert.False(updatedContent.Contains("/*\nALTER TABLE [dbo].[test_migrations] ADD [newColumn]") ||
+                     updatedContent.Contains("/*\r\nALTER TABLE [dbo].[test_migrations] ADD [newColumn]"),
+                     "Should not contain commented out ALTER TABLE ADD");
+        Assert.False(updatedContent.Contains("/*\nCREATE INDEX [IX_NewIndex]") ||
+                     updatedContent.Contains("/*\r\nCREATE INDEX [IX_NewIndex]"),
+                     "Should not contain commented out CREATE INDEX");
+    }
+
+    [Fact]
+    public async Task UpdateMigrationScript_ExcludesConstraintModification_BothDropAndAdd()
+    {
+        // Test that when a constraint modification is excluded, BOTH DROP and ADD statements are commented out
+        var migrationPath = Path.Combine(_testDirectory, "migration_constraint_mod.sql");
+        var migrationContent = @"-- Migration: test constraint modification
+-- Modification operations
+ALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT [DF_test_migrations_zura];
+GO
+
+ALTER TABLE [dbo].[test_migrations]
+    ADD CONSTRAINT [DF_test_migrations_zura] DEFAULT (N'iura') FOR [zura];
+GO
+
+-- Other operations
+ALTER TABLE [dbo].[test_migrations] ADD [newColumn] INT NULL;
+GO";
+        
+        await File.WriteAllTextAsync(migrationPath, migrationContent);
+        
+        var manifest = new ChangeManifest
+        {
+            DatabaseName = "TestDB",
+            ServerName = "TestServer",
+            CommitHash = "test123"
+        };
+        
+        // Exclude the constraint modification
+        manifest.ExcludedChanges.Add(
+            new ManifestChange { Identifier = "dbo.test_migrations.DF_test_migrations_zura", Description = "modified" }
+        );
+        
+        // Act
+        await _updater.UpdateMigrationScriptAsync(migrationPath, manifest);
+        var updatedContent = await File.ReadAllTextAsync(migrationPath);
+        
+        // Assert - BOTH DROP and ADD CONSTRAINT should be commented out
+        Assert.Contains("-- EXCLUDED: dbo.test_migrations.DF_test_migrations_zura - modified", updatedContent);
+        
+        // Check that DROP CONSTRAINT is commented
+        Assert.True(updatedContent.Contains("/*\nALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT [DF_test_migrations_zura]") || 
+                    updatedContent.Contains("/*\r\nALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT [DF_test_migrations_zura]"),
+                    "DROP CONSTRAINT should be commented out");
+        
+        // Check that ADD CONSTRAINT is ALSO commented
+        var addConstraintCommented = 
+            updatedContent.Contains("/*\nALTER TABLE [dbo].[test_migrations]\n    ADD CONSTRAINT [DF_test_migrations_zura]") ||
+            updatedContent.Contains("/*\r\nALTER TABLE [dbo].[test_migrations]\r\n    ADD CONSTRAINT [DF_test_migrations_zura]") ||
+            updatedContent.Contains("/*\nALTER TABLE [dbo].[test_migrations]\r\n    ADD CONSTRAINT [DF_test_migrations_zura]");
+            
+        Assert.True(addConstraintCommented, "ADD CONSTRAINT should also be commented out");
+        
+        // The newColumn should NOT be commented (it's not excluded)
         Assert.DoesNotContain("/*\nALTER TABLE [dbo].[test_migrations] ADD [newColumn]", updatedContent);
-        Assert.DoesNotContain("/*\nCREATE INDEX [IX_NewIndex]", updatedContent);
+        Assert.DoesNotContain("/*\r\nALTER TABLE [dbo].[test_migrations] ADD [newColumn]", updatedContent);
     }
     
     [Fact]

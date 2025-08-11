@@ -123,7 +123,7 @@ GO";
 ALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT [DF_test_migrations_gsdf];
 GO
 
--- Drop and recreate constraint (should not be detected as removed)
+-- Drop and recreate constraint (should be detected as modified, not removed)
 ALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT [DF_test_migrations_zura];
 GO
 ALTER TABLE [dbo].[test_migrations] ADD CONSTRAINT [DF_test_migrations_zura] DEFAULT (N'value') FOR [zura];
@@ -137,8 +137,8 @@ GO";
         
         // Assert
         Assert.Contains(changes, c => c.Identifier == "dbo.test_migrations.DF_test_migrations_gsdf" && c.Description == "removed");
-        // Should not detect DF_test_migrations_zura as removed since it's re-added
-        Assert.DoesNotContain(changes, c => c.Identifier.Contains("DF_test_migrations_zura"));
+        // Should detect DF_test_migrations_zura as modified (not removed) since it's re-added
+        Assert.Contains(changes, c => c.Identifier == "dbo.test_migrations.DF_test_migrations_zura" && c.Description == "modified");
     }
 
     [Fact]
@@ -485,10 +485,10 @@ GO";
     [Fact]
     public async Task ParseMigrationFileAsync_IgnoresRecreatedConstraints()
     {
-        // Arrange
+        // Arrange - This test is now updated to verify that recreated constraints are detected as modifications
         var detector = new GitChangeDetector(GitRepoPath);
         var migrationContent = @"-- Migration: test
--- Drop and recreate a constraint (should not be detected as added)
+-- Drop and recreate a constraint (should be detected as modified, not added)
 ALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT [DF_test_migrations_zura];
 GO
 
@@ -508,11 +508,249 @@ GO";
         var changes = await detector.ParseMigrationFileAsync(migrationPath, "test-server", "test-db");
         
         // Assert
-        // Should NOT detect DF_test_migrations_zura as it's a recreation
-        Assert.DoesNotContain(changes, c => c.Identifier.Contains("DF_test_migrations_zura"));
+        // Should detect DF_test_migrations_zura as modified (not as added)
+        var modifiedConstraint = changes.FirstOrDefault(c => c.Identifier == "dbo.test_migrations.DF_test_migrations_zura");
+        Assert.NotNull(modifiedConstraint);
+        Assert.Equal("modified", modifiedConstraint.Description);
         
-        // Should detect the new constraint
-        Assert.Contains(changes, c => c.Identifier == "dbo.test_migrations.DF_test_migrations_newone" && c.Description == "added");
+        // Should detect the new constraint as added
+        var addedConstraint = changes.FirstOrDefault(c => c.Identifier == "dbo.test_migrations.DF_test_migrations_newone");
+        Assert.NotNull(addedConstraint);
+        Assert.Equal("added", addedConstraint.Description);
+    }
+
+    [Fact]
+    public async Task ParseMigrationFileAsync_DetectsConstraintModifications()
+    {
+        // Arrange - Test that constraint drops followed by recreations are detected as modifications
+        var detector = new GitChangeDetector(GitRepoPath);
+        var migrationContent = @"-- Migration: test
+-- Drop and recreate a constraint with different default value (should be detected as modified)
+ALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT [DF_test_migrations_zura];
+GO
+
+ALTER TABLE [dbo].[test_migrations]
+    ADD CONSTRAINT [DF_test_migrations_zura] DEFAULT (N'iura') FOR [zura];
+GO
+
+-- Drop another constraint and recreate it
+ALTER TABLE [dbo].[orders] DROP CONSTRAINT [DF_orders_status];
+GO
+
+ALTER TABLE [dbo].[orders]
+    ADD CONSTRAINT [DF_orders_status] DEFAULT ('pending') FOR [status];
+GO
+
+-- Add a completely new constraint (not dropped first)
+ALTER TABLE [dbo].[test_migrations]
+    ADD CONSTRAINT [DF_test_migrations_newone] DEFAULT (N'value') FOR [column];
+GO
+
+-- Drop a constraint without recreating it
+ALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT [DF_test_migrations_deleted];
+GO";
+        
+        var migrationPath = Path.Combine(GitRepoPath, "migration.sql");
+        await File.WriteAllTextAsync(migrationPath, migrationContent);
+        
+        // Act
+        var changes = await detector.ParseMigrationFileAsync(migrationPath, "test-server", "test-db");
+        
+        // Assert
+        // Should detect DF_test_migrations_zura as modified (not added or removed)
+        var zuraConstraint = changes.FirstOrDefault(c => c.Identifier == "dbo.test_migrations.DF_test_migrations_zura");
+        Assert.NotNull(zuraConstraint);
+        Assert.Equal("modified", zuraConstraint.Description);
+        Assert.Equal("Constraint", zuraConstraint.ObjectType);
+        
+        // Should detect DF_orders_status as modified
+        var statusConstraint = changes.FirstOrDefault(c => c.Identifier == "dbo.orders.DF_orders_status");
+        Assert.NotNull(statusConstraint);
+        Assert.Equal("modified", statusConstraint.Description);
+        Assert.Equal("Constraint", statusConstraint.ObjectType);
+        
+        // Should detect the new constraint as added
+        var newConstraint = changes.FirstOrDefault(c => c.Identifier == "dbo.test_migrations.DF_test_migrations_newone");
+        Assert.NotNull(newConstraint);
+        Assert.Equal("added", newConstraint.Description);
+        Assert.Equal("Constraint", newConstraint.ObjectType);
+        
+        // Should detect the deleted constraint as removed
+        var deletedConstraint = changes.FirstOrDefault(c => c.Identifier == "dbo.test_migrations.DF_test_migrations_deleted");
+        Assert.NotNull(deletedConstraint);
+        Assert.Equal("removed", deletedConstraint.Description);
+        Assert.Equal("Constraint", deletedConstraint.ObjectType);
+    }
+
+    [Fact]
+    public async Task ParseMigrationFileAsync_DetectsAllObjectTypeModifications()
+    {
+        // Arrange - Test that all object types (indexes, views, procedures, functions) handle drop/recreate as modifications
+        var detector = new GitChangeDetector(GitRepoPath);
+        var migrationContent = @"-- Migration: test all object modifications
+
+-- INDEX MODIFICATIONS
+-- Drop and recreate an index (should be detected as modified)
+DROP INDEX [IX_Orders_CustomerID] ON [dbo].[Orders];
+GO
+CREATE NONCLUSTERED INDEX [IX_Orders_CustomerID] ON [dbo].[Orders]([CustomerID] ASC) INCLUDE ([OrderDate]);
+GO
+
+-- Add a new index (not dropped first)
+CREATE UNIQUE INDEX [IX_Products_SKU] ON [dbo].[Products]([SKU] ASC);
+GO
+
+-- Drop an index without recreating it
+DROP INDEX [IX_OldIndex] ON [dbo].[Legacy];
+GO
+
+-- VIEW MODIFICATIONS
+-- Drop and recreate a view (should be detected as modified)
+DROP VIEW [dbo].[vw_CustomerOrders];
+GO
+CREATE VIEW [dbo].[vw_CustomerOrders]
+AS
+SELECT c.Name, o.OrderDate, o.Total
+FROM Customers c
+JOIN Orders o ON c.ID = o.CustomerID
+WHERE o.Status = 'Active';
+GO
+
+-- Add a new view (not dropped first)
+CREATE VIEW [dbo].[vw_NewReport]
+AS
+SELECT * FROM Reports;
+GO
+
+-- Drop a view without recreating it
+DROP VIEW IF EXISTS [dbo].[vw_OldView];
+GO
+
+-- STORED PROCEDURE MODIFICATIONS  
+-- Drop and recreate a procedure (should be detected as modified)
+DROP PROCEDURE IF EXISTS [dbo].[sp_UpdateCustomer];
+GO
+CREATE PROCEDURE [dbo].[sp_UpdateCustomer]
+    @CustomerID int,
+    @Name nvarchar(100),
+    @Email nvarchar(100)
+AS
+BEGIN
+    UPDATE Customers 
+    SET Name = @Name, Email = @Email, ModifiedDate = GETDATE()
+    WHERE ID = @CustomerID;
+END
+GO
+
+-- Add a new procedure (not dropped first)
+CREATE PROC [dbo].[sp_NewProc]
+AS
+BEGIN
+    SELECT 1;
+END
+GO
+
+-- Drop a procedure without recreating it
+DROP PROC [dbo].[sp_OldProc];
+GO
+
+-- FUNCTION MODIFICATIONS
+-- Drop and recreate a function (should be detected as modified)
+DROP FUNCTION [dbo].[fn_CalculateDiscount];
+GO
+CREATE FUNCTION [dbo].[fn_CalculateDiscount](@Amount decimal(10,2), @DiscountPercent decimal(5,2))
+RETURNS decimal(10,2)
+AS
+BEGIN
+    RETURN @Amount * (1 - @DiscountPercent / 100);
+END
+GO
+
+-- Add a new function (not dropped first)
+CREATE FUNCTION [dbo].[fn_NewFunc](@Input int)
+RETURNS int
+AS
+BEGIN
+    RETURN @Input * 2;
+END
+GO
+
+-- Drop a function without recreating it
+DROP FUNCTION IF EXISTS [dbo].[fn_OldFunc];
+GO";
+        
+        var migrationPath = Path.Combine(GitRepoPath, "migration.sql");
+        await File.WriteAllTextAsync(migrationPath, migrationContent);
+        
+        // Act
+        var changes = await detector.ParseMigrationFileAsync(migrationPath, "test-server", "test-db");
+        
+        // Assert - INDEX modifications
+        var modifiedIndex = changes.FirstOrDefault(c => c.Identifier == "dbo.Orders.IX_Orders_CustomerID");
+        Assert.NotNull(modifiedIndex);
+        Assert.Equal("modified", modifiedIndex.Description);
+        Assert.Equal("Index", modifiedIndex.ObjectType);
+        
+        var addedIndex = changes.FirstOrDefault(c => c.Identifier == "dbo.Products.IX_Products_SKU");
+        Assert.NotNull(addedIndex);
+        Assert.Equal("added", addedIndex.Description);
+        Assert.Equal("Index", addedIndex.ObjectType);
+        
+        var removedIndex = changes.FirstOrDefault(c => c.Identifier == "dbo.Legacy.IX_OldIndex");
+        Assert.NotNull(removedIndex);
+        Assert.Equal("removed", removedIndex.Description);
+        Assert.Equal("Index", removedIndex.ObjectType);
+        
+        // Assert - VIEW modifications
+        var modifiedView = changes.FirstOrDefault(c => c.Identifier == "dbo.vw_CustomerOrders");
+        Assert.NotNull(modifiedView);
+        Assert.Equal("modified", modifiedView.Description);
+        Assert.Equal("View", modifiedView.ObjectType);
+        
+        var addedView = changes.FirstOrDefault(c => c.Identifier == "dbo.vw_NewReport");
+        Assert.NotNull(addedView);
+        Assert.Equal("added", addedView.Description);
+        Assert.Equal("View", addedView.ObjectType);
+        
+        var removedView = changes.FirstOrDefault(c => c.Identifier == "dbo.vw_OldView");
+        Assert.NotNull(removedView);
+        Assert.Equal("removed", removedView.Description);
+        Assert.Equal("View", removedView.ObjectType);
+        
+        // Assert - STORED PROCEDURE modifications
+        var modifiedProc = changes.FirstOrDefault(c => c.Identifier == "dbo.sp_UpdateCustomer");
+        Assert.NotNull(modifiedProc);
+        Assert.Equal("modified", modifiedProc.Description);
+        Assert.Equal("StoredProcedure", modifiedProc.ObjectType);
+        
+        var addedProc = changes.FirstOrDefault(c => c.Identifier == "dbo.sp_NewProc");
+        Assert.NotNull(addedProc);
+        Assert.Equal("added", addedProc.Description);
+        Assert.Equal("StoredProcedure", addedProc.ObjectType);
+        
+        var removedProc = changes.FirstOrDefault(c => c.Identifier == "dbo.sp_OldProc");
+        Assert.NotNull(removedProc);
+        Assert.Equal("removed", removedProc.Description);
+        Assert.Equal("StoredProcedure", removedProc.ObjectType);
+        
+        // Assert - FUNCTION modifications
+        var modifiedFunc = changes.FirstOrDefault(c => c.Identifier == "dbo.fn_CalculateDiscount");
+        Assert.NotNull(modifiedFunc);
+        Assert.Equal("modified", modifiedFunc.Description);
+        Assert.Equal("Function", modifiedFunc.ObjectType);
+        
+        var addedFunc = changes.FirstOrDefault(c => c.Identifier == "dbo.fn_NewFunc");
+        Assert.NotNull(addedFunc);
+        Assert.Equal("added", addedFunc.Description);
+        Assert.Equal("Function", addedFunc.ObjectType);
+        
+        var removedFunc = changes.FirstOrDefault(c => c.Identifier == "dbo.fn_OldFunc");
+        Assert.NotNull(removedFunc);
+        Assert.Equal("removed", removedFunc.Description);
+        Assert.Equal("Function", removedFunc.ObjectType);
+        
+        // Verify total count - should have exactly 12 changes (3 for each of 4 object types)
+        Assert.Equal(12, changes.Count);
     }
 
     [Fact]
@@ -651,8 +889,8 @@ GO";
         // Act
         var changes = await detector.ParseMigrationFileAsync(migrationPath, "test-server", "test-db");
         
-        // Assert - Should detect all changes (DF_test_migrations_zura is not counted as it's recreated)
-        Assert.Equal(19, changes.Count);
+        // Assert - Should detect all changes (DF_test_migrations_zura is now counted as modified when recreated)
+        Assert.Equal(20, changes.Count);
         
         // Table operations
         Assert.Contains(changes, c => c.Identifier == "dbo.new_table" && c.Description == "added" && c.ObjectType == "Table");
@@ -660,6 +898,9 @@ GO";
         
         // Column rename  
         Assert.Contains(changes, c => c.Identifier == "dbo.test_migrations.bb1" && c.Description.Contains("renamed to tempof"));
+        
+        // Constraint modification (drop and recreate)
+        Assert.Contains(changes, c => c.Identifier == "dbo.test_migrations.DF_test_migrations_zura" && c.Description == "modified" && c.ObjectType == "Constraint");
         
         // Column drops
         Assert.Contains(changes, c => c.Identifier == "dbo.test_migrations.ga" && c.Description == "removed");
@@ -672,9 +913,8 @@ GO";
         // Column addition
         Assert.Contains(changes, c => c.Identifier == "dbo.test_migrations.gjglksdf" && c.Description == "added");
         
-        // Constraint drop (DF_test_migrations_gsdf is dropped, DF_test_migrations_zura is recreated so not counted)
+        // Constraint drop (DF_test_migrations_gsdf is dropped, DF_test_migrations_zura is recreated so counted as modified)
         Assert.Contains(changes, c => c.Identifier == "dbo.test_migrations.DF_test_migrations_gsdf" && c.Description == "removed");
-        Assert.DoesNotContain(changes, c => c.Identifier.Contains("DF_test_migrations_zura"));
         
         // Index operations
         Assert.Contains(changes, c => c.Identifier == "dbo.test_migrations.iTesting2" && c.Description == "added" && c.ObjectType == "Index");

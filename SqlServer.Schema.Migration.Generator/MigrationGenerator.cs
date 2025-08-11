@@ -88,7 +88,9 @@ public class MigrationGenerator
             
             var filename = $"_{timestamp}_{sanitizedActor}_{description}.sql";
             var migrationPath = Path.Combine(migrationsPath, filename);
-            var reverseMigrationPath = Path.Combine(reverseMigrationsPath, filename);
+            // Reverse migration filename starts with "reverse_migration"
+            var reverseFilename = $"reverse_migration_{timestamp}_{sanitizedActor}_{description}.sql";
+            var reverseMigrationPath = Path.Combine(reverseMigrationsPath, reverseFilename);
             
             // Validate migration if requested and connection string provided
             // TODO: Enable validation after resolving Git export issues in Windows/WSL environment
@@ -118,12 +120,12 @@ public class MigrationGenerator
             Console.WriteLine($"Generated migration: {filename}");
             
             await File.WriteAllTextAsync(reverseMigrationPath, reverseMigrationScript);
-            Console.WriteLine($"Generated reverse migration: z_migrations_reverse/{filename}");
+            Console.WriteLine($"Generated reverse migration: z_migrations_reverse/{reverseFilename}");
             
             // Validate before committing - check that migration files exist in git's uncommitted changes
             var allUncommittedChanges = _gitAnalyzer.GetUncommittedChanges(outputPath, "");
             var migrationFileCreated = allUncommittedChanges.Any(c => c.Path.Contains($"/z_migrations/{filename}"));
-            var reverseMigrationFileCreated = allUncommittedChanges.Any(c => c.Path.Contains($"/z_migrations_reverse/{filename}"));
+            var reverseMigrationFileCreated = allUncommittedChanges.Any(c => c.Path.Contains($"/z_migrations_reverse/{reverseFilename}"));
             
             if (!migrationFileCreated || !reverseMigrationFileCreated)
             {

@@ -181,18 +181,19 @@ internal static class Program
             await File.WriteAllTextAsync("generated_script.sql", script);
             Console.WriteLine($"Script saved to generated_script.sql ({script.Length} characters)");
             
-            // Clean only the database-specific directory (preserving migrations)
+            // Clean only the database-specific directory (preserving migrations and change manifests)
             var targetOutputPath = Path.Combine(outputPath, "servers", sanitizedTargetServer, targetDatabase);
             Console.WriteLine($"Full target output path: {targetOutputPath}");
             
             if (Directory.Exists(targetOutputPath))
             {
-                Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving z_migrations and z_migrations_reverse)");
+                Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving z_migrations, z_migrations_reverse, and _change-manifests)");
                 
-                // Get all subdirectories except migrations
+                // Get all subdirectories except migrations and change manifests
                 var subdirs = Directory.GetDirectories(targetOutputPath)
                     .Where(d => !Path.GetFileName(d).Equals("z_migrations", StringComparison.OrdinalIgnoreCase) &&
-                               !Path.GetFileName(d).Equals("z_migrations_reverse", StringComparison.OrdinalIgnoreCase))
+                               !Path.GetFileName(d).Equals("z_migrations_reverse", StringComparison.OrdinalIgnoreCase) &&
+                               !Path.GetFileName(d).Equals("_change-manifests", StringComparison.OrdinalIgnoreCase))
                     .ToList();
                 
                 // Delete each subdirectory

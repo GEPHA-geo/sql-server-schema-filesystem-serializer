@@ -317,6 +317,134 @@ public class ManifestManagerTests : IDisposable
     }
 
     [Fact]
+    public async Task UpdateExclusionCommentsAsync_CommentsOutExcludedIndexInMigrationScript()
+    {
+        // This test verifies that when an index like IX_nasti_performance is in the EXCLUDED section
+        // of the manifest, it gets commented out in the migration script
+        
+        // Arrange
+        var gitRepo = SetupTestGitRepo(parentIsOriginMain: false);
+        try
+        {
+            var manager = new ManifestManager(gitRepo);
+            var sourceServer = "10.188.49.19,1433";
+            var sourceDatabase = "abc_20250801_1804";
+            var targetServer = "pharm-n1.pharm.local";
+            var targetDatabase = "abc";
+            
+            // Create directory structure for target
+            var dbPath = Path.Combine(gitRepo, "servers", targetServer, targetDatabase);
+            var migrationsPath = Path.Combine(dbPath, "z_migrations");
+            Directory.CreateDirectory(migrationsPath);
+            
+            // Create a migration script with an active CREATE INDEX statement
+            var migrationScript = @"-- Migration: 20250810_091615_zuraandguladze_1_indexes_13_other.sql
+-- Generated: 2025-08-10 09:16:15 UTC
+-- Database: abc
+-- Actor: zuraandguladze
+-- Changes: 14 schema modifications
+
+SET XACT_ABORT ON;
+BEGIN TRANSACTION;
+
+-- Create indexes
+CREATE NONCLUSTERED INDEX [IX_nasti_performance]
+    ON [dbo].[nasti]([na_kod] ASC, [na_tar] ASC, [na_saw] ASC)
+    INCLUDE([na_raod], [na_k]);
+GO
+
+-- Modification operations
+ALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT [DF_test_migrations_zura];
+GO
+
+ALTER TABLE [dbo].[test_migrations]
+    ADD CONSTRAINT [DF_test_migrations_zura] DEFAULT (N'iura') FOR [zura];
+GO
+
+COMMIT TRANSACTION;
+PRINT 'Migration applied successfully.';
+";
+            
+            var migrationPath = Path.Combine(migrationsPath, "_20250810_091615_zuraandguladze_1_indexes_13_other.sql");
+            await File.WriteAllTextAsync(migrationPath, migrationScript);
+            
+            // Create manifest with IX_nasti_performance in EXCLUDED section
+            var manifest = new ChangeManifest
+            {
+                DatabaseName = sourceDatabase,
+                ServerName = sourceServer,
+                Generated = DateTime.UtcNow,
+                CommitHash = "69423162",
+                RotationMarker = '/'
+            };
+            
+            // Add some included changes
+            manifest.IncludedChanges.Add(new ManifestChange
+            {
+                Identifier = "dbo.test_migrations.DF_test_migrations_zura",
+                Description = "modified"
+            });
+            
+            // Add IX_nasti_performance to EXCLUDED changes
+            manifest.ExcludedChanges.Add(new ManifestChange
+            {
+                Identifier = "dbo.nasti.IX_nasti_performance",
+                Description = "added"
+            });
+            
+            // Save manifest in target location
+            var manifestDir = Path.Combine(dbPath, "_change-manifests");
+            Directory.CreateDirectory(manifestDir);
+            var manifestPath = Path.Combine(manifestDir, $"{sourceServer}_{sourceDatabase}.manifest");
+            var fileHandler = new ManifestFileHandler();
+            await fileHandler.WriteManifestAsync(manifestPath, manifest);
+            
+            // Act
+            var result = await manager.UpdateExclusionCommentsAsync(sourceServer, sourceDatabase, targetServer, targetDatabase);
+            
+            // Assert
+            Assert.True(result);
+            
+            // Read the updated migration script
+            var updatedScript = await File.ReadAllTextAsync(migrationPath);
+            
+            // The IX_nasti_performance CREATE INDEX should now be commented out
+            Assert.Contains("-- EXCLUDED: dbo.nasti.IX_nasti_performance - added", updatedScript);
+            Assert.Contains("/*", updatedScript);
+            Assert.Contains("CREATE NONCLUSTERED INDEX [IX_nasti_performance]", updatedScript);
+            Assert.Contains("*/", updatedScript);
+            
+            // The DF_test_migrations_zura constraint should remain active (not commented)
+            // since it's in the INCLUDED section
+            Assert.DoesNotContain("-- EXCLUDED: dbo.test_migrations.DF_test_migrations_zura", updatedScript);
+            
+            // Verify the constraint modification is not within comment blocks
+            var lines = updatedScript.Split('\n');
+            var inCommentBlock = false;
+            var constraintLineFound = false;
+            
+            foreach (var line in lines)
+            {
+                if (line.Trim() == "/*")
+                    inCommentBlock = true;
+                else if (line.Trim() == "*/")
+                    inCommentBlock = false;
+                else if (line.Contains("ALTER TABLE [dbo].[test_migrations] DROP CONSTRAINT [DF_test_migrations_zura]"))
+                {
+                    constraintLineFound = true;
+                    Assert.False(inCommentBlock, "The included constraint modification should not be inside a comment block");
+                }
+            }
+            
+            Assert.True(constraintLineFound, "The constraint modification should be present in the script");
+        }
+        finally
+        {
+            DeleteDirectoryRecursive(gitRepo);
+        }
+    }
+
+    [Fact]
     public async Task UpdateExclusionCommentsAsync_ReturnsFalse_WhenNoManifestExists()
     {
         // Arrange

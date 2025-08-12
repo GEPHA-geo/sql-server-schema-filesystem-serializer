@@ -373,6 +373,7 @@ internal static class Program
             var actor = Environment.GetEnvironmentVariable("GITHUB_ACTOR") ?? Environment.UserName;
             
             // Generate migration using DACPAC comparison (committed vs uncommitted)
+            // Compare the previous committed state with the newly extracted schema
             var migrationResult = await migrationGenerator.GenerateMigrationAsync(
                 outputPath,
                 sanitizedTargetServer,
@@ -380,8 +381,8 @@ internal static class Program
                 migrationsPath,
                 scmpComparison,  // Pass SCMP comparison for settings
                 actor,
-                validateMigration: true,
-                connectionString: sourceConnectionString);
+                validateMigration: true);
+                // No connectionString - will compare committed vs uncommitted files
             
             var changesDetected = migrationResult.Success && migrationResult.HasChanges;
             Console.WriteLine(changesDetected ? $"✓ Migration files generated in: {migrationsPath}" : "No schema changes detected.");

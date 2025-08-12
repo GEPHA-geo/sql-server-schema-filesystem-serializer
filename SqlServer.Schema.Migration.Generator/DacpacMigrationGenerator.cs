@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Text;
 using Microsoft.SqlServer.Dac;
 using Microsoft.SqlServer.Dac.Model;
@@ -12,6 +13,8 @@ namespace SqlServer.Schema.Migration.Generator;
 /// </summary>
 public class DacpacMigrationGenerator
 {
+    const string SQL_UNRESOLVED_REFERENCE_ERROR = "SQL71561";
+    
     readonly string _tempBasePath;
     readonly ScmpToDeployOptions _optionsMapper = new();
 
@@ -31,12 +34,34 @@ public class DacpacMigrationGenerator
         string migrationsPath,
         SchemaComparison? scmpComparison = null,
         string? actor = null,
+        string? referenceDacpacPath = null,
         bool validateMigration = true,
         string? connectionString = null)
     {
         var result = new MigrationGenerationResult();
         var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
-        var tempDir = Path.Combine(_tempBasePath, $"migration_{timestamp}");
+        // Create build directory in temp folder to avoid polluting the repository
+        var buildDir = Path.Combine(Path.GetTempPath(), "DacpacMigrations", $"build_{timestamp}");
+        
+        // Clean up old temp directories if they exist
+        var tempRoot = Path.Combine(Path.GetTempPath(), "DacpacMigrations");
+        if (Directory.Exists(tempRoot))
+        {
+            try
+            {
+                // Delete old build directories (older than 1 hour)
+                var oldDirs = Directory.GetDirectories(tempRoot, "build_*")
+                    .Where(d => Directory.GetCreationTimeUtc(d) < DateTime.UtcNow.AddHours(-1));
+                foreach (var oldDir in oldDirs)
+                {
+                    try { Directory.Delete(oldDir, recursive: true); } catch { /* Ignore */ }
+                }
+            }
+            catch { /* Ignore cleanup errors */ }
+        }
+        
+        Directory.CreateDirectory(buildDir);
+        var tempDir = buildDir;
         
         // Worktree path for committed state
         string? committedWorktreePath = null;
@@ -49,6 +74,64 @@ public class DacpacMigrationGenerator
             var schemaRelativePath = Path.Combine("servers", targetServer, targetDatabase);
             
             Console.WriteLine("=== Generating DACPAC-based Migration ===");
+            
+            // If connection string is provided, compare database with file system
+            if (!string.IsNullOrEmpty(connectionString))
+            {
+                Console.WriteLine("Comparing database schema with file system...");
+                
+                // Extract DACPAC from database as source
+                var sourceDacpacPath = await ExtractDacpacFromDatabase(
+                    connectionString,
+                    Path.Combine(tempDir, "database-extract"),
+                    "DatabaseSchema");
+                
+                if (string.IsNullOrEmpty(sourceDacpacPath))
+                {
+                    result.Success = false;
+                    result.Error = "Failed to extract schema from database";
+                    return result;
+                }
+                
+                // Build DACPAC from file system as target
+                var currentSchemaPath = Path.Combine(outputPath, schemaRelativePath);
+                Console.WriteLine("Building target DACPAC from file system...");
+                // Look for a reference DACPAC in the schema directory
+                string? referenceDacpac = null;
+                var dacpacFiles = Directory.GetFiles(currentSchemaPath, "*.dacpac", SearchOption.TopDirectoryOnly);
+                if (dacpacFiles.Any())
+                {
+                    referenceDacpac = dacpacFiles.First();
+                    Console.WriteLine($"  Found reference DACPAC: {Path.GetFileName(referenceDacpac)}");
+                }
+                
+                var targetDacpacPath = await BuildDacpacFromFileSystem(
+                    currentSchemaPath,
+                    Path.Combine(tempDir, "filesystem-build"),
+                    "FileSystemSchema",
+                    referenceDacpac);
+                
+                if (string.IsNullOrEmpty(targetDacpacPath))
+                {
+                    // Build failed - this should not happen as we now build with errors
+                    result.Success = false;
+                    result.Error = "Failed to build DACPAC from file system";
+                    return result;
+                }
+                
+                // Generate migration from database to file system
+                result = await GenerateMigrationFromDacpacs(
+                    sourceDacpacPath,
+                    targetDacpacPath,
+                    tempDir,
+                    migrationsPath,
+                    scmpComparison,
+                    actor,
+                    timestamp);
+                
+                return result;
+            }
+            
             Console.WriteLine("Comparing committed state vs uncommitted changes...");
             
             // Check if we have any commits
@@ -68,18 +151,29 @@ public class DacpacMigrationGenerator
                 if (Directory.Exists(committedSchemaPath))
                 {
                     Console.WriteLine("Building source DACPAC from committed state...");
+                    // Look for a reference DACPAC in the committed schema directory
+                    string? committedReferenceDacpac = null;
+                    if (Directory.Exists(committedSchemaPath))
+                    {
+                        var committedDacpacFiles = Directory.GetFiles(committedSchemaPath, "*.dacpac", SearchOption.TopDirectoryOnly);
+                        if (committedDacpacFiles.Any())
+                        {
+                            committedReferenceDacpac = committedDacpacFiles.First();
+                            Console.WriteLine($"  Found reference DACPAC in committed state: {Path.GetFileName(committedReferenceDacpac)}");
+                        }
+                    }
                     sourceDacpacPath = await BuildDacpacFromFileSystem(
                         committedSchemaPath,
                         Path.Combine(tempDir, "source-build"),
-                        "SourceDatabase");
+                        "SourceDatabase",
+                        committedReferenceDacpac);
                     
                     if (string.IsNullOrEmpty(sourceDacpacPath))
                     {
-                        // If build fails, use empty DACPAC
-                        Console.WriteLine("Failed to build from committed state, using empty source...");
-                        sourceDacpacPath = await CreateEmptyDacpac(
-                            Path.Combine(tempDir, "source-build"),
-                            "SourceDatabase");
+                        // Build failed - this should not happen as we now build with errors
+                        result.Success = false;
+                        result.Error = "Failed to build DACPAC from committed state";
+                        return result;
                     }
                 }
                 else
@@ -94,13 +188,23 @@ public class DacpacMigrationGenerator
                 // Step 2: Build target DACPAC from current working directory (uncommitted state)
                 var currentSchemaPath = Path.Combine(outputPath, schemaRelativePath);
                 Console.WriteLine("Building target DACPAC from current uncommitted state...");
+                // Look for a reference DACPAC in the current schema directory
+                string? currentReferenceDacpac = null;
+                var currentDacpacFiles = Directory.GetFiles(currentSchemaPath, "*.dacpac", SearchOption.TopDirectoryOnly);
+                if (currentDacpacFiles.Any())
+                {
+                    currentReferenceDacpac = currentDacpacFiles.First();
+                    Console.WriteLine($"  Found reference DACPAC: {Path.GetFileName(currentReferenceDacpac)}");
+                }
                 var targetDacpacPath = await BuildDacpacFromFileSystem(
                     currentSchemaPath,
                     Path.Combine(tempDir, "target-build"),
-                    "TargetDatabase");
+                    "TargetDatabase",
+                    currentReferenceDacpac);
                 
                 if (string.IsNullOrEmpty(targetDacpacPath))
                 {
+                    // Build failed - this should not happen as we now build with errors
                     result.Success = false;
                     result.Error = "Failed to build target DACPAC from current state";
                     return result;
@@ -133,8 +237,9 @@ public class DacpacMigrationGenerator
                 
                 if (string.IsNullOrEmpty(targetDacpacPath))
                 {
+                    // Build failed - this should not happen as we now build with errors
                     result.Success = false;
-                    result.Error = "Failed to build target DACPAC";
+                    result.Error = "Failed to build target DACPAC from current state";
                     return result;
                 }
                 
@@ -168,11 +273,13 @@ public class DacpacMigrationGenerator
                 catch { /* Ignore cleanup errors */ }
             }
             
-            // Clean up temp directory
+            // Clean up temp build directory
             try
             {
                 if (Directory.Exists(tempDir))
-                    Directory.Delete(tempDir, recursive: true);
+                    // Temporarily disabled for debugging
+                    Console.WriteLine($"Temp files preserved at: {tempDir}");
+                    // Directory.Delete(tempDir, recursive: true);
             }
             catch { /* Ignore cleanup errors */ }
         }
@@ -224,18 +331,51 @@ public class DacpacMigrationGenerator
             var sanitizedActor = SanitizeForFilename(actor ?? "system");
             var filename = $"_{timestamp}_{sanitizedActor}_{description}.sql";
             
-            var migrationFilePath = Path.Combine(migrationsPath, filename);
+            // Create migration directory structure with the new folder-based approach
+            var migrationDirName = Path.GetFileNameWithoutExtension(filename);
+            var migrationDir = Path.Combine(migrationsPath, migrationDirName);
+            Directory.CreateDirectory(migrationDir);
+            
+            // Save the original migration script in the new directory
+            var migrationFilePath = Path.Combine(migrationDir, "migration.sql");
             await File.WriteAllTextAsync(migrationFilePath, migrationScript);
-            Console.WriteLine($"✓ Generated migration: {filename}");
+            Console.WriteLine($"✓ Generated migration: {migrationDirName}/migration.sql");
+            
+            // Split the migration script into organized segments
+            Console.WriteLine("Splitting migration into organized segments...");
+            var splitter = new MigrationScriptSplitter();
+            await splitter.SplitMigrationScript(migrationFilePath, migrationDir);
+            
+            // Count the number of segments created
+            var changesDir = Path.Combine(migrationDir, "changes");
+            var segmentCount = Directory.Exists(changesDir) ? Directory.GetFiles(changesDir, "*.sql").Length : 0;
+            if (segmentCount > 0)
+            {
+                Console.WriteLine($"✓ Split migration into {segmentCount} segments");
+            }
             
             // Save reverse migration
             var reverseMigrationsPath = Path.Combine(Path.GetDirectoryName(migrationsPath)!, "z_migrations_reverse");
             Directory.CreateDirectory(reverseMigrationsPath);
             
-            var reverseFilename = $"reverse_{filename}";
-            var reverseMigrationPath = Path.Combine(reverseMigrationsPath, reverseFilename);
+            // Create reverse migration directory structure
+            var reverseMigrationDir = Path.Combine(reverseMigrationsPath, migrationDirName);
+            Directory.CreateDirectory(reverseMigrationDir);
+            
+            var reverseMigrationPath = Path.Combine(reverseMigrationDir, "migration.sql");
             await File.WriteAllTextAsync(reverseMigrationPath, reverseMigrationScript);
-            Console.WriteLine($"✓ Generated reverse migration: {reverseFilename}");
+            Console.WriteLine($"✓ Generated reverse migration: {migrationDirName}/migration.sql");
+            
+            // Also split the reverse migration
+            Console.WriteLine("Splitting reverse migration into organized segments...");
+            await splitter.SplitMigrationScript(reverseMigrationPath, reverseMigrationDir);
+            
+            var reverseChangesDir = Path.Combine(reverseMigrationDir, "changes");
+            var reverseSegmentCount = Directory.Exists(reverseChangesDir) ? Directory.GetFiles(reverseChangesDir, "*.sql").Length : 0;
+            if (reverseSegmentCount > 0)
+            {
+                Console.WriteLine($"✓ Split reverse migration into {reverseSegmentCount} segments");
+            }
             
             result.Success = true;
             result.MigrationPath = migrationFilePath;
@@ -288,18 +428,44 @@ public class DacpacMigrationGenerator
     /// <summary>
     /// Builds a DACPAC from the file system
     /// </summary>
-    async Task<string> BuildDacpacFromFileSystem(string schemaPath, string outputDir, string projectName)
+    async Task<string> BuildDacpacFromFileSystem(string schemaPath, string outputDir, string projectName, string? referenceDacpacPath = null)
     {
         try
         {
+            if (!Directory.Exists(schemaPath))
+            {
+                Console.WriteLine($"  Schema path does not exist: {schemaPath}");
+                return string.Empty;
+            }
+            
             Directory.CreateDirectory(outputDir);
             
-            // Create SQL project from file system
-            var projectBuilder = new SqlProjectBuilder();
-            var projectPath = await projectBuilder.CreateSqlProject(schemaPath, outputDir, projectName);
+            // Copy SQL files to temp location (excluding migrations and other non-schema files)
+            Console.WriteLine($"  Copying SQL files from {schemaPath} to build directory...");
+            var projectDir = Path.Combine(outputDir, projectName);
+            Directory.CreateDirectory(projectDir);
             
-            if (string.IsNullOrEmpty(projectPath))
-                return string.Empty;
+            // Copy only schema files, excluding migrations and change manifests
+            CopySchemaFiles(schemaPath, projectDir);
+            
+            // Copy reference DACPAC to build directory if provided
+            string? localReferenceDacpacPath = null;
+            if (!string.IsNullOrEmpty(referenceDacpacPath) && File.Exists(referenceDacpacPath))
+            {
+                var referenceDacpacFileName = Path.GetFileName(referenceDacpacPath);
+                localReferenceDacpacPath = Path.Combine(projectDir, referenceDacpacFileName);
+                File.Copy(referenceDacpacPath, localReferenceDacpacPath, overwrite: true);
+                Console.WriteLine($"  Copied reference DACPAC to build directory: {referenceDacpacFileName}");
+            }
+            
+            // Create a simple SDK-style .sqlproj file with optional reference DACPAC
+            var projectPath = Path.Combine(projectDir, $"{projectName}.sqlproj");
+            Console.WriteLine($"  Creating SQL project: {projectPath}");
+            if (!string.IsNullOrEmpty(localReferenceDacpacPath))
+            {
+                Console.WriteLine($"  Adding reference DACPAC: {Path.GetFileName(localReferenceDacpacPath)}");
+            }
+            CreateSdkStyleSqlProject(projectPath, projectName, localReferenceDacpacPath);
             
             // Build the project to generate DACPAC
             var dacpacPath = await BuildSqlProject(projectPath);
@@ -338,6 +504,48 @@ public class DacpacMigrationGenerator
             return dacpacPath;
         });
     }
+
+    /// <summary>
+    /// Extracts a DACPAC from a live database
+    /// </summary>
+    async Task<string> ExtractDacpacFromDatabase(string connectionString, string outputDir, string dacpacName)
+    {
+        return await Task.Run(() =>
+        {
+            try
+            {
+                Directory.CreateDirectory(outputDir);
+                var dacpacPath = Path.Combine(outputDir, $"{dacpacName}.dacpac");
+                
+                Console.WriteLine($"  Extracting schema from database...");
+                
+                // Use DacServices to extract DACPAC from database
+                var dacServices = new DacServices(connectionString);
+                
+                // Subscribe to messages for progress
+                dacServices.Message += (sender, e) =>
+                {
+                    if (e.Message.MessageType == DacMessageType.Error)
+                        Console.WriteLine($"    Error: {e.Message.Message}");
+                };
+                
+                // Extract the DACPAC from the database
+                dacServices.Extract(
+                    dacpacPath,
+                    "DatabaseSchema",  // database name in DACPAC
+                    "Database Schema",  // application name
+                    new Version(1, 0, 0, 0));
+                
+                Console.WriteLine($"  ✓ Extracted DACPAC from database: {Path.GetFileName(dacpacPath)}");
+                return dacpacPath;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"  Error extracting DACPAC from database: {ex.Message}");
+                return string.Empty;
+            }
+        });
+    }
     
     /// <summary>
     /// Compares two DACPACs using SqlPackage and returns the migration script
@@ -353,97 +561,87 @@ public class DacpacMigrationGenerator
         
         try
         {
-            // Build SqlPackage arguments
-            var arguments = new StringBuilder();
-            arguments.Append($"/Action:Script ");
-            arguments.Append($"/SourceFile:\"{sourceDacpac}\" ");
-            arguments.Append($"/TargetFile:\"{targetDacpac}\" ");
-            arguments.Append($"/OutputPath:\"{scriptPath}\" ");
+            Console.WriteLine($"Loading source DACPAC: {Path.GetFileName(sourceDacpac)}");
+            using var sourcePac = DacPackage.Load(sourceDacpac);
+            
+            Console.WriteLine($"Loading target DACPAC: {Path.GetFileName(targetDacpac)}");
+            using var targetPac = DacPackage.Load(targetDacpac);
+            
+            // Create deployment options
+            var deployOptions = new DacDeployOptions();
             
             // Apply SCMP options if provided
             if (scmpComparison != null)
             {
-                var deployOptions = _optionsMapper.MapOptions(scmpComparison);
+                var mappedOptions = _optionsMapper.MapOptions(scmpComparison);
                 
-                // Add key options as SqlPackage parameters
-                arguments.Append($"/p:DropObjectsNotInSource={deployOptions.DropObjectsNotInSource} ");
-                arguments.Append($"/p:BlockOnPossibleDataLoss={deployOptions.BlockOnPossibleDataLoss} ");
-                arguments.Append($"/p:IgnorePermissions={deployOptions.IgnorePermissions} ");
-                arguments.Append($"/p:IgnoreRoleMembership={deployOptions.IgnoreRoleMembership} ");
-                arguments.Append($"/p:IgnoreUserSettingsObjects={deployOptions.IgnoreUserSettingsObjects} ");
-                arguments.Append($"/p:IgnoreLoginSids={deployOptions.IgnoreLoginSids} ");
-                arguments.Append($"/p:IgnoreExtendedProperties={deployOptions.IgnoreExtendedProperties} ");
-                arguments.Append($"/p:IgnoreWhitespace={deployOptions.IgnoreWhitespace} ");
-                arguments.Append($"/p:IgnoreKeywordCasing={deployOptions.IgnoreKeywordCasing} ");
-                arguments.Append($"/p:IgnoreSemicolonBetweenStatements={deployOptions.IgnoreSemicolonBetweenStatements} ");
-                arguments.Append($"/p:IgnoreComments={deployOptions.IgnoreComments} ");
-                arguments.Append($"/p:GenerateSmartDefaults={deployOptions.GenerateSmartDefaults} ");
-                arguments.Append($"/p:IncludeCompositeObjects={deployOptions.IncludeCompositeObjects} ");
-                arguments.Append($"/p:IncludeTransactionalScripts={deployOptions.IncludeTransactionalScripts} ");
+                // Map options from SCMP to DacDeployOptions
+                deployOptions.DropObjectsNotInSource = mappedOptions.DropObjectsNotInSource;
+                deployOptions.BlockOnPossibleDataLoss = mappedOptions.BlockOnPossibleDataLoss;
+                deployOptions.IgnorePermissions = mappedOptions.IgnorePermissions;
+                deployOptions.IgnoreRoleMembership = mappedOptions.IgnoreRoleMembership;
+                deployOptions.IgnoreUserSettingsObjects = mappedOptions.IgnoreUserSettingsObjects;
+                deployOptions.IgnoreLoginSids = mappedOptions.IgnoreLoginSids;
+                deployOptions.IgnoreExtendedProperties = mappedOptions.IgnoreExtendedProperties;
+                deployOptions.IgnoreWhitespace = mappedOptions.IgnoreWhitespace;
+                deployOptions.IgnoreKeywordCasing = mappedOptions.IgnoreKeywordCasing;
+                deployOptions.IgnoreSemicolonBetweenStatements = mappedOptions.IgnoreSemicolonBetweenStatements;
+                deployOptions.IgnoreComments = mappedOptions.IgnoreComments;
+                deployOptions.GenerateSmartDefaults = mappedOptions.GenerateSmartDefaults;
+                deployOptions.IncludeCompositeObjects = mappedOptions.IncludeCompositeObjects;
+                deployOptions.IncludeTransactionalScripts = mappedOptions.IncludeTransactionalScripts;
             }
             else
             {
                 // Default conservative options
-                arguments.Append("/p:DropObjectsNotInSource=false ");
-                arguments.Append("/p:BlockOnPossibleDataLoss=true ");
-                arguments.Append("/p:IgnorePermissions=true ");
-                arguments.Append("/p:IgnoreRoleMembership=true ");
-                arguments.Append("/p:IgnoreUserSettingsObjects=true ");
-                arguments.Append("/p:IgnoreLoginSids=true ");
+                deployOptions.DropObjectsNotInSource = false;
+                deployOptions.BlockOnPossibleDataLoss = true;
+                deployOptions.IgnorePermissions = true;
+                deployOptions.IgnoreRoleMembership = true;
+                deployOptions.IgnoreUserSettingsObjects = true;
+                deployOptions.IgnoreLoginSids = true;
+                deployOptions.IgnoreExtendedProperties = true;
+                deployOptions.IgnoreWhitespace = true;
+                deployOptions.IgnoreComments = true;
             }
             
-            // Find and execute SqlPackage
-            var sqlPackagePath = FindSqlPackage();
-            if (string.IsNullOrEmpty(sqlPackagePath))
+            // Additional options to handle errors
+            deployOptions.AllowIncompatiblePlatform = true;
+            deployOptions.IgnoreFileAndLogFilePath = true;
+            deployOptions.IgnoreFilegroupPlacement = true;
+            deployOptions.IgnoreFileSize = true;
+            deployOptions.IgnoreFullTextCatalogFilePath = true;
+            
+            Console.WriteLine("Generating deployment script...");
+            
+            // Use DacServices to generate the script
+            // We need a target database name for the script generation
+            var targetDatabaseName = "TargetDatabase";
+            
+            // Generate the deployment script (static method)
+            var deployScript = DacServices.GenerateDeployScript(targetPac, sourcePac, targetDatabaseName, deployOptions);
+            
+            if (!string.IsNullOrEmpty(deployScript))
             {
-                throw new FileNotFoundException("SqlPackage.exe not found. Please install SQL Server Data Tools.");
-            }
-            
-            var processInfo = new ProcessStartInfo
-            {
-                FileName = sqlPackagePath,
-                Arguments = arguments.ToString(),
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                WorkingDirectory = outputDir
-            };
-            
-            using var process = Process.Start(processInfo);
-            if (process == null)
-                throw new InvalidOperationException("Failed to start SqlPackage process");
-            
-            var output = await process.StandardOutput.ReadToEndAsync();
-            var errors = await process.StandardError.ReadToEndAsync();
-            
-            await process.WaitForExitAsync();
-            
-            if (process.ExitCode != 0)
-            {
-                Console.WriteLine($"SqlPackage error: {errors}");
-                if (!string.IsNullOrEmpty(output))
-                    Console.WriteLine($"SqlPackage output: {output}");
-                return string.Empty;
-            }
-            
-            // Read and return the generated script
-            if (File.Exists(scriptPath))
-            {
-                var script = await File.ReadAllTextAsync(scriptPath);
+                Console.WriteLine($"Writing migration script to: {scriptPath}");
+                await File.WriteAllTextAsync(scriptPath, deployScript);
                 
                 // Check if script has actual changes
-                if (string.IsNullOrWhiteSpace(script) || 
-                    script.Contains("No schema differences detected") ||
-                    !ContainsSchemaChanges(script))
+                if (string.IsNullOrWhiteSpace(deployScript) || 
+                    deployScript.Contains("No schema differences detected") ||
+                    !ContainsSchemaChanges(deployScript))
                 {
+                    Console.WriteLine("No meaningful schema changes detected in script");
                     return string.Empty;
                 }
                 
-                return script;
+                return scriptPath;
             }
-            
-            return string.Empty;
+            else
+            {
+                Console.WriteLine("No differences found between DACPACs");
+                return string.Empty;
+            }
         }
         catch (Exception ex)
         {
@@ -457,64 +655,593 @@ public class DacpacMigrationGenerator
     /// </summary>
     async Task<string?> BuildSqlProject(string projectPath)
     {
-        return await Task.Run(() =>
+        var projectDir = Path.GetDirectoryName(projectPath)!;
+        var projectName = Path.GetFileNameWithoutExtension(projectPath);
+        
+        try
+        {
+            Console.WriteLine($"  Building SQL project with dotnet build: {projectPath}");
+            
+            // Try to build using dotnet build - this is the only supported method now
+            var dotnetResult = await BuildUsingDotnet(projectPath);
+            if (!string.IsNullOrEmpty(dotnetResult))
+            {
+                return dotnetResult;
+            }
+            
+            // Dotnet build is required - no fallback
+            Console.WriteLine("  ERROR: dotnet build failed. Please ensure:");
+            Console.WriteLine("    1. .NET SDK is installed");
+            Console.WriteLine("    2. SQL Database Projects extension (Microsoft.Build.Sql) is installed");
+            Console.WriteLine("    3. The .sqlproj file is properly configured");
+            Console.WriteLine("  To install SQL project support: dotnet add package Microsoft.Build.Sql");
+            return string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error building SQL project: {ex.Message}");
+            return string.Empty;
+        }
+    }
+    
+    /// <summary>
+    /// Attempts to build SQL project using dotnet build
+    /// </summary>
+    async Task<string?> BuildUsingDotnet(string projectPath)
+    {
+        try
         {
             var projectDir = Path.GetDirectoryName(projectPath)!;
             var projectName = Path.GetFileNameWithoutExtension(projectPath);
             
+            // Create a temporary directory for excluded files
+            var tempExcludeDir = Path.Combine(Path.GetTempPath(), $"DacpacExcluded_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(tempExcludeDir);
+            
             try
             {
-                // Load all SQL files from project
-                var sqlFiles = Directory.GetFiles(projectDir, "*.sql", SearchOption.AllDirectories)
-                    .OrderBy(f => GetSqlFileOrder(f))
-                    .ToList();
-                
-                if (!sqlFiles.Any())
+                // Try building with dotnet build with error suppression
+                var processInfo = new ProcessStartInfo
                 {
-                    Console.WriteLine("No SQL files found in project");
+                    FileName = "dotnet",
+                    Arguments = $"build \"{projectPath}\" --configuration Release /p:TreatTSqlWarningsAsErrors=false /p:SuppressTSqlWarnings=71561",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WorkingDirectory = projectDir
+                };
+                
+                using var process = Process.Start(processInfo);
+                if (process == null)
+                {
+                    Console.WriteLine("  ERROR: Failed to start dotnet build process");
                     return null;
                 }
                 
-                // Create TSqlModel and add all SQL files
-                var model = new TSqlModel(SqlServerVersion.Sql150, new TSqlModelOptions());
+                var output = await process.StandardOutput.ReadToEndAsync();
+                var errors = await process.StandardError.ReadToEndAsync();
                 
-                foreach (var sqlFile in sqlFiles)
+                await process.WaitForExitAsync();
+                
+                if (process.ExitCode == 0)
                 {
-                    try
+                    // Find the generated DACPAC in bin/Release or bin/Debug
+                    var releaseDacpac = Path.Combine(projectDir, "bin", "Release", $"{projectName}.dacpac");
+                    if (File.Exists(releaseDacpac))
                     {
-                        var content = File.ReadAllText(sqlFile);
-                        if (!string.IsNullOrWhiteSpace(content))
+                        Console.WriteLine($"  ✓ Built DACPAC using dotnet build: {Path.GetFileName(releaseDacpac)}");
+                        return releaseDacpac;
+                    }
+                    
+                    var debugDacpac = Path.Combine(projectDir, "bin", "Debug", $"{projectName}.dacpac");
+                    if (File.Exists(debugDacpac))
+                    {
+                        Console.WriteLine($"  ✓ Built DACPAC using dotnet build: {Path.GetFileName(debugDacpac)}");
+                        return debugDacpac;
+                    }
+                    
+                    Console.WriteLine("  ERROR: Build succeeded but DACPAC file was not found");
+                    Console.WriteLine($"  Expected location: {releaseDacpac}");
+                    return null;
+                }
+                else
+                {
+                    // Build failed - iteratively analyze and exclude problematic files
+                    Console.WriteLine($"  Build failed with exit code {process.ExitCode}, starting iterative exclusion...");
+                    
+                    // Track all excluded files and their temporary paths
+                    var excludedFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    var maxIterations = 10; // Prevent infinite loops
+                    var iteration = 0;
+                    
+                    while (iteration < maxIterations)
+                    {
+                        iteration++;
+                        Console.WriteLine($"  Iteration {iteration}: Analyzing errors...");
+                        
+                        // Extract error file paths for unresolved external references
+                        var problematicFiles = ExtractProblematicFiles(output, errors);
+                        
+                        // Also find files that reference already excluded files (cascading dependencies)
+                        var cascadingFiles = FindCascadingDependencies(output, errors, excludedFiles.Keys.ToHashSet());
+                        problematicFiles.UnionWith(cascadingFiles);
+                        
+                        // Remove files that are already excluded
+                        problematicFiles = problematicFiles.Where(f => !excludedFiles.ContainsKey(f)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                        
+                        if (!problematicFiles.Any())
                         {
-                            model.AddObjects(content);
+                            Console.WriteLine($"  No new problematic files found after {iteration} iterations");
+                            break;
+                        }
+                        
+                        Console.WriteLine($"  Found {problematicFiles.Count} new files with {SQL_UNRESOLVED_REFERENCE_ERROR} errors or cascading dependencies");
+                        
+                        // Move the problematic files to temporary location
+                        foreach (var file in problematicFiles)
+                        {
+                            var fullPath = Path.Combine(projectDir, file);
+                            if (File.Exists(fullPath))
+                            {
+                                // Create subdirectory structure in temp location to preserve organization
+                                var fileDir = Path.GetDirectoryName(file) ?? "";
+                                var tempSubDir = Path.Combine(tempExcludeDir, fileDir);
+                                Directory.CreateDirectory(tempSubDir);
+                                
+                                var tempPath = Path.Combine(tempExcludeDir, file);
+                                File.Move(fullPath, tempPath, overwrite: true);
+                                excludedFiles[file] = tempPath;
+                                
+                                // Always show what's being moved
+                                Console.WriteLine($"    Moved to temp: {file}");
+                            }
+                        }
+                        
+                        // Summary line for large sets
+                        if (problematicFiles.Count > 20)
+                        {
+                            Console.WriteLine($"    Total moved: {problematicFiles.Count} files to temporary location");
+                        }
+                        
+                        // Retry the build
+                        Console.WriteLine($"  Retrying build (iteration {iteration})...");
+                        
+                        using var retryProcess = Process.Start(processInfo);
+                        if (retryProcess == null)
+                        {
+                            Console.WriteLine("  ERROR: Failed to start retry build process");
+                            break;
+                        }
+                        
+                        output = await retryProcess.StandardOutput.ReadToEndAsync();
+                        errors = await retryProcess.StandardError.ReadToEndAsync();
+                        
+                        await retryProcess.WaitForExitAsync();
+                        
+                        if (retryProcess.ExitCode == 0)
+                        {
+                            // Build succeeded!
+                            Console.WriteLine($"  ✓ Build succeeded after {iteration} iterations, excluded {excludedFiles.Count} files total");
+                            
+                            // Find the generated DACPAC
+                            var releaseDacpac = Path.Combine(projectDir, "bin", "Release", $"{projectName}.dacpac");
+                            if (File.Exists(releaseDacpac))
+                            {
+                                Console.WriteLine($"  ✓ Built DACPAC after excluding problematic objects: {Path.GetFileName(releaseDacpac)}");
+                                return releaseDacpac;
+                            }
+                            
+                            var debugDacpac = Path.Combine(projectDir, "bin", "Debug", $"{projectName}.dacpac");
+                            if (File.Exists(debugDacpac))
+                            {
+                                Console.WriteLine($"  ✓ Built DACPAC after excluding problematic objects: {Path.GetFileName(debugDacpac)}");
+                                return debugDacpac;
+                            }
+                            
+                            Console.WriteLine("  ERROR: Build succeeded but DACPAC file was not found");
+                            break;
+                        }
+                        
+                        // Continue to next iteration if build still fails
+                    }
+                    
+                    if (iteration >= maxIterations)
+                    {
+                        Console.WriteLine($"  ERROR: Reached maximum iterations ({maxIterations}), giving up");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"  ERROR: Build still failed after {iteration} iterations");
+                    }
+                    
+                    // Display limited error output from last attempt
+                    if (!string.IsNullOrWhiteSpace(errors))
+                    {
+                        var errorLines = errors.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                        var sqlErrors = errorLines.Where(l => l.Contains("SQL", StringComparison.OrdinalIgnoreCase)).Take(5);
+                        if (sqlErrors.Any())
+                        {
+                            Console.WriteLine("  Last build errors:");
+                            foreach (var line in sqlErrors)
+                            {
+                                Console.WriteLine($"    {line}");
+                            }
                         }
                     }
-                    catch (Exception ex)
+                    
+                    return null;
+                }
+            }
+            finally
+            {
+                // Always restore files from temporary location
+                if (Directory.Exists(tempExcludeDir))
+                {
+                    RestoreFilesFromTemp(projectDir, tempExcludeDir);
+                    
+                    // Clean up temp directory
+                    try
                     {
-                        Console.WriteLine($"  Warning: Could not add {Path.GetFileName(sqlFile)}: {ex.Message}");
+                        Directory.Delete(tempExcludeDir, recursive: true);
+                    }
+                    catch
+                    {
+                        // Ignore cleanup errors
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"  ERROR: Exception during dotnet build: {ex.Message}");
+            return null;
+        }
+    }
+    
+    /// <summary>
+    /// Restores excluded files from their backup locations
+    /// </summary>
+    void RestoreExcludedFiles(string projectDir, HashSet<string> excludedFiles)
+    {
+        foreach (var file in excludedFiles)
+        {
+            var fullPath = Path.Combine(projectDir, file);
+            var backupPath = fullPath + ".excluded";
+            if (File.Exists(backupPath))
+            {
+                File.Move(backupPath, fullPath, overwrite: true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Restores files from temporary location back to project directory
+    /// </summary>
+    void RestoreFilesFromTemp(string projectDir, string tempExcludeDir)
+    {
+        if (!Directory.Exists(tempExcludeDir))
+            return;
+            
+        try
+        {
+            // Enumerate all files in the temp directory and restore them
+            foreach (var tempFile in Directory.GetFiles(tempExcludeDir, "*.sql", SearchOption.AllDirectories))
+            {
+                // Calculate relative path from temp directory
+                var relativePath = Path.GetRelativePath(tempExcludeDir, tempFile);
+                var originalPath = Path.Combine(projectDir, relativePath);
+                
+                // Ensure directory exists
+                var originalDir = Path.GetDirectoryName(originalPath);
+                if (!string.IsNullOrEmpty(originalDir))
+                {
+                    Directory.CreateDirectory(originalDir);
+                }
+                
+                // Move file back
+                if (File.Exists(tempFile))
+                {
+                    File.Move(tempFile, originalPath, overwrite: true);
+                }
+            }
+            
+            Console.WriteLine($"  Restored all excluded files from temporary location");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"  WARNING: Error restoring files from temp: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Finds files that reference already excluded objects (cascading dependencies)
+    /// </summary>
+    HashSet<string> FindCascadingDependencies(string output, string errors, HashSet<string> excludedFiles)
+    {
+        var cascadingFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        
+        if (!excludedFiles.Any())
+            return cascadingFiles;
+        
+        // Extract object names from excluded files
+        var excludedObjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var file in excludedFiles)
+        {
+            // Extract object name from file path (e.g., "schemas/dbo/Views/vw_Something.sql" -> "vw_Something")
+            var fileName = Path.GetFileNameWithoutExtension(file);
+            if (!string.IsNullOrEmpty(fileName))
+            {
+                excludedObjects.Add(fileName);
+                
+                // Also add with schema prefix if available
+                var parts = file.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 2)
+                {
+                    // Try to find schema name (usually after "schemas" folder)
+                    for (int i = 0; i < parts.Length - 1; i++)
+                    {
+                        if (parts[i].Equals("schemas", StringComparison.OrdinalIgnoreCase) && i + 1 < parts.Length)
+                        {
+                            var schema = parts[i + 1];
+                            excludedObjects.Add($"[{schema}].[{fileName}]");
+                            excludedObjects.Add($"{schema}.{fileName}");
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        var combinedOutput = output + "\n" + errors;
+        
+        // Look for errors mentioning the excluded objects
+        foreach (var excludedObject in excludedObjects)
+        {
+            // Pattern to find references to excluded objects in error messages
+            var patterns = new[]
+            {
+                // SQL71561 errors referencing the excluded object
+                $@"SQL71561:.*?has an unresolved reference to object.*?{Regex.Escape(excludedObject)}",
+                $@"SQL71561:.*?contains an unresolved reference to an object.*?{Regex.Escape(excludedObject)}",
+                // Object reference patterns
+                $@"([^:\r\n]+\.sql).*?{Regex.Escape(excludedObject)}",
+                // Files containing references to excluded objects
+                $@"Error validating element.*?\[([^\]]+)\]\.\[([^\]]+)\].*?{Regex.Escape(excludedObject)}"
+            };
+            
+            foreach (var pattern in patterns)
+            {
+                var regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+                
+                foreach (Match match in regex.Matches(combinedOutput))
+                {
+                    // Try to extract file path from the error
+                    string? filePath = null;
+                    
+                    // Check if first group contains a file path
+                    if (match.Groups.Count > 1 && match.Groups[1].Value.EndsWith(".sql", StringComparison.OrdinalIgnoreCase))
+                    {
+                        filePath = ProcessFilePath(match.Groups[1].Value);
+                    }
+                    else
+                    {
+                        // Try to extract from the full line containing this match
+                        var lineStart = combinedOutput.LastIndexOf('\n', match.Index) + 1;
+                        var lineEnd = combinedOutput.IndexOf('\n', match.Index);
+                        if (lineEnd == -1) lineEnd = combinedOutput.Length;
+                        
+                        var line = combinedOutput.Substring(lineStart, lineEnd - lineStart);
+                        
+                        // Look for file path in the line
+                        var fileMatch = Regex.Match(line, @"([^:\s]+\.sql)", RegexOptions.IgnoreCase);
+                        if (fileMatch.Success)
+                        {
+                            filePath = ProcessFilePath(fileMatch.Groups[1].Value);
+                        }
+                    }
+                    
+                    if (!string.IsNullOrEmpty(filePath) && !excludedFiles.Contains(filePath))
+                    {
+                        cascadingFiles.Add(filePath);
+                    }
+                }
+            }
+        }
+        
+        if (cascadingFiles.Any())
+        {
+            Console.WriteLine($"    Found {cascadingFiles.Count} files with cascading dependencies");
+            if (cascadingFiles.Count <= 5)
+            {
+                foreach (var file in cascadingFiles)
+                {
+                    Console.WriteLine($"      - {file} (references excluded objects)");
+                }
+            }
+        }
+        
+        return cascadingFiles;
+    }
+    
+    /// <summary>
+    /// Extracts file paths from SQL71561 error messages
+    /// </summary>
+    /// <summary>
+    /// Extracts file paths from SQL71561 error messages
+    /// </summary>
+    /// <summary>
+    /// Extracts file paths from SQL71561 error messages
+    /// </summary>
+    /// <summary>
+    /// Extracts file paths from unresolved external reference error messages
+    /// </summary>
+    HashSet<string> ExtractProblematicFiles(string output, string errors)
+    {
+        var problematicFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var combinedOutput = output + "\n" + errors;
+        
+        // Multiple patterns to match different error formats for unresolved references
+        var patterns = new[]
+        {
+            // Pattern 1: Standard MSBuild error format (works on both Windows and Linux)
+            // Example: "C:\path\to\file.sql(10,5): Error SQL71561: ..."
+            // Example: "/path/to/file.sql(10,5): Error SQL71561: ..."
+            $@"([^:\r\n]+\.sql)\(\d+,\d+\):\s*Error\s+{SQL_UNRESOLVED_REFERENCE_ERROR}",
+            
+            // Pattern 2: Build output format with file path
+            // Example: "schemas/dbo/views/vw_Something.sql : error SQL71561"
+            $@"([^\s:]+\.sql)\s*:\s*error\s+{SQL_UNRESOLVED_REFERENCE_ERROR}",
+            
+            // Pattern 3: Alternative format with full path in error
+            // Example: "Error SQL71561: File /tmp/build/schemas/dbo/tables/Table1.sql"
+            $@"Error\s+{SQL_UNRESOLVED_REFERENCE_ERROR}:.*?(?:File\s+)?([\/\\][^\s]+\.sql)",
+            
+            // Pattern 4: Simple relative path before SQL71561
+            $@"([^\s\(\)]+\.sql).*?{SQL_UNRESOLVED_REFERENCE_ERROR}"
+        };
+        
+        // First, try to extract file paths directly
+        foreach (var pattern in patterns)
+        {
+            var regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            
+            foreach (Match match in regex.Matches(combinedOutput))
+            {
+                if (match.Groups.Count > 1)
+                {
+                    var filePath = match.Groups[1].Value.Trim();
+                    
+                    // Skip if this looks like a command line argument
+                    if (filePath.StartsWith("-") || filePath.StartsWith("/p:"))
+                        continue;
+                    
+                    // Process the file path to make it relative and normalized
+                    filePath = ProcessFilePath(filePath);
+                    
+                    if (!string.IsNullOrEmpty(filePath))
+                        problematicFiles.Add(filePath);
+                }
+            }
+        }
+        
+        // If no files found yet, try to extract object names and map them to files
+        if (!problematicFiles.Any())
+        {
+            // Match error patterns with object names for unresolved references
+            var objectPattern = $@"{SQL_UNRESOLVED_REFERENCE_ERROR}:\s*(?:Error validating element\s*)?(?:View|Table|Procedure|Function|Synonym|Trigger|Schema|SqlFile):\s*\[([^\]]+)\]\.\[([^\]]+)\]";
+            var objectRegex = new Regex(objectPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            
+            foreach (Match match in objectRegex.Matches(combinedOutput))
+            {
+                if (match.Groups.Count > 2)
+                {
+                    var schema = match.Groups[1].Value;
+                    var objectName = match.Groups[2].Value;
+                    
+                    // Try to find the file based on schema and object name
+                    // Common patterns for SQL file organization
+                    var possiblePaths = new[]
+                    {
+                        Path.Combine("schemas", schema, "Tables", $"{objectName}.sql"),
+                        Path.Combine("schemas", schema, "Views", $"{objectName}.sql"),
+                        Path.Combine("schemas", schema, "Procedures", $"{objectName}.sql"),
+                        Path.Combine("schemas", schema, "Functions", $"{objectName}.sql"),
+                        Path.Combine("schemas", schema, $"{objectName}.sql"),
+                        Path.Combine("Tables", $"{objectName}.sql"),
+                        Path.Combine("Views", $"{objectName}.sql"),
+                        Path.Combine("Procedures", $"{objectName}.sql"),
+                        Path.Combine("Functions", $"{objectName}.sql"),
+                        Path.Combine(schema, $"{objectName}.sql"),
+                        $"{objectName}.sql"
+                    };
+                    
+                    // Add all possible paths
+                    foreach (var path in possiblePaths)
+                    {
+                        problematicFiles.Add(path);
+                    }
+                }
+            }
+        }
+        
+        // Log what we found for debugging
+        Console.WriteLine($"    Extracted {problematicFiles.Count} potential problematic files from {SQL_UNRESOLVED_REFERENCE_ERROR} errors");
+        if (problematicFiles.Count > 0 && problematicFiles.Count <= 10)
+        {
+            foreach (var file in problematicFiles.Take(10))
+            {
+                Console.WriteLine($"      - {file}");
+            }
+        }
+        
+        return problematicFiles;
+    }
+    
+    /// <summary>
+    /// Processes a file path to make it relative and normalized for the current OS
+    /// </summary>
+    string ProcessFilePath(string filePath)
+    {
+        // Remove any quotes
+        filePath = filePath.Trim('"', '\'');
+        
+        // If it's an absolute path, try to make it relative
+        if (Path.IsPathRooted(filePath))
+        {
+            // Look for common SQL project directory patterns
+            var patterns = new[] { "schemas", "Tables", "Views", "Procedures", "Functions", "Synonyms", "Triggers" };
+            
+            // Split by both Windows and Unix separators
+            var parts = filePath.Split(new[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries);
+            
+            // Find where the SQL structure starts
+            int startIndex = -1;
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (patterns.Any(p => string.Equals(parts[i], p, StringComparison.OrdinalIgnoreCase)))
+                {
+                    startIndex = i;
+                    break;
+                }
+            }
+            
+            if (startIndex >= 0)
+            {
+                // Reconstruct the relative path from the SQL structure point
+                var relativeParts = parts.Skip(startIndex).ToArray();
+                filePath = Path.Combine(relativeParts);
+            }
+            else
+            {
+                // If we can't find a pattern, look for the .sql file and work backwards
+                for (int i = parts.Length - 1; i >= 0; i--)
+                {
+                    if (parts[i].EndsWith(".sql", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Take at most 3 levels up from the SQL file
+                        var takeCount = Math.Min(3, i + 1);
+                        var relevantParts = parts.Skip(Math.Max(0, i - takeCount + 1)).Take(takeCount).ToArray();
+                        filePath = Path.Combine(relevantParts);
+                        break;
                     }
                 }
                 
-                // Build DACPAC
-                var dacpacPath = Path.Combine(projectDir, $"{projectName}.dacpac");
-                
-                DacPackageExtensions.BuildPackage(
-                    dacpacPath,
-                    model,
-                    new PackageMetadata 
-                    { 
-                        Name = projectName,
-                        Version = "1.0.0.0"
-                    });
-                
-                Console.WriteLine($"  ✓ Built DACPAC: {Path.GetFileName(dacpacPath)}");
-                return dacpacPath;
+                // Last resort: just use the filename
+                if (Path.IsPathRooted(filePath))
+                {
+                    filePath = Path.GetFileName(filePath);
+                }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error building SQL project: {ex.Message}");
-                return null;
-            }
-        });
+        }
+        else
+        {
+            // Already relative, just normalize the separators
+            // Replace both types of separators with the current OS separator
+            filePath = filePath.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
+        }
+        
+        return filePath;
     }
     
     /// <summary>
@@ -704,6 +1431,118 @@ public class DacpacMigrationGenerator
     /// <summary>
     /// Sanitizes a string for use in filenames
     /// </summary>
+    /// <summary>
+    /// Copies schema files from source to destination, excluding migrations and change manifests
+    /// </summary>
+    void CopySchemaFiles(string sourceDir, string destDir)
+    {
+        var filesToCopy = 0;
+        var filesToSkip = 0;
+        var schemasCreated = new HashSet<string>();
+        
+        // First, scan for schemas and create CREATE SCHEMA statements
+        var schemasDir = Path.Combine(sourceDir, "schemas");
+        if (Directory.Exists(schemasDir))
+        {
+            var schemaDirs = Directory.GetDirectories(schemasDir);
+            foreach (var schemaDir in schemaDirs)
+            {
+                var schemaName = Path.GetFileName(schemaDir);
+                // Skip 'dbo' as it exists by default
+                if (!schemaName.Equals("dbo", StringComparison.OrdinalIgnoreCase))
+                {
+                    var schemaFilePath = Path.Combine(destDir, "schemas", $"{schemaName}_schema.sql");
+                    var schemaFileDir = Path.GetDirectoryName(schemaFilePath);
+                    if (!string.IsNullOrEmpty(schemaFileDir))
+                        Directory.CreateDirectory(schemaFileDir);
+                    
+                    // Create the schema creation SQL file
+                    File.WriteAllText(schemaFilePath, $"CREATE SCHEMA [{schemaName}];\nGO\n");
+                    schemasCreated.Add(schemaName);
+                    filesToCopy++;
+                }
+            }
+        }
+        
+        Console.WriteLine($"    Created {schemasCreated.Count} schema creation files");
+        
+        // Now copy all SQL files
+        foreach (var file in Directory.GetFiles(sourceDir, "*.sql", SearchOption.AllDirectories))
+        {
+            var relativePath = Path.GetRelativePath(sourceDir, file);
+            
+            // Skip migrations, change manifests, and other non-schema files
+            if (relativePath.Contains("z_migrations") || 
+                relativePath.Contains("z_migrations_reverse") ||
+                relativePath.Contains("_change-manifests"))
+            {
+                filesToSkip++;
+                continue;
+            }
+            
+            var destPath = Path.Combine(destDir, relativePath);
+            var destFileDir = Path.GetDirectoryName(destPath);
+            
+            if (!string.IsNullOrEmpty(destFileDir))
+                Directory.CreateDirectory(destFileDir);
+            
+            File.Copy(file, destPath, overwrite: true);
+            filesToCopy++;
+        }
+        
+        Console.WriteLine($"    Copied {filesToCopy} SQL files total (skipped {filesToSkip} non-schema files)");
+    }
+    
+    /// <summary>
+    /// Creates a simple SDK-style SQL project file
+    /// </summary>
+    void CreateSdkStyleSqlProject(string projectPath, string projectName, string? referenceDacpacPath = null)
+    {
+        // Minimal SDK-style SQL project with just essential properties
+        var projectContent = $@"<Project Sdk=""Microsoft.Build.Sql/0.2.0-preview"">
+  <PropertyGroup>
+    <Name>{projectName}</Name>
+    <EnableStaticCodeAnalysis>false</EnableStaticCodeAnalysis>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql150DatabaseSchemaProvider</DSP>
+    <TreatTSqlWarningsAsErrors>false</TreatTSqlWarningsAsErrors>
+    <SuppressTSqlWarnings>71502;71562;71558;71561</SuppressTSqlWarnings>
+    <!-- Skip model validation entirely -->
+    <SkipModelValidation>true</SkipModelValidation>
+    <SuppressModelValidation>true</SuppressModelValidation>
+    <SuppressMissingDependenciesErrors>true</SuppressMissingDependenciesErrors>
+    <!-- Still produce a DACPAC -->
+    <TargetDatabaseSet>true</TargetDatabaseSet>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Build Include=""**\*.sql"" />
+  </ItemGroup>";
+
+        // Add reference DACPAC if provided
+        if (!string.IsNullOrEmpty(referenceDacpacPath) && File.Exists(referenceDacpacPath))
+        {
+            var dacpacFileName = Path.GetFileName(referenceDacpacPath);
+            var dacpacName = Path.GetFileNameWithoutExtension(referenceDacpacPath);
+            
+            // Use just the filename since the DACPAC is copied to the same directory as the project
+            projectContent += $@"
+  
+  <!-- Reference to original DACPAC to resolve external references -->
+  <ItemGroup>
+    <ArtifactReference Include=""{dacpacFileName}"">
+      <HintPath>{dacpacFileName}</HintPath>
+      <SuppressMissingDependenciesErrors>true</SuppressMissingDependenciesErrors>
+      <DatabaseVariableLiteralValue>{dacpacName}</DatabaseVariableLiteralValue>
+    </ArtifactReference>
+  </ItemGroup>";
+        }
+
+        projectContent += @"
+</Project>";
+        
+        File.WriteAllText(projectPath, projectContent);
+    }
+
     string SanitizeForFilename(string input)
     {
         var invalid = Path.GetInvalidFileNameChars();

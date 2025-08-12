@@ -7,8 +7,8 @@ The SQL Server Schema Migration Generator automatically creates migration script
 ## Features
 
 - **Automatic Migration Generation**: Detects schema changes from Git history and creates migration scripts
-- **Reverse Migrations**: Automatically generates rollback scripts for manual recovery
-- **Change Detection**: Supports tables, columns, indexes, constraints, views, stored procedures, functions, and triggers
+- **Migration Script Splitting**: Intelligently splits complex migrations into organized segments by database object
+- **Change Detection**: Supports schemas, filegroups, tables, columns, indexes, constraints, views, stored procedures, functions, and triggers
 - **Rename Detection**: Intelligently detects renamed objects based on content similarity
 - **Dependency Resolution**: Orders operations correctly to handle dependencies
 - **Migration History**: Tracks applied migrations in the database
@@ -18,8 +18,8 @@ The SQL Server Schema Migration Generator automatically creates migration script
 
 1. The generator analyzes uncommitted changes in the Git repository
 2. Identifies schema modifications by parsing SQL files
-3. Generates forward migration scripts in the `z_migrations` folder
-4. Creates corresponding reverse migration scripts in the `z_migrations_reverse` folder
+3. Generates migration scripts and splits them into organized segments
+4. Saves split migration files in the `z_migrations/[timestamp]_[actor]_[description]/` folder
 5. Commits the schema changes to Git
 
 ## Directory Structure
@@ -28,22 +28,36 @@ The SQL Server Schema Migration Generator automatically creates migration script
 servers/
 └── [server-name]/
     └── [database-name]/
+        ├── schemas/               # Schema definitions
+        ├── filegroups/            # Filegroup definitions
         ├── Tables/
         ├── Views/
         ├── StoredProcedures/
         ├── Functions/
-        ├── z_migrations/           # Forward migration scripts
-        └── z_migrations_reverse/   # Reverse migration scripts
+        └── z_migrations/          # Migration scripts (split into segments)
+            └── [timestamp]_[actor]_[description]/
+                ├── manifest.json
+                ├── 001_schema_sys_SchemaName.sql
+                ├── 002_filegroup_sys_FilegroupName.sql
+                ├── 003_table_dbo_TableName.sql
+                └── ...
 ```
 
 ## Migration File Naming
 
-Migration files follow this pattern:
+Migration folders follow this pattern:
 ```
-_YYYYMMDD_HHMMSS_[actor]_[description].sql
+_YYYYMMDD_HHMMSS_[actor]_[description]/
 ```
 
-Example: `_20240115_143022_john_2tables_1indexes.sql`
+Example: `_20240115_143022_john_2tables_1indexes/`
+
+Within each migration folder, files are named:
+```
+[sequence]_[objectType]_[schema]_[objectName].sql
+```
+
+Example: `001_table_dbo_Customer.sql`
 
 ## Usage
 
@@ -87,17 +101,13 @@ INSERT INTO [dbo].[DatabaseMigrationHistory] ...
 COMMIT TRANSACTION;
 ```
 
-### Reverse Migration
-```sql
--- WARNING: This is a MANUAL ROLLBACK script
-SET XACT_ABORT ON;
-BEGIN TRANSACTION;
+### Migration Splitting
 
--- Reverse operations
--- ... Inverse DDL statements ...
-
--- Optional: Remove from history
--- DELETE FROM [dbo].[DatabaseMigrationHistory] WHERE [MigrationId] = '...';
+Complex migrations are automatically split into organized segments:
+- Each database object's operations are grouped together
+- Execution order is preserved through numbered prefixes
+- A manifest.json file describes the migration structure
+- No reverse migrations are generated (use database snapshots or backups for rollback)
 
 COMMIT TRANSACTION;
 ```

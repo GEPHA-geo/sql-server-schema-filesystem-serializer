@@ -19,7 +19,7 @@ When migrations involve multiple database objects with complex interdependencies
 2. **Reviewability**: Easier to review changes in pull requests
 3. **Traceability**: Clear understanding of what operations affect each object
 4. **Maintainability**: Simpler to debug issues with specific objects
-5. **Preservation**: Original script is kept for reference
+5. **Direct Execution**: No intermediate migration.sql file - splits are created directly
 
 ## Architecture
 
@@ -48,6 +48,16 @@ When a table is modified (especially when recreated), all of the following opera
 - Permission grants
 - Extended properties
 
+#### Schema Operations
+- CREATE SCHEMA statements
+- Schema-level permissions
+- Schema ownership changes
+
+#### Filegroup Operations
+- ALTER DATABASE ADD FILEGROUP statements
+- Filegroup property modifications
+- File additions to filegroups
+
 #### Special Patterns
 
 ##### Table Recreation Pattern (tmp_ms_xx)
@@ -72,19 +82,23 @@ Foreign keys that reference a table being modified are grouped with that table's
 z_migrations/
 └── 20250812_123456_john_update_customer_schema/
     ├── manifest.json                    # Metadata and execution order
-    ├── 001_table_dbo_Customer.sql
-    ├── 002_table_dbo_Orders.sql
-    ├── 003_view_dbo_vw_CustomerOrders.sql
-    ├── 004_procedure_dbo_sp_GetCustomers.sql
-    └── 005_function_dbo_fn_CalculateTotal.sql
+    ├── 001_schema_sys_NewSchema.sql    # Schema creation
+    ├── 002_filegroup_sys_FG_Data.sql   # Filegroup creation
+    ├── 003_table_dbo_Customer.sql      # Table operations
+    ├── 004_table_dbo_Orders.sql        # Table operations
+    ├── 005_view_dbo_vw_CustomerOrders.sql
+    ├── 006_procedure_dbo_sp_GetCustomers.sql
+    └── 007_function_dbo_fn_CalculateTotal.sql
 ```
+
+Note: The original migration.sql file is no longer kept. The split files are created directly from the migration content.
 
 ### File Naming Convention
 
 Files are named with the pattern: `{sequence}_{objectType}_{schema}_{objectName}.sql`
 
 - **sequence**: Three-digit number indicating execution order (001, 002, etc.)
-- **objectType**: Type of database object (table, view, procedure, function, etc.)
+- **objectType**: Type of database object (schema, filegroup, table, view, procedure, function, trigger, etc.)
 - **schema**: Database schema (typically dbo)
 - **objectName**: Name of the database object
 
@@ -198,6 +212,12 @@ The splitter uses regex patterns to identify objects and operations:
 
 // Index operations
 @"CREATE\s+(?:UNIQUE\s+)?(?:CLUSTERED\s+)?(?:NONCLUSTERED\s+)?INDEX\s+\[?(\w+)\]?\s+ON\s+\[?(\w+)\]?\.\[?(\w+)\]?"
+
+// Schema operations
+@"CREATE\s+SCHEMA\s+\[?(\w+)\]?"
+
+// Filegroup operations
+@"ALTER\s+DATABASE.*?ADD\s+FILEGROUP\s+\[?(\w+)\]?"
 ```
 
 ## Usage Example
@@ -255,12 +275,12 @@ GO
 
 ```
 z_migrations/20250812_123456_john_update_schema/
-├── migration.sql (original script)
 ├── manifest.json
-└── changes/
-    ├── 001_table_dbo_Customer.sql (contains all Customer operations)
-    └── 002_procedure_dbo_sp_GetCustomers.sql
+├── 001_table_dbo_Customer.sql (contains all Customer operations)
+└── 002_procedure_dbo_sp_GetCustomers.sql
 ```
+
+Note: No `changes/` subdirectory or original `migration.sql` file - split files are placed directly in the migration folder.
 
 ### 001_table_dbo_Customer.sql Content
 
@@ -311,23 +331,31 @@ GO
 
 ### Modification to DacpacMigrationGenerator
 
-The splitter is called after the migration script is generated:
+The splitter is integrated into the migration generation process:
 
 ```csharp
 // In GenerateMigrationFromDacpacs method:
-await File.WriteAllTextAsync(migrationFilePath, migrationScript);
+// Compare DACPACs returns the actual SQL content now
+var migrationScript = await CompareDacpacs(
+    sourceDacpacPath,
+    targetDacpacPath,
+    tempDir,
+    scmpComparison);
 
-// Split the migration into organized segments
-var migrationDir = Path.Combine(
-    Path.GetDirectoryName(migrationFilePath), 
-    Path.GetFileNameWithoutExtension(filename));
-    
+// Create migration directory structure
+var migrationDir = Path.Combine(migrationsPath, migrationDirName);
+Directory.CreateDirectory(migrationDir);
+
+// Create a temporary file for the splitter to process
+var tempMigrationPath = Path.Combine(tempDir, "temp_migration.sql");
+await File.WriteAllTextAsync(tempMigrationPath, migrationScript);
+
+// Split the migration script into organized segments
 var splitter = new MigrationScriptSplitter();
-await splitter.SplitMigrationScript(migrationFilePath, migrationDir);
+await splitter.SplitMigrationScript(tempMigrationPath, migrationDir);
 
-// Move the original script into the new directory
-var originalScriptNewPath = Path.Combine(migrationDir, "migration.sql");
-File.Move(migrationFilePath, originalScriptNewPath);
+// No original migration.sql is kept - only the split files
+// No reverse migrations are generated anymore
 ```
 
 ### Reconstruction Capability
@@ -367,7 +395,9 @@ Transaction boundaries (BEGIN TRAN/COMMIT) are preserved within the relevant obj
 Objects that reference multiple schemas are grouped based on the primary object being modified.
 
 ### 5. System Objects
-System object modifications (if any) are kept in a separate `000_system.sql` file to ensure they execute first.
+System-level objects like schemas and filegroups are identified with the `sys` schema prefix and ordered appropriately:
+- Schemas: `001_schema_sys_SchemaName.sql`
+- Filegroups: `002_filegroup_sys_FilegroupName.sql`
 
 ## Testing Strategy
 

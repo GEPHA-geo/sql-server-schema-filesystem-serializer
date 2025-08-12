@@ -31,7 +31,11 @@ Generate SourceOrganized.sqlproj   Generate TargetOrganized.sqlproj
                         ↓
               SqlPackage.Script()
                         ↓
-                 Migration.sql
+                 Migration Content
+                        ↓
+              MigrationScriptSplitter
+                        ↓
+            Split Migration Files
 ```
 
 ### Key Components

@@ -56,11 +56,13 @@ servers/
     └── [database-name]/
         ├── schemas/               # Schema definitions
         │   ├── dbo/
+        │   │   ├── dbo.sql       # Schema CREATE statement
         │   │   ├── Tables/
         │   │   ├── Views/
         │   │   ├── StoredProcedures/
         │   │   └── Functions/
-        │   └── [schema-name].sql  # Schema CREATE statement
+        │   └── [schema-name]/
+        │       └── [schema-name].sql  # Schema CREATE statement
         ├── filegroups/            # Filegroup definitions
         └── z_migrations/          # Migration scripts
 ```

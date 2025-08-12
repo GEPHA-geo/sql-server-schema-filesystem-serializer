@@ -394,13 +394,13 @@ public class DacpacScriptParser
         var schemasPath = Path.Combine(basePath, "schemas");
         FileSystemManager.CreateDirectory(schemasPath);
         
-        // Create a SQL file for the schema definition
-        var filePath = Path.Combine(schemasPath, $"{statement.Name}.sql");
-        _fileSystemManager.WriteFile(filePath, statement.Text);
-        
-        // Also create the schema directory structure for organizing objects
+        // Create the schema directory structure for organizing objects
         var schemaDir = Path.Combine(schemasPath, statement.Name);
         FileSystemManager.CreateDirectory(schemaDir);
+        
+        // Store the schema CREATE statement inside the schema directory
+        var filePath = Path.Combine(schemaDir, $"{statement.Name}.sql");
+        _fileSystemManager.WriteFile(filePath, statement.Text);
     }
 
     string GetFilePrefix(ObjectType type) => type switch

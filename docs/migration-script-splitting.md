@@ -49,7 +49,7 @@ When a table is modified (especially when recreated), all of the following opera
 - Extended properties
 
 #### Schema Operations
-- CREATE SCHEMA statements
+- CREATE SCHEMA statements (stored in schemas/[schema-name]/[schema-name].sql)
 - Schema-level permissions
 - Schema ownership changes
 

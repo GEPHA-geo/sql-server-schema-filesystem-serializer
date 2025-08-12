@@ -71,14 +71,12 @@ Foreign keys that reference a table being modified are grouped with that table's
 ```
 z_migrations/
 └── 20250812_123456_john_update_customer_schema/
-    ├── migration.sql                    # Original complete script (preserved)
     ├── manifest.json                    # Metadata and execution order
-    └── changes/
-        ├── 001_table_dbo_Customer.sql
-        ├── 002_table_dbo_Orders.sql
-        ├── 003_view_dbo_vw_CustomerOrders.sql
-        ├── 004_procedure_dbo_sp_GetCustomers.sql
-        └── 005_function_dbo_fn_CalculateTotal.sql
+    ├── 001_table_dbo_Customer.sql
+    ├── 002_table_dbo_Orders.sql
+    ├── 003_view_dbo_vw_CustomerOrders.sql
+    ├── 004_procedure_dbo_sp_GetCustomers.sql
+    └── 005_function_dbo_fn_CalculateTotal.sql
 ```
 
 ### File Naming Convention

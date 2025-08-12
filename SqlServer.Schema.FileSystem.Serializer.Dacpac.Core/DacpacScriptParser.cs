@@ -209,6 +209,26 @@ public class DacpacScriptParser
                 }
             }
         }
+        else if (Regex.IsMatch(statementText, @"ALTER\s+DATABASE.*?ADD\s+FILEGROUP", RegexOptions.IgnoreCase | RegexOptions.Singleline))
+        {
+            statement.Type = ObjectType.Filegroup;
+            var match = Regex.Match(statementText, @"ADD\s+FILEGROUP\s+\[?([^\]]+)\]?", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                statement.Name = match.Groups[1].Value;
+                statement.Schema = "sys"; // Filegroups are system-level objects
+            }
+        }
+        else if (Regex.IsMatch(statementText, @"CREATE\s+SCHEMA", RegexOptions.IgnoreCase))
+        {
+            statement.Type = ObjectType.Schema;
+            var match = Regex.Match(statementText, @"CREATE\s+SCHEMA\s+\[?([^\]\s]+)\]?", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                statement.Name = match.Groups[1].Value;
+                statement.Schema = "sys"; // Schemas are system-level objects
+            }
+        }
         else
         {
             // Skip statements we don't handle
@@ -291,6 +311,14 @@ public class DacpacScriptParser
         {
             ProcessFunction(firstStatement, basePath);
         }
+        else if (firstStatement.Type == ObjectType.Filegroup)
+        {
+            ProcessFilegroup(firstStatement, basePath);
+        }
+        else if (firstStatement.Type == ObjectType.Schema)
+        {
+            ProcessSchema(firstStatement, basePath);
+        }
     }
 
     void ProcessTableGroup(List<SqlStatement> statements, string basePath)
@@ -348,6 +376,31 @@ public class DacpacScriptParser
         
         var filePath = Path.Combine(functionsPath, $"{statement.Name}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
+    }
+    
+    void ProcessFilegroup(SqlStatement statement, string basePath)
+    {
+        // Filegroups are stored at the root level, not under schemas
+        var filegroupsPath = Path.Combine(basePath, "filegroups");
+        FileSystemManager.CreateDirectory(filegroupsPath);
+        
+        var filePath = Path.Combine(filegroupsPath, $"{statement.Name}.sql");
+        _fileSystemManager.WriteFile(filePath, statement.Text);
+    }
+    
+    void ProcessSchema(SqlStatement statement, string basePath)
+    {
+        // Create schemas directory at the root level
+        var schemasPath = Path.Combine(basePath, "schemas");
+        FileSystemManager.CreateDirectory(schemasPath);
+        
+        // Create a SQL file for the schema definition
+        var filePath = Path.Combine(schemasPath, $"{statement.Name}.sql");
+        _fileSystemManager.WriteFile(filePath, statement.Text);
+        
+        // Also create the schema directory structure for organizing objects
+        var schemaDir = Path.Combine(schemasPath, statement.Name);
+        FileSystemManager.CreateDirectory(schemaDir);
     }
 
     string GetFilePrefix(ObjectType type) => type switch
@@ -411,7 +464,9 @@ public class DacpacScriptParser
             ["PROCEDURE"] = CountPattern(script, @"CREATE\s+PROCEDURE"),
             ["FUNCTION"] = CountPattern(script, @"CREATE\s+FUNCTION"),
             ["EXTENDED PROPERTY"] = CountPattern(script, @"sp_addextendedproperty"),
-            ["INLINE PRIMARY KEY"] = CountPattern(script, @"CONSTRAINT\s+\[[^\]]+\]\s+PRIMARY\s+KEY")
+            ["INLINE PRIMARY KEY"] = CountPattern(script, @"CONSTRAINT\s+\[[^\]]+\]\s+PRIMARY\s+KEY"),
+            ["FILEGROUP"] = CountPattern(script, @"ALTER\s+DATABASE.*?ADD\s+FILEGROUP"),
+            ["SCHEMA"] = CountPattern(script, @"CREATE\s+SCHEMA")
         };
         
         // Count parsed statement types
@@ -451,6 +506,10 @@ public class DacpacScriptParser
             parsedCounts.GetValueOrDefault(ObjectType.Function, 0));
         CheckCount("Extended Properties", originalCounts.GetValueOrDefault("EXTENDED PROPERTY", 0), 
             parsedCounts.GetValueOrDefault(ObjectType.ExtendedProperty, 0));
+        CheckCount("Filegroups", originalCounts.GetValueOrDefault("FILEGROUP", 0), 
+            parsedCounts.GetValueOrDefault(ObjectType.Filegroup, 0));
+        CheckCount("Schemas", originalCounts.GetValueOrDefault("SCHEMA", 0), 
+            parsedCounts.GetValueOrDefault(ObjectType.Schema, 0));
         
         // Warn about unparsed statements
         var totalOriginal = originalCounts.Values.Sum();
@@ -504,5 +563,7 @@ public enum ObjectType
     View,
     StoredProcedure,
     Function,
-    ExtendedProperty
+    ExtendedProperty,
+    Filegroup,
+    Schema
 }

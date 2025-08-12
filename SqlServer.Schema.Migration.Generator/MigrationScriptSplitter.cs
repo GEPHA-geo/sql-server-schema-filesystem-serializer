@@ -27,6 +27,7 @@ public class MigrationScriptSplitter
     private static readonly Regex TriggerPattern = new(@"(?:CREATE|ALTER|DROP)\s+TRIGGER\s+(?:\[?(\w+)\]?\.)?\[?(\w+)\]?", RegexOptions.IgnoreCase);
     private static readonly Regex RenamePattern = new(@"sp_rename\s+'(?:\[?(\w+)\]?\.)?\[?(\w+)\]?'\s*,\s*'(\w+)'", RegexOptions.IgnoreCase);
     private static readonly Regex SchemaPattern = new(@"CREATE\s+SCHEMA\s+\[?(\w+)\]?", RegexOptions.IgnoreCase);
+    private static readonly Regex FilegroupPattern = new(@"(?:ALTER\s+DATABASE.*?(?:ADD|MODIFY)\s+FILEGROUP)\s+\[?(\w+)\]?", RegexOptions.IgnoreCase);
     
     /// <summary>
     /// Splits a migration script into organized segments by database object
@@ -44,8 +45,6 @@ public class MigrationScriptSplitter
         
         // Create output directory structure
         Directory.CreateDirectory(outputDirectory);
-        var changesDir = Path.Combine(outputDirectory, "changes");
-        Directory.CreateDirectory(changesDir);
         
         // Write each object group to its own file
         var manifestEntries = new List<ManifestEntry>();
@@ -54,7 +53,7 @@ public class MigrationScriptSplitter
         foreach (var group in objectGroups)
         {
             var filename = $"{sequence:D3}_{group.ObjectType}_{group.Schema}_{group.ObjectName}.sql";
-            var filePath = Path.Combine(changesDir, filename);
+            var filePath = Path.Combine(outputDirectory, filename);
             
             // Add header comment to the file
             var fileContent = GenerateFileHeader(group) + group.Script;
@@ -76,9 +75,7 @@ public class MigrationScriptSplitter
             sequence++;
         }
         
-        // Copy original migration script for reference
-        var originalScriptPath = Path.Combine(outputDirectory, "migration.sql");
-        File.Copy(migrationScriptPath, originalScriptPath, overwrite: true);
+        // Don't copy the original migration script - we only want the split files
         
         // Generate and save manifest
         await GenerateManifest(outputDirectory, manifestEntries, migrationScriptPath);
@@ -172,7 +169,19 @@ public class MigrationScriptSplitter
     
     private ObjectInfo? IdentifyObject(string statement)
     {
-        // Handle schema operations first
+        // Handle filegroup operations first
+        var filegroupMatch = FilegroupPattern.Match(statement);
+        if (filegroupMatch.Success)
+        {
+            return new ObjectInfo
+            {
+                Name = filegroupMatch.Groups[1].Value,
+                Schema = "sys",
+                Type = "filegroup"
+            };
+        }
+        
+        // Handle schema operations
         var schemaMatch = SchemaPattern.Match(statement);
         if (schemaMatch.Success)
         {
@@ -541,7 +550,7 @@ public class MigrationScriptSplitter
         
         foreach (var segment in manifest.ExecutionOrder)
         {
-            var segmentPath = Path.Combine(segmentsDirectory, "changes", segment.Filename);
+            var segmentPath = Path.Combine(segmentsDirectory, segment.Filename);
             if (!File.Exists(segmentPath))
             {
                 throw new FileNotFoundException($"Segment file not found: {segmentPath}");

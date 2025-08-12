@@ -317,15 +317,6 @@ public class DacpacMigrationGenerator
                 return result;
             }
             
-            // Generate reverse migration
-            Console.WriteLine("Generating reverse migration script...");
-            var reverseMigrationScript = await CompareDacpacs(
-                targetDacpacPath,
-                sourceDacpacPath,
-                tempDir,
-                scmpComparison,
-                isReverse: true);
-            
             // Save migration files
             var description = ExtractDescription(migrationScript);
             var sanitizedActor = SanitizeForFilename(actor ?? "system");
@@ -336,50 +327,29 @@ public class DacpacMigrationGenerator
             var migrationDir = Path.Combine(migrationsPath, migrationDirName);
             Directory.CreateDirectory(migrationDir);
             
-            // Save the original migration script in the new directory
-            var migrationFilePath = Path.Combine(migrationDir, "migration.sql");
-            await File.WriteAllTextAsync(migrationFilePath, migrationScript);
-            Console.WriteLine($"✓ Generated migration: {migrationDirName}/migration.sql");
+            // Create a temporary file for the splitter to process
+            var tempMigrationPath = Path.Combine(tempDir, "temp_migration.sql");
+            await File.WriteAllTextAsync(tempMigrationPath, migrationScript);
+            Console.WriteLine($"✓ Generated migration: {migrationDirName}");
             
             // Split the migration script into organized segments
             Console.WriteLine("Splitting migration into organized segments...");
             var splitter = new MigrationScriptSplitter();
-            await splitter.SplitMigrationScript(migrationFilePath, migrationDir);
+            await splitter.SplitMigrationScript(tempMigrationPath, migrationDir);
             
-            // Count the number of segments created
-            var changesDir = Path.Combine(migrationDir, "changes");
-            var segmentCount = Directory.Exists(changesDir) ? Directory.GetFiles(changesDir, "*.sql").Length : 0;
+            // Count the number of segments created (now in the main directory)
+            var segmentFiles = Directory.GetFiles(migrationDir, "*.sql")
+                .Where(f => System.Text.RegularExpressions.Regex.IsMatch(Path.GetFileName(f), @"^\d{3}_"))
+                .ToArray();
+            var segmentCount = segmentFiles.Length;
             if (segmentCount > 0)
             {
                 Console.WriteLine($"✓ Split migration into {segmentCount} segments");
             }
             
-            // Save reverse migration
-            var reverseMigrationsPath = Path.Combine(Path.GetDirectoryName(migrationsPath)!, "z_migrations_reverse");
-            Directory.CreateDirectory(reverseMigrationsPath);
-            
-            // Create reverse migration directory structure
-            var reverseMigrationDir = Path.Combine(reverseMigrationsPath, migrationDirName);
-            Directory.CreateDirectory(reverseMigrationDir);
-            
-            var reverseMigrationPath = Path.Combine(reverseMigrationDir, "migration.sql");
-            await File.WriteAllTextAsync(reverseMigrationPath, reverseMigrationScript);
-            Console.WriteLine($"✓ Generated reverse migration: {migrationDirName}/migration.sql");
-            
-            // Also split the reverse migration
-            Console.WriteLine("Splitting reverse migration into organized segments...");
-            await splitter.SplitMigrationScript(reverseMigrationPath, reverseMigrationDir);
-            
-            var reverseChangesDir = Path.Combine(reverseMigrationDir, "changes");
-            var reverseSegmentCount = Directory.Exists(reverseChangesDir) ? Directory.GetFiles(reverseChangesDir, "*.sql").Length : 0;
-            if (reverseSegmentCount > 0)
-            {
-                Console.WriteLine($"✓ Split reverse migration into {reverseSegmentCount} segments");
-            }
-            
             result.Success = true;
-            result.MigrationPath = migrationFilePath;
-            result.ReverseMigrationPath = reverseMigrationPath;
+            result.MigrationPath = migrationDir;  // Return directory path instead of file path
+            result.ReverseMigrationPath = null;  // No longer generating reverse migrations
             result.HasChanges = true;
         }
         catch (Exception ex)
@@ -554,10 +524,9 @@ public class DacpacMigrationGenerator
         string sourceDacpac,
         string targetDacpac,
         string outputDir,
-        SchemaComparison? scmpComparison,
-        bool isReverse = false)
+        SchemaComparison? scmpComparison)
     {
-        var scriptPath = Path.Combine(outputDir, isReverse ? "reverse_migration.sql" : "migration.sql");
+        var scriptPath = Path.Combine(outputDir, "migration.sql");
         
         try
         {
@@ -635,7 +604,7 @@ public class DacpacMigrationGenerator
                     return string.Empty;
                 }
                 
-                return scriptPath;
+                return deployScript;
             }
             else
             {

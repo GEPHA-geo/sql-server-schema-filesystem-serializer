@@ -47,15 +47,41 @@ Retrieves complete database schema from git at specific commits/refs:
 - Handles both historical and current states
 
 #### 2. SQL Project Generator
-Creates MSBuild SQL projects (.sqlproj) dynamically:
-- Generates project file with all SQL file references
+Creates SDK-style SQL projects (.sqlproj) dynamically:
+- Generates SDK-style project file using Microsoft.Build.Sql SDK
 - Maintains proper build order
 - Handles special files (schemas.sql, filegroups.sql)
 - Sets appropriate build properties
+- Automatically manages exclusion files for problematic dependencies
+
+##### Exclusion File System
+The system automatically manages `.dacpac-exclusions.json` files in each database schema directory:
+- **Automatic Usage**: If exclusion file exists, it's automatically applied
+- **Automatic Regeneration**: If build fails, exclusions are regenerated
+- **Smart Iteration**: First iteration excludes SQL71561 errors, subsequent iterations only exclude cascading dependencies
+- **Detailed Tracking**: Each exclusion includes the specific reason for exclusion
+
+Example exclusion file structure:
+```json
+{
+  "version": "1.0",
+  "generated": "2025-01-13T10:00:00Z",
+  "lastSuccessfulBuild": "2025-01-13T10:05:00Z",
+  "exclusions": [
+    {
+      "file": "schemas/dbo/Views/vw_ComplexView.sql",
+      "reason": "SQL71561: Contains unresolved reference to external database [OtherDB].[dbo].[ExternalTable]",
+      "excludedOn": "2025-01-13T10:00:00Z",
+      "iteration": 1,
+      "errorCode": "SQL71561"
+    }
+  ]
+}
+```
 
 #### 3. DACPAC Builder
 Compiles SQL projects into DACPACs:
-- Uses MSBuild or DacServices API
+- Uses dotnet build with Microsoft.Build.Sql SDK
 - Validates schema during build
 - Reports compilation errors
 - Produces portable schema packages
@@ -75,7 +101,7 @@ Compares DACPACs and generates migration scripts:
 public class DacpacMigrationGenerator
 {
     private readonly IGitService _gitService;
-    private readonly ISqlProjectGenerator _projectGenerator;
+    // Direct SQL project generation within this class
     private readonly IDacpacBuilder _dacpacBuilder;
     private readonly IMigrationScriptGenerator _scriptGenerator;
     
@@ -90,7 +116,7 @@ public class DacpacMigrationGenerator
             options.SchemaPath);
         
         // Step 2: Generate source SQL project
-        var sourceProjectPath = await _projectGenerator.GenerateProjectAsync(
+        var sourceProjectPath = await GenerateSdkProjectAsync(
             sourceFiles, 
             "SourceDatabase",
             options.TempDirectory);
@@ -104,7 +130,7 @@ public class DacpacMigrationGenerator
             options.SchemaPath);
         
         // Step 5: Generate target SQL project
-        var targetProjectPath = await _projectGenerator.GenerateProjectAsync(
+        var targetProjectPath = await GenerateSdkProjectAsync(
             targetFiles, 
             "TargetDatabase",
             options.TempDirectory);

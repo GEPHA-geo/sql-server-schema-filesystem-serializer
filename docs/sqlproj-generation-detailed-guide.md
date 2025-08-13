@@ -189,7 +189,38 @@ public class TableFileGroup
 
 ### Step 3: Generate the SQL Project File (.sqlproj)
 
+The system uses SDK-style SQL projects with Microsoft.Build.Sql SDK:
+
 ```csharp
+/// <summary>
+/// Creates a simple SDK-style SQL project file
+/// Uses Microsoft.Build.Sql SDK for modern DACPAC building
+/// </summary>
+void CreateSdkStyleSqlProject(string projectPath, string projectName, string? referenceDacpacPath = null)
+{
+    // Minimal SDK-style SQL project with just essential properties
+    var projectContent = $@"<Project Sdk=""Microsoft.Build.Sql/0.2.0-preview"">
+      <PropertyGroup>
+        <Name>{projectName}</Name>
+        <EnableStaticCodeAnalysis>false</EnableStaticCodeAnalysis>
+        <DSP>Microsoft.Data.Tools.Schema.Sql.Sql150DatabaseSchemaProvider</DSP>
+        <TreatTSqlWarningsAsErrors>false</TreatTSqlWarningsAsErrors>
+        <SuppressTSqlWarnings>71502;71562;71558;71561</SuppressTSqlWarnings>
+        <!-- Skip model validation entirely -->
+        <SkipModelValidation>true</SkipModelValidation>
+        <SuppressModelValidation>true</SuppressModelValidation>
+        <SuppressMissingDependenciesErrors>true</SuppressMissingDependenciesErrors>
+        <!-- Still produce a DACPAC -->
+        <TargetDatabaseSet>true</TargetDatabaseSet>
+      </PropertyGroup>
+      
+      <ItemGroup>
+        <Build Include=""**\*.sql"" />
+      </ItemGroup>
+    </Project>";
+    
+    File.WriteAllText(projectPath, projectContent);
+}csharp
 public class SqlProjectGenerator
 {
     /// <summary>

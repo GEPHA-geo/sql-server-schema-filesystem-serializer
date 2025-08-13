@@ -437,8 +437,8 @@ public class DacpacMigrationGenerator
             }
             CreateSdkStyleSqlProject(projectPath, projectName, localReferenceDacpacPath);
             
-            // Build the project to generate DACPAC
-            var dacpacPath = await BuildSqlProject(projectPath);
+            // Build the project to generate DACPAC - pass the original schema path for exclusion file
+            var dacpacPath = await BuildSqlProject(projectPath, schemaPath);
             return dacpacPath ?? string.Empty;
         }
         catch (Exception ex)
@@ -537,8 +537,11 @@ public class DacpacMigrationGenerator
             using var targetPac = DacPackage.Load(targetDacpac);
             
             // Create deployment options
-            var deployOptions = new DacDeployOptions();
-            
+            var deployOptions = new DacDeployOptions
+            {
+                IgnoreAuthorizer = true
+            };
+
             // Apply SCMP options if provided
             if (scmpComparison != null)
             {
@@ -559,6 +562,8 @@ public class DacpacMigrationGenerator
                 deployOptions.GenerateSmartDefaults = mappedOptions.GenerateSmartDefaults;
                 deployOptions.IncludeCompositeObjects = mappedOptions.IncludeCompositeObjects;
                 deployOptions.IncludeTransactionalScripts = mappedOptions.IncludeTransactionalScripts;
+                
+
             }
             else
             {
@@ -622,7 +627,7 @@ public class DacpacMigrationGenerator
     /// <summary>
     /// Builds a SQL project using DacServices API
     /// </summary>
-    async Task<string?> BuildSqlProject(string projectPath)
+    async Task<string?> BuildSqlProject(string projectPath, string schemaPath)
     {
         var projectDir = Path.GetDirectoryName(projectPath)!;
         var projectName = Path.GetFileNameWithoutExtension(projectPath);
@@ -632,7 +637,7 @@ public class DacpacMigrationGenerator
             Console.WriteLine($"  Building SQL project with dotnet build: {projectPath}");
             
             // Try to build using dotnet build - this is the only supported method now
-            var dotnetResult = await BuildUsingDotnet(projectPath);
+            var dotnetResult = await BuildUsingDotnet(projectPath, schemaPath);
             if (!string.IsNullOrEmpty(dotnetResult))
             {
                 return dotnetResult;
@@ -656,12 +661,15 @@ public class DacpacMigrationGenerator
     /// <summary>
     /// Attempts to build SQL project using dotnet build
     /// </summary>
-    async Task<string?> BuildUsingDotnet(string projectPath)
+    async Task<string?> BuildUsingDotnet(string projectPath, string schemaPath)
     {
         try
         {
             var projectDir = Path.GetDirectoryName(projectPath)!;
             var projectName = Path.GetFileNameWithoutExtension(projectPath);
+            
+            // Exclusion file path in the original schema directory
+            var exclusionFilePath = Path.Combine(schemaPath, ".dacpac-exclusions.json");
             
             // Create a temporary directory for excluded files
             var tempExcludeDir = Path.Combine(Path.GetTempPath(), $"DacpacExcluded_{Guid.NewGuid():N}");
@@ -669,7 +677,42 @@ public class DacpacMigrationGenerator
             
             try
             {
-                // Try building with dotnet build with error suppression
+                ExclusionFile? existingExclusions = null;
+                var appliedExclusions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                
+                // Step 1: Load and apply existing exclusions if they exist
+                if (File.Exists(exclusionFilePath))
+                {
+                    existingExclusions = LoadExclusionFile(exclusionFilePath);
+                    if (existingExclusions != null && existingExclusions.Exclusions.Any())
+                    {
+                        Console.WriteLine($"  Applying {existingExclusions.Exclusions.Count} exclusions from .dacpac-exclusions.json");
+                        
+                        // Apply existing exclusions
+                        foreach (var exclusion in existingExclusions.Exclusions)
+                        {
+                            var fullPath = Path.Combine(projectDir, exclusion.File);
+                            if (File.Exists(fullPath))
+                            {
+                                var tempPath = Path.Combine(tempExcludeDir, exclusion.File);
+                                var tempFileDir = Path.GetDirectoryName(tempPath);
+                                if (!string.IsNullOrEmpty(tempFileDir))
+                                    Directory.CreateDirectory(tempFileDir);
+                                    
+                                File.Move(fullPath, tempPath);
+                                appliedExclusions[exclusion.File] = tempPath;
+                            }
+                        }
+                        
+                        if (appliedExclusions.Count > 0)
+                        {
+                            Console.WriteLine($"    Successfully excluded {appliedExclusions.Count} files");
+                        }
+                    }
+                }
+                
+                // Step 2: Attempt build
+                Console.WriteLine("  Attempting build...");
                 var processInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
@@ -695,152 +738,191 @@ public class DacpacMigrationGenerator
                 
                 if (process.ExitCode == 0)
                 {
-                    // Find the generated DACPAC in bin/Release or bin/Debug
-                    var releaseDacpac = Path.Combine(projectDir, "bin", "Release", $"{projectName}.dacpac");
-                    if (File.Exists(releaseDacpac))
+                    // Build succeeded with existing exclusions (or no exclusions)
+                    var dacpacPath = FindGeneratedDacpac(projectDir, projectName);
+                    if (!string.IsNullOrEmpty(dacpacPath))
                     {
-                        Console.WriteLine($"  ✓ Built DACPAC using dotnet build: {Path.GetFileName(releaseDacpac)}");
-                        return releaseDacpac;
-                    }
-                    
-                    var debugDacpac = Path.Combine(projectDir, "bin", "Debug", $"{projectName}.dacpac");
-                    if (File.Exists(debugDacpac))
-                    {
-                        Console.WriteLine($"  ✓ Built DACPAC using dotnet build: {Path.GetFileName(debugDacpac)}");
-                        return debugDacpac;
+                        Console.WriteLine($"  ✓ Build succeeded");
+                        
+                        // Update last successful build time if we used exclusions
+                        if (existingExclusions != null)
+                        {
+                            existingExclusions.LastSuccessfulBuild = DateTime.UtcNow;
+                            SaveExclusionFile(exclusionFilePath, existingExclusions);
+                        }
+                        
+                        return dacpacPath;
                     }
                     
                     Console.WriteLine("  ERROR: Build succeeded but DACPAC file was not found");
-                    Console.WriteLine($"  Expected location: {releaseDacpac}");
                     return null;
                 }
-                else
+                
+                // Step 3: Build failed - regenerate exclusions
+                Console.WriteLine("  Build failed. Regenerating exclusion file...");
+                
+                // First restore all previously excluded files
+                foreach (var kvp in appliedExclusions)
                 {
-                    // Build failed - iteratively analyze and exclude problematic files
-                    Console.WriteLine($"  Build failed with exit code {process.ExitCode}, starting iterative exclusion...");
+                    var originalPath = Path.Combine(projectDir, kvp.Key);
+                    File.Move(kvp.Value, originalPath);
+                }
+                appliedExclusions.Clear();
+                
+                // Step 4: Run iterative exclusion process
+                var newExclusionFile = new ExclusionFile
+                {
+                    Version = "1.0",
+                    Generated = DateTime.UtcNow,
+                    LastSuccessfulBuild = DateTime.UtcNow
+                };
+                
+                var iteration = 0;
+                var maxIterations = 10;
+                var allExcludedFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                
+                while (iteration < maxIterations)
+                {
+                    iteration++;
+                    Dictionary<string, string> filesToExclude;
                     
-                    // Track all excluded files and their temporary paths
-                    var excludedFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                    var maxIterations = 10; // Prevent infinite loops
-                    var iteration = 0;
-                    
-                    while (iteration < maxIterations)
+                    if (iteration == 1)
                     {
-                        iteration++;
-                        Console.WriteLine($"  Iteration {iteration}: Analyzing errors...");
+                        // First iteration: ONLY SQL71561 errors
+                        Console.WriteLine($"  Iteration 1: Analyzing SQL71561 errors...");
+                        filesToExclude = ExtractSQL71561FilesWithReasons(output, errors);
                         
-                        // Extract error file paths for unresolved external references
-                        var problematicFiles = ExtractProblematicFiles(output, errors);
-                        
-                        // Also find files that reference already excluded files (cascading dependencies)
-                        var cascadingFiles = FindCascadingDependencies(output, errors, excludedFiles.Keys.ToHashSet());
-                        problematicFiles.UnionWith(cascadingFiles);
-                        
-                        // Remove files that are already excluded
-                        problematicFiles = problematicFiles.Where(f => !excludedFiles.ContainsKey(f)).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                        
-                        if (!problematicFiles.Any())
+                        if (filesToExclude.Any())
                         {
-                            Console.WriteLine($"  No new problematic files found after {iteration} iterations");
-                            break;
-                        }
-                        
-                        Console.WriteLine($"  Found {problematicFiles.Count} new files with {SQL_UNRESOLVED_REFERENCE_ERROR} errors or cascading dependencies");
-                        
-                        // Move the problematic files to temporary location
-                        foreach (var file in problematicFiles)
-                        {
-                            var fullPath = Path.Combine(projectDir, file);
-                            if (File.Exists(fullPath))
+                            Console.WriteLine($"    Found {filesToExclude.Count} files with SQL71561 errors");
+                            
+                            foreach (var kvp in filesToExclude)
                             {
-                                // Create subdirectory structure in temp location to preserve organization
-                                var fileDir = Path.GetDirectoryName(file) ?? "";
-                                var tempSubDir = Path.Combine(tempExcludeDir, fileDir);
-                                Directory.CreateDirectory(tempSubDir);
-                                
-                                var tempPath = Path.Combine(tempExcludeDir, file);
-                                File.Move(fullPath, tempPath, overwrite: true);
-                                excludedFiles[file] = tempPath;
-                                
-                                // Always show what's being moved
-                                Console.WriteLine($"    Moved to temp: {file}");
+                                newExclusionFile.Exclusions.Add(new ExclusionEntry
+                                {
+                                    File = kvp.Key,
+                                    Reason = kvp.Value,
+                                    ExcludedOn = DateTime.UtcNow,
+                                    Iteration = iteration,
+                                    ErrorCode = SQL_UNRESOLVED_REFERENCE_ERROR
+                                });
                             }
                         }
-                        
-                        // Summary line for large sets
-                        if (problematicFiles.Count > 20)
-                        {
-                            Console.WriteLine($"    Total moved: {problematicFiles.Count} files to temporary location");
-                        }
-                        
-                        // Retry the build
-                        Console.WriteLine($"  Retrying build (iteration {iteration})...");
-                        
-                        using var retryProcess = Process.Start(processInfo);
-                        if (retryProcess == null)
-                        {
-                            Console.WriteLine("  ERROR: Failed to start retry build process");
-                            break;
-                        }
-                        
-                        output = await retryProcess.StandardOutput.ReadToEndAsync();
-                        errors = await retryProcess.StandardError.ReadToEndAsync();
-                        
-                        await retryProcess.WaitForExitAsync();
-                        
-                        if (retryProcess.ExitCode == 0)
-                        {
-                            // Build succeeded!
-                            Console.WriteLine($"  ✓ Build succeeded after {iteration} iterations, excluded {excludedFiles.Count} files total");
-                            
-                            // Find the generated DACPAC
-                            var releaseDacpac = Path.Combine(projectDir, "bin", "Release", $"{projectName}.dacpac");
-                            if (File.Exists(releaseDacpac))
-                            {
-                                Console.WriteLine($"  ✓ Built DACPAC after excluding problematic objects: {Path.GetFileName(releaseDacpac)}");
-                                return releaseDacpac;
-                            }
-                            
-                            var debugDacpac = Path.Combine(projectDir, "bin", "Debug", $"{projectName}.dacpac");
-                            if (File.Exists(debugDacpac))
-                            {
-                                Console.WriteLine($"  ✓ Built DACPAC after excluding problematic objects: {Path.GetFileName(debugDacpac)}");
-                                return debugDacpac;
-                            }
-                            
-                            Console.WriteLine("  ERROR: Build succeeded but DACPAC file was not found");
-                            break;
-                        }
-                        
-                        // Continue to next iteration if build still fails
-                    }
-                    
-                    if (iteration >= maxIterations)
-                    {
-                        Console.WriteLine($"  ERROR: Reached maximum iterations ({maxIterations}), giving up");
                     }
                     else
                     {
-                        Console.WriteLine($"  ERROR: Build still failed after {iteration} iterations");
-                    }
-                    
-                    // Display limited error output from last attempt
-                    if (!string.IsNullOrWhiteSpace(errors))
-                    {
-                        var errorLines = errors.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-                        var sqlErrors = errorLines.Where(l => l.Contains("SQL", StringComparison.OrdinalIgnoreCase)).Take(5);
-                        if (sqlErrors.Any())
+                        // Subsequent iterations: ONLY cascading dependencies (NOT new SQL71561 errors)
+                        Console.WriteLine($"  Iteration {iteration}: Analyzing cascading dependencies...");
+                        filesToExclude = FindCascadingDependenciesOnly(output, errors, allExcludedFiles.Keys.ToHashSet());
+                        
+                        if (!filesToExclude.Any())
                         {
-                            Console.WriteLine("  Last build errors:");
-                            foreach (var line in sqlErrors)
+                            Console.WriteLine($"    No cascading dependencies found");
+                            break;
+                        }
+                        
+                        Console.WriteLine($"    Found {filesToExclude.Count} cascading dependencies");
+                        
+                        foreach (var kvp in filesToExclude)
+                        {
+                            newExclusionFile.Exclusions.Add(new ExclusionEntry
                             {
-                                Console.WriteLine($"    {line}");
-                            }
+                                File = kvp.Key,
+                                Reason = kvp.Value,
+                                ExcludedOn = DateTime.UtcNow,
+                                Iteration = iteration,
+                                ErrorCode = "CASCADING"
+                            });
                         }
                     }
                     
-                    return null;
+                    // If no files to exclude, we can't proceed
+                    if (!filesToExclude.Any() && iteration == 1)
+                    {
+                        Console.WriteLine("  No files identified for exclusion. Build cannot proceed.");
+                        break;
+                    }
+                    
+                    // Move files to temp and track
+                    foreach (var kvp in filesToExclude)
+                    {
+                        var fullPath = Path.Combine(projectDir, kvp.Key);
+                        if (File.Exists(fullPath))
+                        {
+                            var tempPath = Path.Combine(tempExcludeDir, kvp.Key);
+                            var tempFileDir = Path.GetDirectoryName(tempPath);
+                            if (!string.IsNullOrEmpty(tempFileDir))
+                                Directory.CreateDirectory(tempFileDir);
+                                
+                            File.Move(fullPath, tempPath);
+                            allExcludedFiles[kvp.Key] = tempPath;
+                        }
+                    }
+                    
+                    // Retry build
+                    Console.WriteLine($"  Retrying build (iteration {iteration})...");
+                    
+                    using var retryProcess = Process.Start(processInfo);
+                    if (retryProcess == null)
+                    {
+                        Console.WriteLine("  ERROR: Failed to start retry build process");
+                        break;
+                    }
+                    
+                    output = await retryProcess.StandardOutput.ReadToEndAsync();
+                    errors = await retryProcess.StandardError.ReadToEndAsync();
+                    
+                    await retryProcess.WaitForExitAsync();
+                    
+                    if (retryProcess.ExitCode == 0)
+                    {
+                        // Build succeeded!
+                        var dacpacPath = FindGeneratedDacpac(projectDir, projectName);
+                        if (!string.IsNullOrEmpty(dacpacPath))
+                        {
+                            Console.WriteLine($"  ✓ Build succeeded after {iteration} iterations");
+                            Console.WriteLine($"  ✓ Total files excluded: {newExclusionFile.Exclusions.Count}");
+                            
+                            // Save the new exclusion file
+                            SaveExclusionFile(exclusionFilePath, newExclusionFile);
+                            
+                            return dacpacPath;
+                        }
+                        
+                        Console.WriteLine("  ERROR: Build succeeded but DACPAC file was not found");
+                        break;
+                    }
+                    
+                    // Continue to next iteration if build still fails
                 }
+                
+                if (iteration >= maxIterations)
+                {
+                    Console.WriteLine($"  ERROR: Reached maximum iterations ({maxIterations}), giving up");
+                }
+                else
+                {
+                    Console.WriteLine($"  ERROR: Build still failing after {iteration} iterations");
+                }
+                
+                // Display limited error output from last attempt
+                if (!string.IsNullOrWhiteSpace(errors))
+                {
+                    var errorLines = errors.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                    var sqlErrors = errorLines.Where(l => l.Contains("SQL", StringComparison.OrdinalIgnoreCase)).Take(5);
+                    if (sqlErrors.Any())
+                    {
+                        Console.WriteLine("  Last build errors:");
+                        foreach (var line in sqlErrors)
+                        {
+                            // Keep file path and error on same line, remove extra whitespace
+                            var trimmedLine = System.Text.RegularExpressions.Regex.Replace(line.Trim(), @"\s+", " ");
+                            Console.WriteLine($"    {trimmedLine}");
+                        }
+                    }
+                }
+                
+                return null;
             }
             finally
             {
@@ -866,6 +948,30 @@ public class DacpacMigrationGenerator
             Console.WriteLine($"  ERROR: Exception during dotnet build: {ex.Message}");
             return null;
         }
+    }
+    
+    /// <summary>
+    /// Finds the generated DACPAC file in the build output
+    /// </summary>
+    string? FindGeneratedDacpac(string projectDir, string projectName)
+    {
+        // Check Release build output first
+        var releaseDacpac = Path.Combine(projectDir, "bin", "Release", $"{projectName}.dacpac");
+        if (File.Exists(releaseDacpac))
+        {
+            Console.WriteLine($"  ✓ Found DACPAC: {Path.GetFileName(releaseDacpac)}");
+            return releaseDacpac;
+        }
+        
+        // Check Debug build output
+        var debugDacpac = Path.Combine(projectDir, "bin", "Debug", $"{projectName}.dacpac");
+        if (File.Exists(debugDacpac))
+        {
+            Console.WriteLine($"  ✓ Found DACPAC: {Path.GetFileName(debugDacpac)}");
+            return debugDacpac;
+        }
+        
+        return null;
     }
     
     /// <summary>
@@ -1021,13 +1127,7 @@ public class DacpacMigrationGenerator
         if (cascadingFiles.Any())
         {
             Console.WriteLine($"    Found {cascadingFiles.Count} files with cascading dependencies");
-            if (cascadingFiles.Count <= 5)
-            {
-                foreach (var file in cascadingFiles)
-                {
-                    Console.WriteLine($"      - {file} (references excluded objects)");
-                }
-            }
+            // Detailed output removed - reasons are shown elsewhere
         }
         
         return cascadingFiles;
@@ -1407,43 +1507,17 @@ public class DacpacMigrationGenerator
     {
         var filesToCopy = 0;
         var filesToSkip = 0;
-        var schemasCreated = new HashSet<string>();
-        
-        // First, scan for schemas and create CREATE SCHEMA statements
-        var schemasDir = Path.Combine(sourceDir, "schemas");
-        if (Directory.Exists(schemasDir))
-        {
-            var schemaDirs = Directory.GetDirectories(schemasDir);
-            foreach (var schemaDir in schemaDirs)
-            {
-                var schemaName = Path.GetFileName(schemaDir);
-                // Skip 'dbo' as it exists by default
-                if (!schemaName.Equals("dbo", StringComparison.OrdinalIgnoreCase))
-                {
-                    var schemaFilePath = Path.Combine(destDir, "schemas", $"{schemaName}_schema.sql");
-                    var schemaFileDir = Path.GetDirectoryName(schemaFilePath);
-                    if (!string.IsNullOrEmpty(schemaFileDir))
-                        Directory.CreateDirectory(schemaFileDir);
-                    
-                    // Create the schema creation SQL file
-                    File.WriteAllText(schemaFilePath, $"CREATE SCHEMA [{schemaName}];\nGO\n");
-                    schemasCreated.Add(schemaName);
-                    filesToCopy++;
-                }
-            }
-        }
-        
-        Console.WriteLine($"    Created {schemasCreated.Count} schema creation files");
         
         // Now copy all SQL files
         foreach (var file in Directory.GetFiles(sourceDir, "*.sql", SearchOption.AllDirectories))
         {
             var relativePath = Path.GetRelativePath(sourceDir, file);
             
-            // Skip migrations, change manifests, and other non-schema files
+            // Skip migrations, change manifests, extra.sql, and other non-schema files
             if (relativePath.Contains("z_migrations") || 
                 relativePath.Contains("z_migrations_reverse") ||
-                relativePath.Contains("_change-manifests"))
+                relativePath.Contains("_change-manifests") ||
+                relativePath.Equals("extra.sql", StringComparison.OrdinalIgnoreCase))
             {
                 filesToSkip++;
                 continue;
@@ -1512,6 +1586,423 @@ public class DacpacMigrationGenerator
         File.WriteAllText(projectPath, projectContent);
     }
 
+    /// <summary>
+    /// Loads exclusion file from the schema directory
+    /// </summary>
+    /// <summary>
+    /// Extracts files with SQL71561 errors along with the specific error reasons
+    /// </summary>
+    /// <summary>
+    /// Finds ONLY files that have cascading dependencies on already excluded objects
+    /// Does NOT look for new SQL71561 errors
+    /// </summary>
+    Dictionary<string, string> FindCascadingDependenciesOnly(string output, string errors, HashSet<string> excludedFiles)
+    {
+        var cascadingFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        
+        if (!excludedFiles.Any())
+        {
+            Console.WriteLine("      No excluded files to check for cascading dependencies");
+            return cascadingFiles;
+        }
+        
+        // Extract object names from excluded files
+        var excludedObjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var file in excludedFiles)
+        {
+            // Extract object name from file path (e.g., "schemas/dbo/Views/vw_Something.sql" -> "vw_Something")
+            var fileName = Path.GetFileNameWithoutExtension(file);
+            if (!string.IsNullOrEmpty(fileName))
+            {
+                excludedObjects.Add(fileName);
+                
+                // Also add with schema prefix if available
+                var parts = file.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 2)
+                {
+                    // Try to find schema name (usually after "schemas" folder)
+                    for (int i = 0; i < parts.Length - 1; i++)
+                    {
+                        if (parts[i].Equals("schemas", StringComparison.OrdinalIgnoreCase) && i + 1 < parts.Length)
+                        {
+                            var schema = parts[i + 1];
+                            excludedObjects.Add($"[{schema}].[{fileName}]");
+                            excludedObjects.Add($"{schema}.{fileName}");
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        Console.WriteLine($"      Looking for cascading dependencies from {excludedFiles.Count} excluded files...");
+        
+        var combinedOutput = output + "\n" + errors;
+        var lines = combinedOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        
+        // Also look for any SQL71561 errors that weren't caught in first iteration
+        var newSQL71561Files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        
+        // Process each line looking for references to excluded objects
+        foreach (var line in lines)
+        {
+            // Check if this is a NEW SQL71561 error (not caught in iteration 1)
+            if (line.Contains(SQL_UNRESOLVED_REFERENCE_ERROR, StringComparison.OrdinalIgnoreCase))
+            {
+                // Extract file path from this error
+                var fileMatch = Regex.Match(line, @"([^:\s]+\.sql)(?:\(\d+,\d+\))?", RegexOptions.IgnoreCase);
+                if (fileMatch.Success)
+                {
+                    var filePath = ProcessFilePath(fileMatch.Groups[1].Value.Trim());
+                    if (!excludedFiles.Contains(filePath))
+                    {
+                        newSQL71561Files.Add(filePath);
+                    }
+                }
+            }
+            
+            // Check if line mentions an excluded object
+            bool mentionsExcludedObject = false;
+            string? referencedExcludedObject = null;
+            
+            foreach (var excludedObject in excludedObjects)
+            {
+                if (line.Contains(excludedObject, StringComparison.OrdinalIgnoreCase))
+                {
+                    mentionsExcludedObject = true;
+                    referencedExcludedObject = excludedObject;
+                    break;
+                }
+            }
+            
+            if (!mentionsExcludedObject)
+                continue;
+            
+            // Now extract the file that has the dependency
+            string? filePath2 = null;
+            string reason = "";
+            
+            // Look for file paths in the error line
+            var fileMatch2 = Regex.Match(line, @"([^:\s]+\.sql)(?:\(\d+,\d+\))?", RegexOptions.IgnoreCase);
+            if (fileMatch2.Success)
+            {
+                filePath2 = ProcessFilePath(fileMatch2.Groups[1].Value.Trim());
+                
+                // Don't include files that are already excluded
+                if (excludedFiles.Contains(filePath2))
+                {
+                    filePath2 = null;
+                }
+                else
+                {
+                    // Build a reason based on the error
+                    if (line.Contains(SQL_UNRESOLVED_REFERENCE_ERROR, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Extract the specific error message
+                        var errorMatch = Regex.Match(line, @"SQL71561:\s*(.+)$", RegexOptions.IgnoreCase);
+                        if (errorMatch.Success)
+                        {
+                            reason = $"Cascading dependency: {errorMatch.Groups[1].Value.Trim()}";
+                        }
+                        else
+                        {
+                            // Include the file name in the reason for clarity
+                        var excludedFileName = excludedFiles.FirstOrDefault(f => f.Contains(referencedExcludedObject, StringComparison.OrdinalIgnoreCase));
+                        if (!string.IsNullOrEmpty(excludedFileName))
+                        {
+                            reason = $"Cascading dependency: References excluded {referencedExcludedObject} from {Path.GetFileName(excludedFileName)}";
+                        }
+                        else
+                        {
+                            reason = $"Cascading dependency: References excluded object {referencedExcludedObject}";
+                        }
+                        }
+                    }
+                    else
+                    {
+                        // Include the file name in the reason for clarity
+                        var excludedFileName = excludedFiles.FirstOrDefault(f => f.Contains(referencedExcludedObject, StringComparison.OrdinalIgnoreCase));
+                        if (!string.IsNullOrEmpty(excludedFileName))
+                        {
+                            reason = $"Cascading dependency: References excluded {referencedExcludedObject} from {Path.GetFileName(excludedFileName)}";
+                        }
+                        else
+                        {
+                            reason = $"Cascading dependency: References excluded object {referencedExcludedObject}";
+                        }
+                    }
+                    
+                    // Debug logging removed - too verbose
+                }
+            }
+            
+            // Add the file if we found one
+            if (!string.IsNullOrEmpty(filePath2) && !cascadingFiles.ContainsKey(filePath2))
+            {
+                cascadingFiles[filePath2] = reason;
+            }
+        }
+        
+        // Also check for binding errors that might not have SQL71561
+        foreach (var excludedObject in excludedObjects)
+        {
+            var bindingPattern = $@"([^:\s]+\.sql).*?could not be resolved.*?{Regex.Escape(excludedObject)}";
+            var bindingRegex = new Regex(bindingPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            
+            foreach (Match match in bindingRegex.Matches(combinedOutput))
+            {
+                if (match.Groups.Count > 0)
+                {
+                    var filePath = ProcessFilePath(match.Groups[1].Value.Trim());
+                    
+                    if (!excludedFiles.Contains(filePath) && !cascadingFiles.ContainsKey(filePath))
+                    {
+                        cascadingFiles[filePath] = $"Cascading dependency: Binding error referencing excluded object {excludedObject}";
+                        Console.WriteLine($"        Found binding error for {filePath} referencing {excludedObject}");
+                    }
+                }
+            }
+        }
+        
+        // Log summary of what we found
+        if (newSQL71561Files.Any())
+        {
+            Console.WriteLine($"      WARNING: Found {newSQL71561Files.Count} NEW SQL71561 errors not caught in iteration 1:");
+            foreach (var file in newSQL71561Files.Take(5))
+            {
+                Console.WriteLine($"        - {file}");
+            }
+            Console.WriteLine("      These should have been caught in iteration 1 - checking why they were missed...");
+        }
+        
+        if (cascadingFiles.Any())
+        {
+            Console.WriteLine($"    Found {cascadingFiles.Count} files with cascading dependencies");
+            foreach (var kvp in cascadingFiles)
+            {
+                // Just print the reason which contains all necessary information
+                Console.WriteLine($"      {kvp.Value}");
+            }
+        }
+        else
+        {
+            Console.WriteLine("      No cascading dependencies found");
+        }
+        
+        return cascadingFiles;
+    }
+
+    Dictionary<string, string> ExtractSQL71561FilesWithReasons(string output, string errors)
+    {
+        var filesWithReasons = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var combinedOutput = output + "\n" + errors;
+        
+        // Split by lines to process each error individually
+        var lines = combinedOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        
+        Console.WriteLine($"      Scanning {lines.Length} lines for SQL71561 errors...");
+        var sql71561Count = 0;
+        
+        foreach (var line in lines)
+        {
+            // Only process lines that contain SQL71561
+            if (!line.Contains(SQL_UNRESOLVED_REFERENCE_ERROR, StringComparison.OrdinalIgnoreCase))
+                continue;
+            
+            sql71561Count++;
+            
+            string? filePath = null;
+            string reason = line.Trim();
+            
+            // Debug logging removed
+            
+            // Pattern 1: Standard MSBuild error format
+            // Example: "C:\path\to\file.sql(10,5): Error SQL71561: View: [dbo].[vw_Something] has an unresolved reference to object [OtherDB].[dbo].[Table]"
+            var match = Regex.Match(line, @"([^:\r\n]+\.sql)\(\d+,\d+\):\s*(?:Build\s+)?(?:error|Error)\s+" + SQL_UNRESOLVED_REFERENCE_ERROR + @":\s*(.+)$", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                filePath = ProcessFilePath(match.Groups[1].Value.Trim());
+                // Remove the .sqlproj path from the error message
+                var errorText = match.Groups[2].Value.Trim();
+                // Only remove the trailing .sqlproj path, not the error content
+                errorText = System.Text.RegularExpressions.Regex.Replace(errorText, @"\s*\[[^\[\]]*\.sqlproj\]\s*$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                reason = $"SQL71561: {errorText}";
+                // Debug output removed
+            }
+            else
+            {
+                // Pattern 2: Alternative format
+                // Example: "schemas/dbo/views/vw_Something.sql : error SQL71561: View has unresolved reference"
+                match = Regex.Match(line, @"([^\s:]+\.sql)\s*:\s*error\s+" + SQL_UNRESOLVED_REFERENCE_ERROR + @":\s*(.+)$", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    filePath = ProcessFilePath(match.Groups[1].Value.Trim());
+                    // Remove the .sqlproj path from the error message
+                var errorText = match.Groups[2].Value.Trim();
+                // Only remove the trailing .sqlproj path, not the error content
+                errorText = System.Text.RegularExpressions.Regex.Replace(errorText, @"\s*\[[^\[\]]*\.sqlproj\]\s*$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                reason = $"SQL71561: {errorText}";
+                    // Debug output removed
+                }
+                else
+                {
+                    // Pattern 3: Try to extract any file path from the line
+                    match = Regex.Match(line, @"([^\s\(\)]+\.sql)", RegexOptions.IgnoreCase);
+                    if (match.Success)
+                    {
+                        filePath = ProcessFilePath(match.Groups[1].Value.Trim());
+                        
+                        // Extract the error message after SQL71561
+                        var errorMatch = Regex.Match(line, SQL_UNRESOLVED_REFERENCE_ERROR + @":\s*(.+)$", RegexOptions.IgnoreCase);
+                        if (errorMatch.Success)
+                        {
+                            var errorText = errorMatch.Groups[1].Value.Trim();
+                            // Only remove the trailing .sqlproj path, not the error content
+                errorText = System.Text.RegularExpressions.Regex.Replace(errorText, @"\s*\[[^\[\]]*\.sqlproj\]\s*$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                            reason = $"SQL71561: {errorText}";
+                        }
+                        else
+                        {
+                            reason = $"SQL71561: Unresolved reference error";
+                        }
+                        // Debug output removed
+                    }
+                    // No file path found - skip silently
+                }
+            }
+            
+            // Add the file and reason if we found a valid file path
+            if (!string.IsNullOrEmpty(filePath) && !filesWithReasons.ContainsKey(filePath))
+            {
+                // Clean up the reason - remove excessive whitespace and truncate if too long
+                reason = Regex.Replace(reason, @"\s+", " ").Trim();
+                if (reason.Length > 500)
+                {
+                    reason = reason.Substring(0, 497) + "...";
+                }
+                
+                filesWithReasons[filePath] = reason;
+                // Debug output removed
+            }
+            // Duplicate handling - no output needed
+        }
+        
+        Console.WriteLine($"      Found {sql71561Count} SQL71561 errors");
+        Console.WriteLine($"    Extracted {filesWithReasons.Count} unique files with SQL71561 errors");
+        
+        // If no files found with detailed reasons but we have SQL71561 errors, fall back to object-based extraction
+        if (!filesWithReasons.Any() && sql71561Count > 0)
+        {
+            Console.WriteLine("      No files extracted from error lines, trying object-based extraction...");
+            
+            // Match error patterns with object names for unresolved references
+            var objectPattern = SQL_UNRESOLVED_REFERENCE_ERROR + @":\s*(?:Error validating element\s*)?(?:View|Table|Procedure|Function|Synonym|Trigger|Schema|SqlFile):\s*\[([^\]]+)\]\.?\[([^\]]+)\].*?(?:has an unresolved reference to (?:object\s*)?(.+?)(?:\.|$))?";
+            var objectRegex = new Regex(objectPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            
+            foreach (Match match in objectRegex.Matches(combinedOutput))
+            {
+                if (match.Groups.Count > 2)
+                {
+                    var schema = match.Groups[1].Value;
+                    var objectName = match.Groups[2].Value;
+                    var referencedObject = match.Groups.Count > 3 ? match.Groups[3].Value.Trim() : "unknown object";
+                    
+                    Console.WriteLine($"        Found object reference: [{schema}].[{objectName}] -> {referencedObject}");
+                    
+                    // Try to find the file based on schema and object name
+                    var possiblePaths = new[]
+                    {
+                        Path.Combine("schemas", schema, "Tables", $"{objectName}.sql"),
+                        Path.Combine("schemas", schema, "Views", $"{objectName}.sql"),
+                        Path.Combine("schemas", schema, "Procedures", $"{objectName}.sql"),
+                        Path.Combine("schemas", schema, "Functions", $"{objectName}.sql"),
+                        Path.Combine("schemas", schema, $"{objectName}.sql")
+                    };
+                    
+                    var reason = $"SQL71561: [{schema}].[{objectName}] has unresolved reference to {referencedObject}";
+                    
+                    foreach (var path in possiblePaths)
+                    {
+                        if (!filesWithReasons.ContainsKey(path))
+                        {
+                            filesWithReasons[path] = reason;
+                            Console.WriteLine($"          Guessed file path: {path}");
+                            break; // Only add once
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (filesWithReasons.Count > 0)
+        {
+            // Show all errors, not truncated
+            foreach (var kvp in filesWithReasons)
+            {
+                // Just print the error reason which already contains the file path
+                Console.WriteLine($"      {kvp.Value}");
+            }
+        }
+        
+        return filesWithReasons;
+    }
+
+    ExclusionFile? LoadExclusionFile(string exclusionFilePath)
+    {
+        try
+        {
+            if (!File.Exists(exclusionFilePath))
+                return null;
+                
+            var json = File.ReadAllText(exclusionFilePath);
+            var exclusionFile = System.Text.Json.JsonSerializer.Deserialize<ExclusionFile>(json);
+            
+            if (exclusionFile != null)
+            {
+                Console.WriteLine($"  Loaded exclusion file with {exclusionFile.Exclusions.Count} exclusions");
+                Console.WriteLine($"  Last successful build: {exclusionFile.LastSuccessfulBuild:yyyy-MM-dd HH:mm:ss}");
+            }
+            
+            return exclusionFile;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"  WARNING: Failed to load exclusion file: {ex.Message}");
+            return null;
+        }
+    }
+    
+    /// <summary>
+    /// Saves exclusion file to the schema directory
+    /// </summary>
+    void SaveExclusionFile(string exclusionFilePath, ExclusionFile exclusionFile)
+    {
+        try
+        {
+            var options = new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+            
+            var json = System.Text.Json.JsonSerializer.Serialize(exclusionFile, options);
+            File.WriteAllText(exclusionFilePath, json);
+            
+            Console.WriteLine($"  ✓ Saved exclusion file: {Path.GetFileName(exclusionFilePath)}");
+            Console.WriteLine($"    Total exclusions: {exclusionFile.Exclusions.Count}");
+            
+            // Group by error code for summary
+            var byErrorCode = exclusionFile.Exclusions.GroupBy(e => e.ErrorCode);
+            foreach (var group in byErrorCode)
+            {
+                Console.WriteLine($"    - {group.Key}: {group.Count()} files");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"  WARNING: Failed to save exclusion file: {ex.Message}");
+        }
+    }
+
     string SanitizeForFilename(string input)
     {
         var invalid = Path.GetInvalidFileNameChars();
@@ -1539,4 +2030,27 @@ public class MigrationGenerationResult
     public string? MigrationPath { get; set; }
     public string? ReverseMigrationPath { get; set; }
     public bool HasChanges { get; set; }
+}
+
+/// <summary>
+/// Represents a single excluded file entry in the DACPAC build exclusion file
+/// </summary>
+public class ExclusionEntry
+{
+    public string File { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+    public DateTime ExcludedOn { get; set; }
+    public int Iteration { get; set; }
+    public string ErrorCode { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Represents the DACPAC build exclusion file structure
+/// </summary>
+public class ExclusionFile
+{
+    public string Version { get; set; } = "1.0";
+    public DateTime Generated { get; set; }
+    public DateTime LastSuccessfulBuild { get; set; }
+    public List<ExclusionEntry> Exclusions { get; set; } = new();
 }

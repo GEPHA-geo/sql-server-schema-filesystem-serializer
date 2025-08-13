@@ -14,13 +14,11 @@ public class DacpacScriptParser
         
         // Count total GO statements in original script
         var totalGoStatements = CountGoStatements(script);
-        Console.WriteLine($"Total GO statements in script: {totalGoStatements}");
         
-        // Split script into individual statements
-        var statements = SplitIntoStatements(script);
-        Console.WriteLine($"Parsed statements: {statements.Count}");
+        // Split script into individual statements, tracking skipped ones
+        var (statements, skippedStatements) = SplitIntoStatementsWithSkipped(script);
         
-        // Verify parsing completeness
+        // Verify parsing completeness - only show errors
         VerifyParsingCompleteness(script, statements, totalGoStatements);
         
         // Group statements by object
@@ -36,23 +34,27 @@ public class DacpacScriptParser
             processedCount += objectGroup.Value.Count;
         }
         
+        // Save skipped statements to extra.sql if any exist
+        if (skippedStatements.Any())
+        {
+            SaveSkippedStatements(skippedStatements, basePath);
+        }
+        
         // Create README for empty schemas if needed
         CreateEmptySchemaReadmes(basePath);
         
-        // Final verification
-        Console.WriteLine($"\nProcessed {processedCount} statements out of {statements.Count} parsed statements");
-        Console.WriteLine($"Created {CountGeneratedFiles(basePath)} SQL files");
-        
+        // Only show errors/warnings
         if (processedCount < statements.Count)
         {
-            Console.WriteLine($"WARNING: {statements.Count - processedCount} statements were not processed!");
+            Console.WriteLine($"WARNING: {statements.Count - processedCount} parsed statements were not processed!");
         }
     }
 
-    List<SqlStatement> SplitIntoStatements(string script)
+    (List<SqlStatement>, List<string>) SplitIntoStatementsWithSkipped(string script)
     {
         var statements = new List<SqlStatement>();
-        var lines = script.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        var skippedStatements = new List<string>();
+        var lines = script.Split(["\r\n", "\r", "\n"], StringSplitOptions.None);
         var currentStatement = new List<string>();
         
         foreach (var line in lines)
@@ -66,6 +68,11 @@ public class DacpacScriptParser
                     if (statement != null)
                     {
                         statements.Add(statement);
+                    }
+                    else if (!string.IsNullOrWhiteSpace(statementText))
+                    {
+                        // Save skipped statements that aren't empty
+                        skippedStatements.Add(statementText);
                     }
                     currentStatement.Clear();
                 }
@@ -85,8 +92,19 @@ public class DacpacScriptParser
             {
                 statements.Add(statement);
             }
+            else if (!string.IsNullOrWhiteSpace(statementText))
+            {
+                skippedStatements.Add(statementText);
+            }
         }
         
+        return (statements, skippedStatements);
+    }
+    
+    // Keep the old method for backward compatibility, but have it call the new one
+    List<SqlStatement> SplitIntoStatements(string script)
+    {
+        var (statements, _) = SplitIntoStatementsWithSkipped(script);
         return statements;
     }
 
@@ -209,6 +227,56 @@ public class DacpacScriptParser
                 }
             }
         }
+        else if (Regex.IsMatch(statementText, @"ALTER\s+DATABASE.*?ADD\s+FILEGROUP", RegexOptions.IgnoreCase | RegexOptions.Singleline))
+        {
+            statement.Type = ObjectType.Filegroup;
+            var match = Regex.Match(statementText, @"ADD\s+FILEGROUP\s+\[?([^\]]+)\]?", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                statement.Name = match.Groups[1].Value;
+                statement.Schema = "sys"; // Filegroups are system-level objects
+            }
+        }
+        else if (Regex.IsMatch(statementText, @"CREATE\s+SCHEMA", RegexOptions.IgnoreCase))
+        {
+            statement.Type = ObjectType.Schema;
+            var match = Regex.Match(statementText, @"CREATE\s+SCHEMA\s+\[?([^\]\s]+)\]?", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                statement.Name = match.Groups[1].Value;
+                statement.Schema = "sys"; // Schemas are system-level objects
+            }
+        }
+        else if (Regex.IsMatch(statementText, @"CREATE\s+USER", RegexOptions.IgnoreCase))
+        {
+            statement.Type = ObjectType.User;
+            var match = Regex.Match(statementText, @"CREATE\s+USER\s+\[?([^\]\s]+)\]?", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                statement.Name = match.Groups[1].Value;
+                statement.Schema = "sys"; // Users are database-level objects
+            }
+        }
+        else if (Regex.IsMatch(statementText, @"CREATE\s+LOGIN", RegexOptions.IgnoreCase))
+        {
+            statement.Type = ObjectType.Login;
+            var match = Regex.Match(statementText, @"CREATE\s+LOGIN\s+\[?([^\]\s]+)\]?", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                statement.Name = match.Groups[1].Value;
+                statement.Schema = "sys"; // Logins are server-level objects
+            }
+        }
+        else if (Regex.IsMatch(statementText, @"CREATE\s+ROLE", RegexOptions.IgnoreCase))
+        {
+            statement.Type = ObjectType.Role;
+            var match = Regex.Match(statementText, @"CREATE\s+ROLE\s+\[?([^\]\s]+)\]?", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                statement.Name = match.Groups[1].Value;
+                statement.Schema = "sys"; // Roles are database-level objects
+            }
+        }
         else
         {
             // Skip statements we don't handle
@@ -252,7 +320,7 @@ public class DacpacScriptParser
             
             if (!groups.ContainsKey(key))
             {
-                groups[key] = new List<SqlStatement>();
+                groups[key] = [];
             }
             
             groups[key].Add(statement);
@@ -290,6 +358,26 @@ public class DacpacScriptParser
         else if (firstStatement.Type == ObjectType.Function)
         {
             ProcessFunction(firstStatement, basePath);
+        }
+        else if (firstStatement.Type == ObjectType.Filegroup)
+        {
+            ProcessFilegroup(firstStatement, basePath);
+        }
+        else if (firstStatement.Type == ObjectType.Schema)
+        {
+            ProcessSchema(firstStatement, basePath);
+        }
+        else if (firstStatement.Type == ObjectType.User)
+        {
+            ProcessUser(firstStatement, basePath);
+        }
+        else if (firstStatement.Type == ObjectType.Login)
+        {
+            ProcessLogin(firstStatement, basePath);
+        }
+        else if (firstStatement.Type == ObjectType.Role)
+        {
+            ProcessRole(firstStatement, basePath);
         }
     }
 
@@ -349,6 +437,69 @@ public class DacpacScriptParser
         var filePath = Path.Combine(functionsPath, $"{statement.Name}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
+    
+    void ProcessFilegroup(SqlStatement statement, string basePath)
+    {
+        // Filegroups are stored at the root level, not under schemas
+        var filegroupsPath = Path.Combine(basePath, "filegroups");
+        FileSystemManager.CreateDirectory(filegroupsPath);
+        
+        var filePath = Path.Combine(filegroupsPath, $"{statement.Name}.sql");
+        _fileSystemManager.WriteFile(filePath, statement.Text);
+    }
+    
+    void ProcessSchema(SqlStatement statement, string basePath)
+    {
+        // Create schemas directory at the root level
+        var schemasPath = Path.Combine(basePath, "schemas");
+        FileSystemManager.CreateDirectory(schemasPath);
+        
+        // Create the schema directory structure for organizing objects
+        var schemaDir = Path.Combine(schemasPath, statement.Name);
+        FileSystemManager.CreateDirectory(schemaDir);
+        
+        // Store the schema CREATE statement inside the schema directory
+        var filePath = Path.Combine(schemaDir, $"{statement.Name}.sql");
+        _fileSystemManager.WriteFile(filePath, statement.Text);
+    }
+    
+    void ProcessUser(SqlStatement statement, string basePath)
+    {
+        // Users are stored at the root level in a users directory
+        var usersPath = Path.Combine(basePath, "users");
+        FileSystemManager.CreateDirectory(usersPath);
+        
+        var filePath = Path.Combine(usersPath, $"{statement.Name}.sql");
+        _fileSystemManager.WriteFile(filePath, statement.Text);
+    }
+    
+    void ProcessLogin(SqlStatement statement, string basePath)
+    {
+        // Logins are stored at the root level in a logins directory
+        var loginsPath = Path.Combine(basePath, "logins");
+        FileSystemManager.CreateDirectory(loginsPath);
+        
+        var filePath = Path.Combine(loginsPath, $"{statement.Name}.sql");
+        _fileSystemManager.WriteFile(filePath, statement.Text);
+    }
+    
+    void ProcessRole(SqlStatement statement, string basePath)
+    {
+        // Roles are stored at the root level in a roles directory
+        var rolesPath = Path.Combine(basePath, "roles");
+        FileSystemManager.CreateDirectory(rolesPath);
+        
+        var filePath = Path.Combine(rolesPath, $"{statement.Name}.sql");
+        _fileSystemManager.WriteFile(filePath, statement.Text);
+    }
+    
+    void SaveSkippedStatements(List<string> skippedStatements, string basePath)
+    {
+        // Save all skipped statements to extra.sql
+        var filePath = Path.Combine(basePath, "extra.sql");
+        var content = string.Join("\nGO\n", skippedStatements);
+        _fileSystemManager.WriteFile(filePath, content);
+    }
 
     string GetFilePrefix(ObjectType type) => type switch
     {
@@ -386,7 +537,7 @@ public class DacpacScriptParser
 
     int CountGoStatements(string script)
     {
-        var lines = script.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        var lines = script.Split(["\r\n", "\r", "\n"], StringSplitOptions.None);
         return lines.Count(line => line.Trim().Equals("GO", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -397,73 +548,19 @@ public class DacpacScriptParser
 
     void VerifyParsingCompleteness(string script, List<SqlStatement> statements, int totalGoStatements)
     {
-        // Count different statement types in original script
-        var originalCounts = new Dictionary<string, int>
+        // Calculate totals
+        var totalStatements = statements.Count;
+        var skippedStatements = totalGoStatements - totalStatements;
+        
+        // Final accounting - only show errors
+        var totalAccountedFor = totalStatements + skippedStatements;
+        if (totalAccountedFor != totalGoStatements)
         {
-            ["CREATE TABLE"] = CountPattern(script, @"CREATE\s+TABLE"),
-            ["PRIMARY KEY"] = CountPattern(script, @"ALTER\s+TABLE\s+[^\s]+\s+ADD\s+CONSTRAINT\s+[^\s]+\s+PRIMARY\s+KEY"),
-            ["FOREIGN KEY"] = CountPattern(script, @"ADD\s+CONSTRAINT\s+\[FK_[^\]]+\]\s+FOREIGN\s+KEY"),
-            ["CHECK"] = CountPattern(script, @"WITH\s+CHECK\s+ADD\s+CONSTRAINT.*CHECK\s*\("),
-            ["DEFAULT"] = CountPattern(script, @"ADD\s+CONSTRAINT\s+\[[^\]]+\]\s+DEFAULT"),
-            ["INDEX"] = CountPattern(script, @"CREATE\s+(UNIQUE\s+)?(CLUSTERED\s+|NONCLUSTERED\s+)?INDEX"),
-            ["TRIGGER"] = CountPattern(script, @"CREATE\s+TRIGGER"),
-            ["VIEW"] = CountPattern(script, @"CREATE\s+VIEW"),
-            ["PROCEDURE"] = CountPattern(script, @"CREATE\s+PROCEDURE"),
-            ["FUNCTION"] = CountPattern(script, @"CREATE\s+FUNCTION"),
-            ["EXTENDED PROPERTY"] = CountPattern(script, @"sp_addextendedproperty"),
-            ["INLINE PRIMARY KEY"] = CountPattern(script, @"CONSTRAINT\s+\[[^\]]+\]\s+PRIMARY\s+KEY")
-        };
-        
-        // Count parsed statement types
-        var parsedCounts = new Dictionary<ObjectType, int>();
-        foreach (var stmt in statements)
-        {
-            parsedCounts.TryAdd(stmt.Type, 0);
-            parsedCounts[stmt.Type]++;
-        }
-        
-        // Display comparison
-        Console.WriteLine("\n=== Statement Type Verification ===");
-        Console.WriteLine($"{"Type",-20} {"Original",-10} {"Parsed",-10} {"Status",-10}");
-        Console.WriteLine(new string('-', 50));
-        
-        CheckCount("Tables", originalCounts["CREATE TABLE"], 
-            parsedCounts.GetValueOrDefault(ObjectType.Table, 0));
-        var pkNote = originalCounts["PRIMARY KEY"] > 0 && (!parsedCounts.ContainsKey(ObjectType.PrimaryKey) || parsedCounts[ObjectType.PrimaryKey] == 0) 
-            ? " (inline with tables)" : "";
-        CheckCount("Primary Keys" + pkNote, originalCounts["PRIMARY KEY"], 
-            parsedCounts.GetValueOrDefault(ObjectType.PrimaryKey, 0));
-        CheckCount("Foreign Keys", originalCounts["FOREIGN KEY"], 
-            parsedCounts.GetValueOrDefault(ObjectType.ForeignKey, 0));
-        CheckCount("Check Constraints", originalCounts["CHECK"], 
-            parsedCounts.GetValueOrDefault(ObjectType.CheckConstraint, 0));
-        CheckCount("Default Constraints", originalCounts["DEFAULT"], 
-            parsedCounts.GetValueOrDefault(ObjectType.DefaultConstraint, 0));
-        CheckCount("Indexes", originalCounts["INDEX"], 
-            parsedCounts.GetValueOrDefault(ObjectType.Index, 0));
-        CheckCount("Triggers", originalCounts["TRIGGER"], 
-            parsedCounts.GetValueOrDefault(ObjectType.Trigger, 0));
-        CheckCount("Views", originalCounts["VIEW"], 
-            parsedCounts.GetValueOrDefault(ObjectType.View, 0));
-        CheckCount("Stored Procedures", originalCounts["PROCEDURE"], 
-            parsedCounts.GetValueOrDefault(ObjectType.StoredProcedure, 0));
-        CheckCount("Functions", originalCounts["FUNCTION"], 
-            parsedCounts.GetValueOrDefault(ObjectType.Function, 0));
-        CheckCount("Extended Properties", originalCounts.GetValueOrDefault("EXTENDED PROPERTY", 0), 
-            parsedCounts.GetValueOrDefault(ObjectType.ExtendedProperty, 0));
-        
-        // Warn about unparsed statements
-        var totalOriginal = originalCounts.Values.Sum();
-        var totalParsed = statements.Count;
-        var skippedStatements = totalGoStatements - totalParsed;
-        
-        Console.WriteLine(new string('-', 50));
-        Console.WriteLine($"{"Total",-20} {totalOriginal,-10} {totalParsed,-10}");
-        
-        if (skippedStatements > 0)
-        {
-            Console.WriteLine($"\nWARNING: {skippedStatements} statements were skipped during parsing!");
-            Console.WriteLine("These might be unsupported statement types or system-generated statements.");
+            Console.WriteLine($"ERROR: Statement accounting mismatch!");
+            Console.WriteLine($"   Total GO statements: {totalGoStatements}");
+            Console.WriteLine($"   Parsed + Skipped: {totalAccountedFor}");
+            Console.WriteLine($"   Missing: {totalGoStatements - totalAccountedFor}");
+            throw new InvalidOperationException("Not all statements are accounted for!");
         }
     }
 
@@ -504,5 +601,10 @@ public enum ObjectType
     View,
     StoredProcedure,
     Function,
-    ExtendedProperty
+    ExtendedProperty,
+    Filegroup,
+    Schema,
+    User,
+    Login,
+    Role
 }

@@ -60,7 +60,7 @@ public class DacpacMigrationGeneratorTests : IDisposable
         var migrationsPath = Path.Combine(_testDirectory, "migrations");
         
         // Create a test SCMP comparison
-        var scmpComparison = new SchemaComparison
+        var scmpComparison = new Exclusion.Manager.Core.Models.SchemaComparison
         {
             Version = "10",
             SchemaCompareSettingsService = new SchemaCompareSettingsService

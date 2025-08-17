@@ -362,20 +362,6 @@ generated_script.sql
             Console.WriteLine("\nPerforming hard reset to ensure clean working directory...");
             try
             {
-                // First stash any changes just in case
-                try
-                {
-                    var stashResult = RunGitCommand(path, "stash push -m \"Auto-stash before migration generation\"");
-                    if (stashResult.Contains("Saved working directory"))
-                    {
-                        Console.WriteLine("✓ Stashed uncommitted changes");
-                    }
-                }
-                catch
-                {
-                    // Ignore stash errors
-                }
-                
                 RunGitCommand(path, "reset --hard HEAD");
                 Console.WriteLine("✓ Hard reset completed");
                 

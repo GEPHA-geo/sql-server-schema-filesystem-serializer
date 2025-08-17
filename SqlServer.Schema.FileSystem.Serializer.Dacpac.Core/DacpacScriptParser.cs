@@ -6,7 +6,7 @@ public class DacpacScriptParser
 {
     readonly FileSystemManager _fileSystemManager = new();
 
-    public void ParseAndOrganizeScripts(string script, string outputPath, string targetServer, string targetDatabase)
+    public void ParseAndOrganizeScripts(string script, string outputPath, string targetServer, string targetDatabase, HashSet<string>? excludedObjectNames = null)
     {
         // Create base directory with new hierarchical structure
         var basePath = Path.Combine(outputPath, "servers", targetServer, targetDatabase);
@@ -26,10 +26,19 @@ public class DacpacScriptParser
         
         // Track processed statements
         var processedCount = 0;
+        var excludedCount = 0;
         
         // Process each object group
         foreach (var objectGroup in objectGroups)
         {
+            // Check if this object should be excluded
+            if (excludedObjectNames != null && IsObjectExcluded(objectGroup.Key, excludedObjectNames))
+            {
+                excludedCount++;
+                processedCount += objectGroup.Value.Count;
+                continue; // Skip generating files for excluded objects
+            }
+            
             ProcessObjectGroup(objectGroup, basePath);
             processedCount += objectGroup.Value.Count;
         }
@@ -43,11 +52,27 @@ public class DacpacScriptParser
         // Create README for empty schemas if needed
         CreateEmptySchemaReadmes(basePath);
         
+        // Report exclusions
+        if (excludedCount > 0)
+        {
+            Console.WriteLine($"Excluded {excludedCount} objects based on SCMP configuration");
+        }
+        
         // Only show errors/warnings
         if (processedCount < statements.Count)
         {
             Console.WriteLine($"WARNING: {statements.Count - processedCount} parsed statements were not processed!");
         }
+    }
+
+    private static bool IsObjectExcluded(string objectName, HashSet<string> excludedObjectNames)
+    {
+        // Check if the object name matches any excluded object
+        // Handle different formats: [schema].[object] vs schema.object
+        var normalizedObjectName = objectName.Replace("[", "").Replace("]", "");
+        
+        return excludedObjectNames.Contains(objectName) || 
+               excludedObjectNames.Contains(normalizedObjectName);
     }
 
     (List<SqlStatement>, List<string>) SplitIntoStatementsWithSkipped(string script)

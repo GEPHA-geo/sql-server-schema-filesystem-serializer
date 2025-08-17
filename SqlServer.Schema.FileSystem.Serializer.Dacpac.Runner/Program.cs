@@ -1,6 +1,9 @@
 using System.CommandLine;
+using System.Diagnostics;
 using Microsoft.Data.SqlClient;
 using Microsoft.SqlServer.Dac;
+using Microsoft.SqlServer.Dac.Compare;
+using Microsoft.SqlServer.Dac.Model;
 using SqlServer.Schema.FileSystem.Serializer.Dacpac.Core;
 using SqlServer.Schema.Migration.Generator.GitIntegration;
 using SqlServer.Schema.Exclusion.Manager.Core.Services;
@@ -14,394 +17,339 @@ internal static class Program
 {
     static async Task<int> Main(string[] args)
     {
-        var rootCommand = new RootCommand("SQL Server DACPAC Structure Generator - Extracts database schema and generates file-based representation");
+        var rootCommand = new RootCommand("SQL Server SCMP-based DACPAC Tool - Generates database comparisons and migrations using SCMP files");
         
-        // Define options - now optional when SCMP is provided
-        var sourceConnectionOption = new Option<string?>(
-            aliases: new[] { "--source-connection" },
-            description: "Source database connection string (optional if SCMP file is provided)"
-        ) { IsRequired = false };
-        
-        var targetServerOption = new Option<string?>(
-            aliases: new[] { "--target-server" },
-            description: "Target server name for output directory (optional if SCMP file is provided)"
-        ) { IsRequired = false };
-        
-        var targetDatabaseOption = new Option<string?>(
-            aliases: new[] { "--target-database" },
-            description: "Target database name for output directory (optional if SCMP file is provided)"
-        ) { IsRequired = false };
-        
-        var outputPathOption = new Option<string>(
-            aliases: new[] { "--output-path" },
-            description: "Output directory path for generated schema files"
+        // SCMP file is now REQUIRED
+        var scmpFileOption = new Option<string>(
+            aliases: new[] { "--scmp" },
+            description: "Path to SCMP file containing comparison settings and exclusions (REQUIRED)"
         ) { IsRequired = true };
         
+        // Required passwords for source and target databases
+        var sourcePasswordOption = new Option<string>(
+            aliases: new[] { "--source-password" },
+            description: "Password for source database connection (REQUIRED)"
+        ) { IsRequired = true };
+        
+        var targetPasswordOption = new Option<string>(
+            aliases: new[] { "--target-password" },
+            description: "Password for target database connection (REQUIRED)"
+        ) { IsRequired = true };
+        
+        // Output path is required
+        var outputPathOption = new Option<string>(
+            aliases: new[] { "--output-path" },
+            description: "Output directory path for generated files (REQUIRED)"
+        ) { IsRequired = true };
+        
+        // Optional parameters
         var commitMessageOption = new Option<string?>(
             aliases: new[] { "--commit-message" },
-            description: "Custom commit message for migration generation (optional)"
+            description: "Custom commit message (optional)"
         ) { IsRequired = false };
         
-        // Define skip exclusion manager option
         var skipExclusionManagerOption = new Option<bool>(
             aliases: new[] { "--skip-exclusion-manager" },
-            description: "Skip running the exclusion manager after schema extraction"
-        ) { IsRequired = false };
-        
-        // Define SCMP file option for exclusion management
-        var scmpFileOption = new Option<string?>(
-            aliases: new[] { "--scmp" },
-            description: "Path to SCMP file containing comparison settings and exclusions (optional)"
-        ) { IsRequired = false };
-        
-        // Define source password option for SCMP scenarios
-        var sourcePasswordOption = new Option<string?>(
-            aliases: new[] { "--source-password" },
-            description: "Password for source database connection (required when using SCMP file with SQL authentication)"
+            description: "Skip exclusion manager step (optional)"
         ) { IsRequired = false };
         
         // Add options to root command
-        rootCommand.AddOption(sourceConnectionOption);
-        rootCommand.AddOption(targetServerOption);
-        rootCommand.AddOption(targetDatabaseOption);
+        rootCommand.AddOption(scmpFileOption);
+        rootCommand.AddOption(sourcePasswordOption);
+        rootCommand.AddOption(targetPasswordOption);
         rootCommand.AddOption(outputPathOption);
         rootCommand.AddOption(commitMessageOption);
         rootCommand.AddOption(skipExclusionManagerOption);
-        rootCommand.AddOption(scmpFileOption);
-        rootCommand.AddOption(sourcePasswordOption);
         
-        // Set handler - now with SCMP support and optional source/target parameters
-        rootCommand.SetHandler(async (string? sourceConnection, string? targetServer, string? targetDatabase, string outputPath, string? commitMessage, bool skipExclusionManager, string? scmpFile, string? sourcePassword) =>
+        // Set handler with all required parameters
+        rootCommand.SetHandler(async (string scmpFile, string sourcePassword, string targetPassword, string outputPath, string? commitMessage, bool skipExclusionManager) =>
         {
-            await RunDacpacExtraction(sourceConnection, targetServer, targetDatabase, outputPath, commitMessage, skipExclusionManager, scmpFile, sourcePassword);
-        }, sourceConnectionOption, targetServerOption, targetDatabaseOption, outputPathOption, commitMessageOption, skipExclusionManagerOption, scmpFileOption, sourcePasswordOption);
+            await RunDacpacExtraction(scmpFile, sourcePassword, targetPassword, outputPath, commitMessage);
+        }, scmpFileOption, sourcePasswordOption, targetPasswordOption, outputPathOption, commitMessageOption, skipExclusionManagerOption);
         
-        // Named parameters are now required - no positional argument support
         return await rootCommand.InvokeAsync(args);
     }
     
-    static async Task RunDacpacExtraction(string? sourceConnectionString, string? targetServer, string? targetDatabase, string outputPath, string? commitMessage = null, bool skipExclusionManager = false, string? scmpFilePath = null, string? sourcePassword = null)
+    static async Task RunDacpacExtraction(string scmpFilePath, string sourcePassword, string targetPassword, string outputPath, string? commitMessage = null)
     {
-        // Store the loaded SCMP comparison for later use
-        SchemaComparison? scmpComparison = null;
-        
-        // If SCMP file is provided, extract connection information from it
-        if (!string.IsNullOrEmpty(scmpFilePath))
+        try
         {
-            Console.WriteLine($"Loading SCMP file to extract connection information: {scmpFilePath}");
+            Console.WriteLine("=== SCMP-Based DACPAC Tool ===");
+            Console.WriteLine($"Loading SCMP file: {scmpFilePath}");
             
+            // Configure Git safe directory for Docker environments
+            ConfigureGitSafeDirectory(outputPath);
+            
+            // Load SCMP file using our custom handler to extract connection info
+            var scmpHandler = new ScmpManifestHandler();
+            var scmpModel = await scmpHandler.LoadManifestAsync(scmpFilePath);
+            
+            if (scmpModel == null)
+            {
+                Console.WriteLine("❌ Error: Failed to load SCMP file");
+                Environment.Exit(1);
+            }
+            
+            // Extract server and database information from SCMP
+            var (sourceServer, targetServer) = scmpHandler.GetServerInfo(scmpModel);
+            var (sourceDb, targetDb) = scmpHandler.GetDatabaseInfo(scmpModel);
+            
+            Console.WriteLine($"Source: {sourceServer}/{sourceDb}");
+            Console.WriteLine($"Target: {targetServer}/{targetDb}");
+            
+            // Get connection strings from SCMP and update with provided passwords
+            var sourceConnectionString = scmpModel.SourceModelProvider?.ConnectionBasedModelProvider?.ConnectionString;
+            var targetConnectionString = scmpModel.TargetModelProvider?.ConnectionBasedModelProvider?.ConnectionString;
+            
+            if (string.IsNullOrEmpty(sourceConnectionString))
+            {
+                Console.WriteLine("❌ Error: Source connection string not found in SCMP file");
+                Environment.Exit(1);
+            }
+            
+            if (string.IsNullOrEmpty(targetConnectionString))
+            {
+                Console.WriteLine("❌ Error: Target connection string not found in SCMP file");
+                Environment.Exit(1);
+            }
+            
+            // Update connection strings with provided passwords
+            var sourceBuilder = new SqlConnectionStringBuilder(sourceConnectionString);
+            if (!sourceBuilder.IntegratedSecurity)
+            {
+                sourceBuilder.Password = sourcePassword;
+            }
+            sourceConnectionString = sourceBuilder.ConnectionString;
+            
+            var targetBuilder = new SqlConnectionStringBuilder(targetConnectionString);
+            if (!targetBuilder.IntegratedSecurity)
+            {
+                targetBuilder.Password = targetPassword;
+            }
+            targetConnectionString = targetBuilder.ConnectionString;
+            
+            // Sanitize server names for folder paths
+            var sanitizedTargetServer = targetServer?.Replace('\\', '-').Replace(':', '-') ?? "unknown-server";
+            
+            // Set up output paths
+            var targetOutputPath = Path.Combine(outputPath, "servers", sanitizedTargetServer, targetDb ?? "unknown-db");
+            Directory.CreateDirectory(targetOutputPath);
+            
+            Console.WriteLine($"Output path: {targetOutputPath}");
+            
+            // Initialize Git repository state
+            var gitAnalyzer = new GitDiffAnalyzer();
+            if (gitAnalyzer.IsGitRepository(outputPath))
+            {
+                Console.WriteLine("=== Preparing Git repository ===");
+                var checkoutResult = gitAnalyzer.CheckoutBranch(outputPath, "origin/main");
+                if (!checkoutResult.success)
+                {
+                    Console.WriteLine($"❌ Git operation failed: {checkoutResult.message}");
+                    throw new InvalidOperationException($"Git branch setup failed: {checkoutResult.message}");
+                }
+                Console.WriteLine(checkoutResult.message);
+            }
+            
+            // === Phase 1: Build Target Filesystem DACPAC ===
+            Console.WriteLine("\n=== Phase 1: Building Target Filesystem DACPAC ===");
+            // Create descriptive DACPAC filename with server and database names
+            var targetServerClean = targetServer?.Replace("\\", "_").Replace(".", "_").Replace(":", "_") ?? "unknown";
+            var targetDbClean = targetDb?.Replace(" ", "_") ?? "unknown";
+            var targetFilesystemDacpac = Path.Combine(targetOutputPath, $"{targetServerClean}_{targetDbClean}_filesystem.dacpac");
+            
+            // Create git worktree of committed state
+            var worktreePath = Path.Combine(Path.GetTempPath(), $"worktree_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}");
             try
             {
-                var scmpHandler = new ScmpManifestHandler();
-                scmpComparison = await scmpHandler.LoadManifestAsync(scmpFilePath);
-                
-                if (scmpComparison != null)
+                // Create worktree from origin/main
+                var worktreeProcess = new System.Diagnostics.Process
                 {
-                    // Extract server and database information from SCMP
-                    var (scmpSourceServer, scmpTargetServer) = scmpHandler.GetServerInfo(scmpComparison);
-                    var (scmpSourceDb, scmpTargetDb) = scmpHandler.GetDatabaseInfo(scmpComparison);
-                    
-                    // If parameters weren't provided explicitly, use values from SCMP
-                    if (string.IsNullOrEmpty(sourceConnectionString))
+                    StartInfo = new System.Diagnostics.ProcessStartInfo
                     {
-                        // Get connection string from SCMP source
-                        sourceConnectionString = scmpComparison.SourceModelProvider?.ConnectionBasedModelProvider?.ConnectionString;
-                        
-                        // If a password was provided separately, update the connection string
-                        if (!string.IsNullOrEmpty(sourceConnectionString) && !string.IsNullOrEmpty(sourcePassword))
-                        {
-                            var builder = new SqlConnectionStringBuilder(sourceConnectionString);
-                            
-                            // Only update password if the connection string uses SQL authentication
-                            if (!builder.IntegratedSecurity)
-                            {
-                                builder.Password = sourcePassword;
-                                sourceConnectionString = builder.ConnectionString;
-                                Console.WriteLine($"Using source connection from SCMP with provided password: {scmpSourceServer}/{scmpSourceDb}");
-                            }
-                            else
-                            {
-                                Console.WriteLine($"Using source connection from SCMP (Windows auth): {scmpSourceServer}/{scmpSourceDb}");
-                            }
-                        }
-                        else if (!string.IsNullOrEmpty(sourceConnectionString))
-                        {
-                            Console.WriteLine($"Using source connection from SCMP: {scmpSourceServer}/{scmpSourceDb}");
-                        }
+                        FileName = "git",
+                        Arguments = $"worktree add \"{worktreePath}\" origin/main",
+                        WorkingDirectory = outputPath,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                
+                worktreeProcess.Start();
+                var worktreeOutput = await worktreeProcess.StandardOutput.ReadToEndAsync();
+                var worktreeError = await worktreeProcess.StandardError.ReadToEndAsync();
+                worktreeProcess.WaitForExit();
+                
+                if (worktreeProcess.ExitCode != 0)
+                {
+                    Console.WriteLine($"⚠ Could not create worktree: {worktreeError}");
+                    Console.WriteLine("Using current filesystem state instead");
+                    worktreePath = outputPath;
+                }
+                else
+                {
+                    Console.WriteLine("Created git worktree for committed state");
+                }
+                
+                // Build DACPAC from worktree's target directory
+                var worktreeTargetPath = Path.Combine(worktreePath, "servers", sanitizedTargetServer, targetDb ?? "unknown-db");
+                if (Directory.Exists(worktreeTargetPath) && Directory.GetFiles(worktreeTargetPath, "*.sql", SearchOption.AllDirectories).Any())
+                {
+                    // Normalize line endings before building
+                    var fsManager = new FileSystemManager();
+                    fsManager.NormalizeDirectoryLineEndings(worktreeTargetPath);
+                    
+                    Console.WriteLine("Building DACPAC from committed filesystem state...");
+                    var migrationGen = new Migration.Generator.DacpacMigrationGenerator();
+                    var tempBuildPath = Path.Combine(Path.GetTempPath(), $"target-filesystem-build_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}");
+                    
+                    var builtDacpac = await migrationGen.BuildDacpacFromFileSystem(
+                        worktreeTargetPath,
+                        tempBuildPath,
+                        "TargetFilesystem",
+                        null
+                    );
+                    
+                    if (!string.IsNullOrEmpty(builtDacpac) && File.Exists(builtDacpac))
+                    {
+                        File.Copy(builtDacpac, targetFilesystemDacpac, overwrite: true);
+                        Console.WriteLine($"✓ Target filesystem DACPAC created: {Path.GetFileName(targetFilesystemDacpac)}");
+                    }
+                    else
+                    {
+                        CreateEmptyDacpacFile(targetFilesystemDacpac);
+                        Console.WriteLine("✓ Created empty target filesystem DACPAC (no existing schema)");
                     }
                     
-                    if (string.IsNullOrEmpty(targetServer))
+                    // Clean up temp directory unless debugger is attached
+                    if (Directory.Exists(tempBuildPath) && !Debugger.IsAttached)
                     {
-                        targetServer = scmpTargetServer;
-                        if (!string.IsNullOrEmpty(targetServer))
+                        try
                         {
-                            Console.WriteLine($"Using target server from SCMP: {targetServer}");
+                            Directory.Delete(tempBuildPath, recursive: true);
+                            Console.WriteLine($"  Cleaned up temp build directory");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"  ⚠ Could not clean up temp directory: {ex.Message}");
                         }
                     }
-                    
-                    if (string.IsNullOrEmpty(targetDatabase))
+                    else if (Debugger.IsAttached && Directory.Exists(tempBuildPath))
                     {
-                        targetDatabase = scmpTargetDb;
-                        if (!string.IsNullOrEmpty(targetDatabase))
-                        {
-                            Console.WriteLine($"Using target database from SCMP: {targetDatabase}");
-                        }
+                        Console.WriteLine($"  Debug mode: Temp directory preserved at {tempBuildPath}");
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"⚠ Warning: Could not load SCMP file: {scmpFilePath}");
+                    CreateEmptyDacpacFile(targetFilesystemDacpac);
+                    Console.WriteLine("✓ Created empty target filesystem DACPAC (no existing schema)");
                 }
             }
-            catch (Exception ex)
+            finally
             {
-                Console.WriteLine($"⚠ Warning: Error loading SCMP file: {ex.Message}");
-                // Continue with explicitly provided parameters if SCMP load fails
-            }
-        }
-        
-        // Validate that we have all required parameters (either from CLI or SCMP)
-        if (string.IsNullOrEmpty(sourceConnectionString))
-        {
-            Console.WriteLine("❌ Error: Source connection string is required. Provide it via --source-connection or through an SCMP file.");
-            Environment.Exit(1);
-        }
-        
-        if (string.IsNullOrEmpty(targetServer))
-        {
-            Console.WriteLine("❌ Error: Target server is required. Provide it via --target-server or through an SCMP file.");
-            Environment.Exit(1);
-        }
-        
-        if (string.IsNullOrEmpty(targetDatabase))
-        {
-            Console.WriteLine("❌ Error: Target database is required. Provide it via --target-database or through an SCMP file.");
-            Environment.Exit(1);
-        }
-        
-        // Sanitize target server name for use in folder names
-        var sanitizedTargetServer = targetServer.Replace('\\', '-').Replace(':', '-');
-        
-        // Log the resolved server name and target path
-        Console.WriteLine($"Target Server: {targetServer}");
-        Console.WriteLine($"Target Server (sanitized): {sanitizedTargetServer}");
-        Console.WriteLine($"Target Database: {targetDatabase}");
-        Console.WriteLine($"Target Path: servers/{sanitizedTargetServer}/{targetDatabase}/");
-
-        // Configure Git safe directory for Docker environments
-        ConfigureGitSafeDirectory(outputPath);
-
-        try
-        {
-            // Log environment information for debugging
-            Console.WriteLine("=== Environment Information ===");
-            Console.WriteLine($"Current Directory: {Environment.CurrentDirectory}");
-            Console.WriteLine($"Output Path: {outputPath}");
-            Console.WriteLine($"GitHub Workspace: {Environment.GetEnvironmentVariable("GITHUB_WORKSPACE") ?? "Not set"}");
-            Console.WriteLine($"GitHub Repository: {Environment.GetEnvironmentVariable("GITHUB_REPOSITORY") ?? "Not set"}");
-            Console.WriteLine($"Running in GitHub Actions: {!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"))}");
-            
-            // Ensure we're on origin/main with clean state before generating files
-            var gitAnalyzer = new GitDiffAnalyzer();
-            if (gitAnalyzer.IsGitRepository(outputPath))
-            {
-                try
+                // Clean up worktree if it was created (unless debugger is attached)
+                if (worktreePath != outputPath && Directory.Exists(worktreePath))
                 {
-                    Console.WriteLine("=== Preparing Git repository for schema extraction ===");
-                    
-                    // Use the enhanced CheckoutBranch method which includes hard reset
-                    var checkoutResult = gitAnalyzer.CheckoutBranch(outputPath, "origin/main");
-                    if (!checkoutResult.success)
+                    if (!Debugger.IsAttached)
                     {
-                        Console.WriteLine($"❌ CRITICAL: Git operation failed: {checkoutResult.message}");
-                        Console.WriteLine("Cannot continue without proper git configuration.");
-                        throw new InvalidOperationException($"Git branch setup failed: {checkoutResult.message}");
+                        try
+                        {
+                            var removeProcess = new System.Diagnostics.Process
+                            {
+                                StartInfo = new System.Diagnostics.ProcessStartInfo
+                                {
+                                    FileName = "git",
+                                    Arguments = $"worktree remove \"{worktreePath}\" --force",
+                                    WorkingDirectory = outputPath,
+                                    RedirectStandardOutput = true,
+                                    RedirectStandardError = true,
+                                    UseShellExecute = false,
+                                    CreateNoWindow = true
+                                }
+                            };
+                            removeProcess.Start();
+                            removeProcess.WaitForExit();
+                            
+                            // Also try to delete the directory if git worktree remove failed
+                            if (Directory.Exists(worktreePath))
+                            {
+                                Directory.Delete(worktreePath, recursive: true);
+                            }
+                            Console.WriteLine("  Cleaned up git worktree");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"  ⚠ Could not clean up worktree: {ex.Message}");
+                        }
                     }
                     else
                     {
-                        Console.WriteLine(checkoutResult.message);
+                        Console.WriteLine($"  Debug mode: Worktree preserved at {worktreePath}");
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"❌ CRITICAL: Could not prepare Git repository: {ex.Message}");
-                    // Re-throw to stop execution
-                    throw;
-                }
             }
             
-            // Extract database to DACPAC
-            Console.WriteLine("Extracting database to DACPAC...");
-            var dacpacPath = Path.Combine(Path.GetTempPath(), "temp_database.dacpac");
-            var dacServices = new DacServices(sourceConnectionString);
+            // === Phase 2: Extract Target Original DACPAC ===
+            Console.WriteLine("\n=== Phase 2: Extracting Target Original DACPAC ===");
+            var targetOriginalDacpac = Path.Combine(targetOutputPath, $"{targetServerClean}_{targetDbClean}_original.dacpac");
             
-            // Extract source database name from source connection string
-            var sourceBuilder = new SqlConnectionStringBuilder(sourceConnectionString);
-            var sourceDatabaseName = sourceBuilder.InitialCatalog;
-
-            try
+            var targetDacServices = new DacServices(targetConnectionString);
+            var extractOptions = new DacExtractOptions
             {
-                // Configure extract options to include all database objects
-                var extractOptions = new DacExtractOptions
-                {
-                    ExtractAllTableData = false,
-                    IgnoreExtendedProperties = false,  // Include extended properties (column descriptions)
-                    IgnorePermissions = false,         // Include permissions (GRANT/REVOKE/DENY)
-                    IgnoreUserLoginMappings = true   // Include user-to-login mappings
-                    
-                };
-                
-                dacServices.Extract(dacpacPath, sourceDatabaseName, "DacpacStructureGenerator", new Version(1, 0), null, null, extractOptions);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-                throw;
-            }
-            
-            Console.WriteLine($"DACPAC extracted successfully to: {dacpacPath}");
-
-            // Load the DACPAC
-            var dacpac = DacPackage.Load(dacpacPath);
-            
-            // Configure deployment options
-            DacDeployOptions deployOptions;
-            
-            // If SCMP was loaded, use its configuration options
-            if (scmpComparison != null)
-            {
-                Console.WriteLine("Using deployment options from SCMP file...");
-                var mapper = new ScmpToDeployOptions();
-                deployOptions = mapper.MapOptions(scmpComparison);
-                
-                // Ensure we're generating full schema scripts
-                deployOptions.CreateNewDatabase = true;
-                
-                // Log key settings
-                Console.WriteLine($"  Block on data loss: {deployOptions.BlockOnPossibleDataLoss}");
-                Console.WriteLine($"  Drop objects not in source: {deployOptions.DropObjectsNotInSource}");
-                Console.WriteLine($"  Ignore permissions: {deployOptions.IgnorePermissions}");
-            }
-            else
-            {
-                // Use default options that include all database objects
-                deployOptions = new DacDeployOptions
-                {
-                    CreateNewDatabase = true,
-                    IgnorePermissions = false,          // Include permissions
-                    IgnoreUserSettingsObjects = false,  // Include user settings
-                    IgnoreLoginSids = true,             // Ignore login SIDs (server-specific)
-                    IgnoreRoleMembership = false,       // Include role memberships
-                    IgnoreExtendedProperties = false,   // Include extended properties
-                    IgnoreAuthorizer = true,            // Don't include AUTHORIZATION in CREATE statements (avoids user dependencies)
-                    DoNotAlterReplicatedObjects = true, // Don't alter replicated objects
-                    DropObjectsNotInSource = false,     // Don't drop objects not in source
-                    ScriptDatabaseOptions = false,      // Don't script database options (avoid state issues)
-                    // Exclude Users to avoid SQL74502 errors - handle them separately
-                    ExcludeObjectTypes = [Microsoft.SqlServer.Dac.ObjectType.Users]
-                };
-            }
-            
-            // Generate deployment script
-            Console.WriteLine("Generating deployment script...");
-            
-            // Subscribe to message events to handle/suppress SQL74502 errors
-            dacServices.Message += (sender, e) =>
-            {
-                // Log but don't fail on SQL74502 errors (users that can't be recreated)
-                if (e.Message.MessageType == DacMessageType.Error && 
-                    e.Message.Number == 74502)
-                {
-                    Console.WriteLine($"⚠ Warning (suppressed): {e.Message.Message}");
-                    return; // Suppress the error
-                }
-                
-                // Log other messages normally
-                if (e.Message.MessageType == DacMessageType.Error)
-                {
-                    Console.WriteLine($"❌ Error {e.Message.Number}: {e.Message.Message}");
-                }
-                else if (e.Message.MessageType == DacMessageType.Warning)
-                {
-                    Console.WriteLine($"⚠ Warning: {e.Message.Message}");
-                }
+                ExtractAllTableData = false,
+                IgnoreExtendedProperties = false,
+                IgnorePermissions = false,
+                IgnoreUserLoginMappings = true
             };
             
-            string script;
-            try
-            {
-                script = dacServices.GenerateDeployScript(
-                    dacpac,
-                    sourceDatabaseName,
-                    deployOptions,
-                    null // No additional contributors
-                );
-            }
-            catch (DacServicesException ex) when (ex.Messages.Any(m => m.Number == 74502))
-            {
-                // SQL74502 errors indicate users that can't be deployed - continue anyway
-                Console.WriteLine("⚠ Warning: Continuing despite SQL74502 errors (users with state that cannot be recreated)");
-                Console.WriteLine("These users will need to be created manually or already exist in the target database.");
-                
-                // Generate the script anyway, the warnings have been logged
-                script = string.Empty; // Will be populated below
-                
-                // Try to get partial script if possible
-                try
-                {
-                    // Remove message handler to avoid duplicate messages
-                    dacServices = new DacServices(sourceConnectionString);
-                    script = dacServices.GenerateDeployScript(
-                        dacpac,
-                        sourceDatabaseName,
-                        deployOptions
-                    );
-                }
-                catch
-                {
-                    // If still failing, generate empty script
-                    script = @"-- Script generation failed due to SQL74502 errors
--- Users need to be handled separately";
-                }
-            }
+            targetDacServices.Extract(targetOriginalDacpac, targetDb, "TargetOriginal", new Version(1, 0), null, null, extractOptions);
+            Console.WriteLine($"✓ Target original DACPAC extracted: {Path.GetFileName(targetOriginalDacpac)}");
             
-            // Post-process script to remove AUTHORIZATION clauses if IgnoreAuthorizer is set
-            // This is a workaround for DacFx not properly handling IgnoreAuthorizer for schemas
-            if (deployOptions.IgnoreAuthorizer)
+            // === Phase 3: Extract Source Original DACPAC ===
+            Console.WriteLine("\n=== Phase 3: Extracting Source Original DACPAC ===");
+            // Create descriptive source DACPAC filename
+            var sourceServerClean = sourceServer?.Replace("\\", "_").Replace(".", "_").Replace(":", "_") ?? "unknown";
+            var sourceDbClean = sourceDb?.Replace(" ", "_") ?? "unknown";
+            var sourceOriginalDacpac = Path.Combine(targetOutputPath, $"{sourceServerClean}_{sourceDbClean}_original.dacpac");
+            
+            var sourceDacServices = new DacServices(sourceConnectionString);
+            sourceDacServices.Extract(sourceOriginalDacpac, sourceDb, "SourceOriginal", new Version(1, 0), null, null, extractOptions);
+            Console.WriteLine($"✓ Source original DACPAC extracted: {Path.GetFileName(sourceOriginalDacpac)}");
+            
+            // === Phase 4: Extract Source to Filesystem and Build Filesystem DACPAC ===
+            Console.WriteLine("\n=== Phase 4: Extracting Source Schema and Building Filesystem DACPAC ===");
+            
+            // Generate deployment script from source DACPAC
+            var sourceDacpac = DacPackage.Load(sourceOriginalDacpac);
+            var deployOptions = new DacDeployOptions
             {
-                Console.WriteLine("Removing AUTHORIZATION clauses from CREATE SCHEMA statements...");
-                
-                // Pattern to match CREATE SCHEMA with AUTHORIZATION
+                CreateNewDatabase = true,
+                IgnoreAuthorizer = true,
+                IgnoreExtendedProperties = false,
+                IgnorePermissions = false
+            };
+            
+            var script = sourceDacServices.GenerateDeployScript(sourceDacpac, sourceDb, deployOptions, null);
+            
+            // Remove AUTHORIZATION clauses from CREATE SCHEMA statements
+            if (script.Contains("AUTHORIZATION"))
+            {
                 var schemaAuthPattern = @"(CREATE\s+SCHEMA\s+\[[^\]]+\])\s+AUTHORIZATION\s+\[[^\]]+\]";
-                var originalCount = System.Text.RegularExpressions.Regex.Matches(script, schemaAuthPattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase).Count;
-                
-                // Replace with just CREATE SCHEMA without AUTHORIZATION
                 script = System.Text.RegularExpressions.Regex.Replace(
                     script, 
                     schemaAuthPattern, 
                     "$1",
                     System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Multiline
                 );
-                
-                if (originalCount > 0)
-                {
-                    Console.WriteLine($"Removed {originalCount} AUTHORIZATION clauses from CREATE SCHEMA statements");
-                }
             }
             
-            // Save script for debugging
-            await File.WriteAllTextAsync("generated_script.sql", script);
-            Console.WriteLine($"Script saved to generated_script.sql ({script.Length} characters)");
-            
-            // Clean only the database-specific directory (preserving migrations, change manifests, and exclusion file)
-            var targetOutputPath = Path.Combine(outputPath, "servers", sanitizedTargetServer, targetDatabase);
-            Console.WriteLine($"Full target output path: {targetOutputPath}");
-            
+            // Clean the target directory before extraction (preserve migrations and special files)
+            Console.WriteLine("Cleaning target directory before extraction...");
             if (Directory.Exists(targetOutputPath))
             {
-                Console.WriteLine($"Cleaning database directory: {targetOutputPath} (preserving z_migrations, z_migrations_reverse, _change-manifests, and .dacpac-exclusions.json)");
-                
-                // Get all subdirectories except migrations and change manifests
+                // Get all subdirectories except migrations, change manifests, and other special directories
                 var subdirs = Directory.GetDirectories(targetOutputPath)
                     .Where(d => !Path.GetFileName(d).Equals("z_migrations", StringComparison.OrdinalIgnoreCase) &&
                                !Path.GetFileName(d).Equals("z_migrations_reverse", StringComparison.OrdinalIgnoreCase) &&
@@ -411,161 +359,162 @@ internal static class Program
                 // Delete each subdirectory
                 foreach (var dir in subdirs)
                 {
-                    Directory.Delete(dir, recursive: true);
+                    try
+                    {
+                        Directory.Delete(dir, recursive: true);
+                        Console.WriteLine($"  Cleaned: {Path.GetFileName(dir)}/");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"  ⚠ Could not clean {Path.GetFileName(dir)}: {ex.Message}");
+                    }
                 }
                 
-                // Delete all files in the root except .dacpac-exclusions.json
+                // Delete all files in the root except .dacpac-exclusions.json and DACPAC files
                 foreach (var file in Directory.GetFiles(targetOutputPath))
                 {
                     var fileName = Path.GetFileName(file);
-                    if (!fileName.Equals(".dacpac-exclusions.json", StringComparison.OrdinalIgnoreCase))
+                    if (!fileName.Equals(".dacpac-exclusions.json", StringComparison.OrdinalIgnoreCase) &&
+                        !fileName.EndsWith(".dacpac", StringComparison.OrdinalIgnoreCase))
                     {
-                        File.Delete(file);
+                        try
+                        {
+                            File.Delete(file);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"  ⚠ Could not delete {fileName}: {ex.Message}");
+                        }
                     }
                 }
             }
             
-            // Parse and organize the script into separate files
-            Console.WriteLine("Parsing and organizing scripts...");
+            // Parse and extract to filesystem (overwrites current schemas/ folder)
+            Console.WriteLine("Extracting source schema to filesystem...");
             var parser = new DacpacScriptParser();
-            parser.ParseAndOrganizeScripts(script, outputPath, sanitizedTargetServer, targetDatabase);
+            parser.ParseAndOrganizeScripts(script, outputPath, sanitizedTargetServer, targetDb ?? "unknown-db");
             
-            // Clean up temporary script file
-            if (File.Exists("generated_script.sql"))
-            {
-                File.Delete("generated_script.sql");
-            }
+            // Apply line ending normalization
+            var targetSchemaPath = Path.Combine(outputPath, "servers", sanitizedTargetServer, targetDb ?? "unknown-db");
+            var fileSystemManager = new FileSystemManager();
+            fileSystemManager.NormalizeDirectoryLineEndings(targetSchemaPath);
+            Console.WriteLine("✓ Line endings normalized");
             
-            // Clean up temp DACPAC file
-            if (File.Exists(dacpacPath))
-            {
-                File.Delete(dacpacPath);
-            }
-            
-            Console.WriteLine($"Database structure generated successfully at: {targetOutputPath}");
-            
-            // Generate migrations using DACPAC comparison
-            Console.WriteLine("\nGenerating DACPAC-based migrations...");
+            // Build source filesystem DACPAC
+            var sourceFilesystemDacpac = Path.Combine(targetOutputPath, $"{sourceServerClean}_{sourceDbClean}_filesystem.dacpac");
             var migrationGenerator = new Migration.Generator.DacpacMigrationGenerator();
-            var migrationsPath = Path.Combine(targetOutputPath, "z_migrations");
+            var tempSourceBuildPath = Path.Combine(Path.GetTempPath(), $"source-filesystem-build_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}");
             
-            // Ensure migrations directory exists
-            Directory.CreateDirectory(migrationsPath);
+            var sourceBuiltDacpac = await migrationGenerator.BuildDacpacFromFileSystem(
+                targetSchemaPath,
+                tempSourceBuildPath,
+                "SourceFilesystem",
+                null
+            );
             
-            // Get actor from environment variable (GitHub Actions provides GITHUB_ACTOR)
-            var actor = Environment.GetEnvironmentVariable("GITHUB_ACTOR") ?? Environment.UserName;
-            
-            // Generate migration using DACPAC comparison (committed vs uncommitted)
-            // Compare the previous committed state with the newly extracted schema
-            var migrationResult = await migrationGenerator.GenerateMigrationAsync(
-                outputPath,
-                sanitizedTargetServer,
-                targetDatabase,
-                migrationsPath,
-                scmpComparison,  // Pass SCMP comparison for settings
-                actor,
-                validateMigration: true);
-                // No connectionString - will compare committed vs uncommitted files
-            
-            var changesDetected = migrationResult.Success && migrationResult.HasChanges;
-            Console.WriteLine(changesDetected ? $"✓ Migration files generated in: {migrationsPath}" : "No schema changes detected.");
-            
-            // Run Exclusion Manager to create/update manifest and apply exclusions (unless skipped)
-            if (!skipExclusionManager && scmpComparison != null)
+            if (!string.IsNullOrEmpty(sourceBuiltDacpac) && File.Exists(sourceBuiltDacpac))
             {
-                // Source server and database are already extracted above (sourceBuilder, sourceDatabaseName)
-                var sourceServer = sourceBuilder.DataSource.Replace('\\', '-').Replace(':', '-'); // Sanitize for folder names
-                var sourceDatabase = sourceDatabaseName;
-                
-                Console.WriteLine("\n=== Managing Exclusions from SCMP ===");
-                Console.WriteLine($"Source: {sourceServer}/{sourceDatabase}");
-                Console.WriteLine($"Target: {targetServer}/{targetDatabase}");
-                
+                File.Copy(sourceBuiltDacpac, sourceFilesystemDacpac, overwrite: true);
+                Console.WriteLine($"✓ Source filesystem DACPAC created: {Path.GetFileName(sourceFilesystemDacpac)}");
+            }
+            
+            // Clean up temp directory unless debugger is attached
+            if (Directory.Exists(tempSourceBuildPath) && !Debugger.IsAttached)
+            {
                 try
                 {
-                    var scmpHandler = new ScmpManifestHandler();
-                    
-                    // Extract exclusions from the already-loaded SCMP comparison
-                    var excludedObjects = scmpHandler.GetExcludedObjects(scmpComparison);
-                    
-                    if (excludedObjects.Any())
-                    {
-                        Console.WriteLine($"Found {excludedObjects.Count} excluded objects in SCMP file:");
-                        foreach (var obj in excludedObjects.Take(10))
-                        {
-                            Console.WriteLine($"  - {obj}");
-                        }
-                        if (excludedObjects.Count > 10)
-                        {
-                            Console.WriteLine($"  ... and {excludedObjects.Count - 10} more");
-                        }
-                        
-                        // Apply exclusions to generated SQL files
-                        Console.WriteLine("\nApplying exclusions to generated SQL files...");
-                        
-                        // Parse excluded objects and apply exclusion comments
-                        foreach (var excludedObj in excludedObjects)
-                        {
-                            // Remove the (Source) or (Target) suffix to get the actual object name
-                            var objectName = excludedObj.Replace(" (Source)", "").Replace(" (Target)", "").Trim();
-                            
-                            // Split the object name (e.g., "dbo.TableName" or "dbo.sp_ProcedureName")
-                            var parts = objectName.Split('.');
-                            if (parts.Length >= 2)
-                            {
-                                var schema = parts[0];
-                                var objName = string.Join(".", parts.Skip(1));
-                                
-                                // Try to find and mark the corresponding file
-                                var sqlFilePath = FindSqlFileForObject(targetOutputPath, schema, objName);
-                                if (!string.IsNullOrEmpty(sqlFilePath) && File.Exists(sqlFilePath))
-                                {
-                                    await ApplyExclusionToFile(sqlFilePath, objectName);
-                                }
-                            }
-                        }
-                        
-                        Console.WriteLine("✓ Exclusions applied to SQL files");
-                    }
-                    else
-                    {
-                        Console.WriteLine("No exclusions found in SCMP file");
-                    }
+                    Directory.Delete(tempSourceBuildPath, recursive: true);
+                    Console.WriteLine($"  Cleaned up temp build directory");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"⚠ Error applying SCMP exclusions: {ex.Message}");
-                    Console.WriteLine("Continuing without exclusion management...");
+                    Console.WriteLine($"  ⚠ Could not clean up temp directory: {ex.Message}");
                 }
             }
-            else if (!skipExclusionManager)
+            else if (Debugger.IsAttached && Directory.Exists(tempSourceBuildPath))
             {
-                Console.WriteLine("\n=== Exclusion Manager Skipped ===");
-                Console.WriteLine("No SCMP file provided - exclusion management skipped");
-                Console.WriteLine("Use --scmp parameter to provide an SCMP file with exclusions");
-            }
-            else
-            {
-                Console.WriteLine("\n=== Exclusion Manager Skipped ===");
-                Console.WriteLine("Exclusion manager was skipped as requested via --skip-exclusion-manager flag");
+                Console.WriteLine($"  Debug mode: Temp directory preserved at {tempSourceBuildPath}");
             }
             
-            // Now commit all changes together (schema files, migrations, and manifest)
-            if (changesDetected || gitAnalyzer.GetUncommittedChanges(outputPath, "").Any())
+            // === Phase 5: Schema Comparison using Official API ===
+            Console.WriteLine("\n=== Phase 5: Running Schema Comparison ===");
+            
+            // Create comparison using Microsoft's official API
+            var sourceEndpoint = new SchemaCompareDacpacEndpoint(sourceFilesystemDacpac);
+            var targetEndpoint = new SchemaCompareDacpacEndpoint(targetFilesystemDacpac);
+            
+            // Create new comparison with DACPAC endpoints instead of loading SCMP
+            // We'll use the SCMP settings from scmpModel for configuration
+            var comparison = new Microsoft.SqlServer.Dac.Compare.SchemaComparison(sourceEndpoint, targetEndpoint);
+            
+            Console.WriteLine("Comparing schemas...");
+            var comparisonResult = comparison.Compare();
+            
+            Console.WriteLine($"Found {comparisonResult.Differences.Count()} total differences");
+            Console.WriteLine($"Included differences: {comparisonResult.Differences.Count(d => d.Included)}");
+            
+            // Generate migration script
+            var publishResult = comparisonResult.GenerateScript(targetDb);
+            var migrationScript = publishResult.Script;
+            
+            if (!string.IsNullOrEmpty(publishResult.MasterScript))
+            {
+                migrationScript = publishResult.MasterScript + "\n" + migrationScript;
+            }
+            
+            // Save migration to z_migrations directory
+            var migrationsPath = Path.Combine(targetOutputPath, "z_migrations");
+            Directory.CreateDirectory(migrationsPath);
+            
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var actor = Environment.GetEnvironmentVariable("GITHUB_ACTOR") ?? Environment.UserName;
+            var migrationFileName = $"_{timestamp}_{actor}_migration.sql";
+            var migrationFilePath = Path.Combine(migrationsPath, migrationFileName);
+            
+            await File.WriteAllTextAsync(migrationFilePath, migrationScript);
+            Console.WriteLine($"✓ Migration saved to: {migrationFileName}");
+            
+            // // Create reverse migration placeholder
+            // var reverseMigrationsPath = Path.Combine(targetOutputPath, "z_migrations_reverse");
+            // Directory.CreateDirectory(reverseMigrationsPath);
+            // var reverseMigrationPath = Path.Combine(reverseMigrationsPath, migrationFileName);
+            // await File.WriteAllTextAsync(reverseMigrationPath, "-- Reverse migration placeholder\n-- Manual review required for rollback script");
+            //
+            // Commit changes if any
+            if (gitAnalyzer.GetUncommittedChanges(outputPath, "").Count != 0)
             {
                 var commitMsg = !string.IsNullOrWhiteSpace(commitMessage) 
                     ? commitMessage 
-                    : "Schema update with migrations and exclusions";
+                    : "Schema update with migrations";
                     
-                Console.WriteLine($"\n📝 Committing all changes: {commitMsg}");
+                Console.WriteLine($"\n📝 Committing changes: {commitMsg}");
                 gitAnalyzer.CommitChanges(outputPath, commitMsg);
             }
+            
+            Console.WriteLine("\n✓ SCMP-based extraction completed successfully");
+            Console.WriteLine($"  - 4 DACPACs generated in: {targetOutputPath}");
+            Console.WriteLine($"  - Migration script generated in: z_migrations/");
+            Console.WriteLine($"  - Source schema extracted to: schemas/");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            Console.WriteLine($"❌ Error: {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
             Environment.Exit(1);
         }
+    }
+    
+    static void CreateEmptyDacpacFile(string path)
+    {
+        // Create a minimal empty DACPAC
+        var metadata = new PackageMetadata 
+        { 
+            Name = "Empty", 
+            Version = "1.0.0.0" 
+        };
+        
+        var model = new TSqlModel(SqlServerVersion.Sql150, new TSqlModelOptions());
+        DacPackageExtensions.BuildPackage(path, model, metadata);
     }
     
     static void ConfigureGitSafeDirectory(string path)

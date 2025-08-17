@@ -2,14 +2,16 @@
 <SchemaComparison>
   <Version>10</Version>
   <SourceModelProvider>
-    <ConnectionBasedModelProvider>
-      <ConnectionString>Data Source=10.188.49.19;Initial Catalog=abc_MAMUKA_20250728_1314;Persist Security Info=True;User ID=sa_abc_dev;Pooling=False;Multiple Active Result Sets=False;Connect Timeout=60;Encrypt=True;Trust Server Certificate=True;Command Timeout=0</ConnectionString>
-    </ConnectionBasedModelProvider>
+    <FileBasedModelProvider>
+      <Name></Name>
+      <DatabaseFileName>C:\Users\petre.chitashvili\AppData\Local\Temp\source_database.dacpac</DatabaseFileName>
+    </FileBasedModelProvider>
   </SourceModelProvider>
   <TargetModelProvider>
-    <ConnectionBasedModelProvider>
-      <ConnectionString>Data Source=pharm-n1.pharm.local;Initial Catalog=abc;Persist Security Info=True;User ID=sa_abc_ro;Pooling=False;Multiple Active Result Sets=False;Connect Timeout=60;Encrypt=True;Trust Server Certificate=True;Command Timeout=0</ConnectionString>
-    </ConnectionBasedModelProvider>
+    <FileBasedModelProvider>
+      <Name></Name>
+      <DatabaseFileName>C:\Users\petre.chitashvili\AppData\Local\Temp\target_database.dacpac</DatabaseFileName>
+    </FileBasedModelProvider>
   </TargetModelProvider>
   <SchemaCompareSettingsService>
     <SchemaCompareSettingsService>
@@ -157,7 +159,7 @@
       </PropertyElementName>
       <PropertyElementName>
         <Name>IgnoreComments</Name>
-        <Value>True</Value>
+        <Value>False</Value>
       </PropertyElementName>
       <PropertyElementName>
         <Name>IgnoreWhitespace</Name>
@@ -345,11 +347,11 @@
       </PropertyElementName>
       <PropertyElementName>
         <Name>TargetDatabaseName</Name>
-        <Value>abc</Value>
+        <Value>target_database</Value>
       </PropertyElementName>
       <PropertyElementName>
         <Name>TargetConnectionString</Name>
-        <Value>Data Source=pharm-n1.pharm.local;Initial Catalog=abc;Persist Security Info=True;User ID=sa_abc_ro;Pooling=False;Multiple Active Result Sets=False;Connect Timeout=60;Encrypt=True;Trust Server Certificate=True;Application Name="Microsoft SQL Server Data Tools, Schema Compare";Command Timeout=0</Value>
+        <Value>Integrated Security=True;Pooling=False;Connect Timeout=30</Value>
       </PropertyElementName>
       <PropertyElementName>
         <Name>TreatVerificationErrorsAsWarnings</Name>

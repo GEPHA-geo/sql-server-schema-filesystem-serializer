@@ -146,15 +146,14 @@ public class ExcludedElements
 /// </summary>
 public class SelectedItem
 {
-    /// <summary>
-    /// Type of the SQL object (e.g., Microsoft.Data.Tools.Schema.Sql.SchemaModel.SqlTable)
-    /// </summary>
     [XmlAttribute("Type")]
     public string Type { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Fully qualified name of the database object (e.g., dbo.TableName)
-    /// </summary>
+    
+    // Changed to handle multiple Name elements that form the object path
     [XmlElement("Name")]
-    public string Name { get; set; } = string.Empty;
+    public List<string> NameParts { get; set; } = new List<string>();
+    
+    // Computed property to get the full qualified name
+    [XmlIgnore]
+    public string Name => string.Join(".", NameParts);
 }

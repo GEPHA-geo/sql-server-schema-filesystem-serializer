@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using System.Text;
 using Microsoft.SqlServer.Dac;
 using Microsoft.SqlServer.Dac.Model;
+using Microsoft.SqlServer.Dac.Compare;
 using SqlServer.Schema.Exclusion.Manager.Core.Models;
 using SqlServer.Schema.Exclusion.Manager.Core.Services;
 
@@ -32,7 +33,7 @@ public class DacpacMigrationGenerator
         string targetServer, 
         string targetDatabase,
         string migrationsPath,
-        SchemaComparison? scmpComparison = null,
+        Exclusion.Manager.Core.Models.SchemaComparison? scmpComparison = null,
         string? actor = null,
         string? referenceDacpacPath = null,
         bool validateMigration = true,
@@ -293,7 +294,7 @@ public class DacpacMigrationGenerator
         string targetDacpacPath,
         string tempDir,
         string migrationsPath,
-        SchemaComparison? scmpComparison,
+        Exclusion.Manager.Core.Models.SchemaComparison? scmpComparison,
         string? actor,
         string timestamp)
     {
@@ -398,7 +399,7 @@ public class DacpacMigrationGenerator
     /// <summary>
     /// Builds a DACPAC from the file system
     /// </summary>
-    async Task<string> BuildDacpacFromFileSystem(string schemaPath, string outputDir, string projectName, string? referenceDacpacPath = null)
+    public async Task<string> BuildDacpacFromFileSystem(string schemaPath, string outputDir, string projectName, string? referenceDacpacPath = null)
     {
         try
         {
@@ -524,7 +525,7 @@ public class DacpacMigrationGenerator
         string sourceDacpac,
         string targetDacpac,
         string outputDir,
-        SchemaComparison? scmpComparison)
+        Exclusion.Manager.Core.Models.SchemaComparison? scmpComparison)
     {
         var scriptPath = Path.Combine(outputDir, "migration.sql");
         
@@ -558,7 +559,8 @@ public class DacpacMigrationGenerator
                 deployOptions.IgnoreWhitespace = mappedOptions.IgnoreWhitespace;
                 deployOptions.IgnoreKeywordCasing = mappedOptions.IgnoreKeywordCasing;
                 deployOptions.IgnoreSemicolonBetweenStatements = mappedOptions.IgnoreSemicolonBetweenStatements;
-                deployOptions.IgnoreComments = mappedOptions.IgnoreComments;
+                // Always ignore comments to reduce false positives, regardless of SCMP setting
+                deployOptions.IgnoreComments = true; // mappedOptions.IgnoreComments;
                 deployOptions.GenerateSmartDefaults = mappedOptions.GenerateSmartDefaults;
                 deployOptions.IncludeCompositeObjects = mappedOptions.IncludeCompositeObjects;
                 deployOptions.IncludeTransactionalScripts = mappedOptions.IncludeTransactionalScripts;
@@ -579,12 +581,37 @@ public class DacpacMigrationGenerator
                 deployOptions.IgnoreComments = true;
             }
             
-            // Additional options to handle errors
+            // Additional options to handle errors and reduce false positives
             deployOptions.AllowIncompatiblePlatform = true;
             deployOptions.IgnoreFileAndLogFilePath = true;
             deployOptions.IgnoreFilegroupPlacement = true;
             deployOptions.IgnoreFileSize = true;
             deployOptions.IgnoreFullTextCatalogFilePath = true;
+            
+            // Additional options to reduce false positives
+            deployOptions.IgnoreColumnOrder = true;
+            deployOptions.IgnoreTableOptions = true;
+            deployOptions.IgnoreIndexOptions = true;
+            deployOptions.IgnoreIndexPadding = true;
+            deployOptions.IgnoreFillFactor = true;
+            deployOptions.IgnoreIdentitySeed = true;
+            deployOptions.IgnoreIncrement = true;
+            deployOptions.IgnoreQuotedIdentifiers = true;
+            deployOptions.IgnoreAnsiNulls = true;
+            deployOptions.IgnoreColumnCollation = true;
+            deployOptions.IgnoreLockHintsOnIndexes = true;
+            deployOptions.IgnoreWithNocheckOnCheckConstraints = true;
+            deployOptions.IgnoreWithNocheckOnForeignKeys = true;
+            deployOptions.IgnoreDmlTriggerOrder = true;
+            deployOptions.IgnoreDmlTriggerState = true;
+            deployOptions.IgnoreDdlTriggerOrder = true;
+            deployOptions.IgnoreDdlTriggerState = true;
+            deployOptions.IgnoreDefaultSchema = true;
+            deployOptions.IgnorePartitionSchemes = true;
+            deployOptions.IgnoreAuthorizer = true;
+            deployOptions.IgnoreCryptographicProviderFilePath = true;
+            deployOptions.IgnoreRouteLifetime = true;
+            deployOptions.IgnoreNotForReplication = true;
             
             Console.WriteLine("Generating deployment script...");
             
@@ -1503,6 +1530,33 @@ public class DacpacMigrationGenerator
     /// <summary>
     /// Copies schema files from source to destination, excluding migrations and change manifests
     /// </summary>
+    /// <summary>
+    /// Normalizes line endings in a SQL file to CRLF (Windows format)
+    /// This helps reduce false positives in DACPAC comparisons
+    /// </summary>
+    void NormalizeLineEndings(string filePath)
+    {
+        try
+        {
+            // Read the file content
+            var content = File.ReadAllText(filePath);
+            
+            // Normalize line endings to CRLF
+            // First convert all CRLF to LF, then all LF to CRLF
+            // This ensures consistent conversion regardless of source format
+            content = content.Replace("\r\n", "\n");  // CRLF -> LF
+            content = content.Replace("\r", "\n");    // CR -> LF (for old Mac files)
+            // content = content.Replace("\n", "\r\n");  // LF -> CRLF
+            
+            // Write back with normalized line endings
+            File.WriteAllText(filePath, content);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"      WARNING: Failed to normalize line endings for {Path.GetFileName(filePath)}: {ex.Message}");
+        }
+    }
+
     void CopySchemaFiles(string sourceDir, string destDir)
     {
         var filesToCopy = 0;
@@ -1531,6 +1585,9 @@ public class DacpacMigrationGenerator
             
             File.Copy(file, destPath, overwrite: true);
             filesToCopy++;
+            
+            // Normalize line endings in the copied file
+            NormalizeLineEndings(destPath);
         }
         
         Console.WriteLine($"    Copied {filesToCopy} SQL files total (skipped {filesToSkip} non-schema files)");

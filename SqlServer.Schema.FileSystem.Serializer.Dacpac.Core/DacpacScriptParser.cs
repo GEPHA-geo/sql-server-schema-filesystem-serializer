@@ -25,24 +25,29 @@ public class DacpacScriptParser
         // Group statements by object
         var objectGroups = GroupStatementsByObject(statements);
         
-        // Track processed statements
+        // Track processed statements (thread-safe counters for parallel processing)
         var processedCount = 0;
         var excludedCount = 0;
         
-        // Process each object group
-        foreach (var objectGroup in objectGroups)
+        // Process each object group in parallel for better performance
+        var parallelOptions = new ParallelOptions 
+        { 
+            MaxDegreeOfParallelism = Environment.ProcessorCount 
+        };
+        
+        Parallel.ForEach(objectGroups, parallelOptions, objectGroup =>
         {
             // Check if this object should be excluded
             if (excludedObjectNames != null && IsObjectExcluded(objectGroup.Key, excludedObjectNames))
             {
-                excludedCount++;
-                processedCount += objectGroup.Value.Count;
-                continue; // Skip generating files for excluded objects
+                System.Threading.Interlocked.Increment(ref excludedCount);
+                System.Threading.Interlocked.Add(ref processedCount, objectGroup.Value.Count);
+                return; // Skip generating files for excluded objects
             }
             
             ProcessObjectGroup(objectGroup, basePath);
-            processedCount += objectGroup.Value.Count;
-        }
+            System.Threading.Interlocked.Add(ref processedCount, objectGroup.Value.Count);
+        });
         
         // Save skipped statements to source_server_database_extra.sql if any exist
         if (skippedStatements.Any())

@@ -114,16 +114,24 @@ public class SchemaExtractor
             // Normalize all SQL files to remove BOM and fix line endings
             // This prevents false positive sp_updateextendedproperty differences
             Console.WriteLine("  Normalizing SQL files (removing BOM, converting to LF line endings)...");
+            
+            // Use parallel processing for better performance with large numbers of files
             var normalizedCount = 0;
-            foreach (var sqlFile in sqlFiles)
+            var parallelOptions = new ParallelOptions 
+            { 
+                MaxDegreeOfParallelism = Environment.ProcessorCount 
+            };
+            
+            Parallel.ForEach(sqlFiles, parallelOptions, sqlFile =>
             {
                 _fileSystemManager.NormalizeFile(sqlFile);
-                normalizedCount++;
-                if (normalizedCount % 100 == 0)
+                var count = System.Threading.Interlocked.Increment(ref normalizedCount);
+                if (count % 100 == 0)
                 {
-                    Console.WriteLine($"    Normalized {normalizedCount}/{sqlFiles.Length} files...");
+                    Console.WriteLine($"    Normalized {count}/{sqlFiles.Length} files...");
                 }
-            }
+            });
+            
             Console.WriteLine($"  ✓ Normalized all {normalizedCount} SQL files");
             
             // Stage the extracted files to normalize line endings through Git

@@ -65,14 +65,19 @@ public class DacpacExtractionService
                 await BuildTargetFilesystemDacpac(context);
                 // Note: We don't fail if target filesystem build fails - it's expected initially
 
-                // Phase 2-3: Extract Original DACPACs from databases
-                var targetExtractResult = await ExtractTargetOriginalDacpac(context);
-                if (targetExtractResult.IsFailure)
-                    return Result.Failure<ExtractionResult>(targetExtractResult.Error);
-
-                var sourceExtractResult = await ExtractSourceOriginalDacpac(context);
-                if (sourceExtractResult.IsFailure)
-                    return Result.Failure<ExtractionResult>(sourceExtractResult.Error);
+                // Phase 2-3: Extract Original DACPACs from databases in parallel
+                // Since source and target extractions are independent, run them simultaneously
+                var targetExtractTask = ExtractTargetOriginalDacpac(context);
+                var sourceExtractTask = ExtractSourceOriginalDacpac(context);
+                
+                // Wait for both extractions to complete
+                var extractResults = await Task.WhenAll(targetExtractTask, sourceExtractTask);
+                
+                // Check results
+                if (extractResults[0].IsFailure)
+                    return Result.Failure<ExtractionResult>(extractResults[0].Error);
+                if (extractResults[1].IsFailure)
+                    return Result.Failure<ExtractionResult>(extractResults[1].Error);
 
                 // Phase 4: Extract Source to Filesystem and Build DACPAC
                 var buildResult = await ExtractAndBuildSourceFilesystem(context);

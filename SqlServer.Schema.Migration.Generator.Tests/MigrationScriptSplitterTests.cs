@@ -85,10 +85,8 @@ GO";
             // Assert
             Assert.True(Directory.Exists(outputDir), "Output directory should exist");
             
-            var changesDir = Path.Combine(outputDir, "changes");
-            Assert.True(Directory.Exists(changesDir), "Changes directory should exist");
-            
-            var segmentFiles = Directory.GetFiles(changesDir, "*.sql");
+            // Files are now placed directly in outputDir, not in a changes subdirectory
+            var segmentFiles = Directory.GetFiles(outputDir, "*.sql");
             _output.WriteLine($"Found {segmentFiles.Length} segment files");
             
             // Should have files for Customer table, Orders table, and sp_GetCustomers procedure
@@ -118,9 +116,8 @@ GO";
             Assert.Equal("1.0", manifest.RootElement.GetProperty("version").GetString());
             Assert.True(manifest.RootElement.GetProperty("totalSegments").GetInt32() > 0);
             
-            // Check that original script was preserved
-            var originalScriptPath = Path.Combine(outputDir, "migration.sql");
-            Assert.True(File.Exists(originalScriptPath), "Original migration script should be preserved");
+            // Original script is no longer preserved in the new implementation
+            // The split files are created directly without keeping the original
         }
         finally
         {
@@ -143,26 +140,33 @@ GO";
         try
         {
             var migrationScript = @"
-CREATE VIEW [dbo].[vw_CustomerOrders]
-AS
-SELECT c.Name, o.OrderDate
-FROM Customer c
-JOIN Orders o ON c.Id = o.CustomerId
+CREATE TABLE [dbo].[Products] (
+    [Id] INT IDENTITY(1,1) NOT NULL,
+    [Name] NVARCHAR(100) NOT NULL
+)
 GO
 
-CREATE FUNCTION [dbo].[fn_CalculateTotal]
-(@OrderId INT)
-RETURNS DECIMAL(10,2)
+CREATE VIEW [dbo].[vw_ProductList]
+AS
+SELECT Id, Name FROM Products
+GO
+
+CREATE PROCEDURE [dbo].[sp_GetProducts]
 AS
 BEGIN
-    RETURN 100.00
+    SELECT * FROM Products
 END
 GO
 
-ALTER TABLE [dbo].[Products] ADD [Description] NVARCHAR(500)
+CREATE FUNCTION [dbo].[fn_ProductCount]()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM Products)
+END
 GO";
 
-            var scriptPath = Path.Combine(tempDir, "_20250812_123456_test_multiple.sql");
+            var scriptPath = Path.Combine(tempDir, "_20250812_123456_test_multi.sql");
             await File.WriteAllTextAsync(scriptPath, migrationScript);
             
             var outputDir = Path.Combine(tempDir, "output");
@@ -171,23 +175,35 @@ GO";
             await splitter.SplitMigrationScript(scriptPath, outputDir);
             
             // Assert
-            var changesDir = Path.Combine(outputDir, "changes");
-            var segmentFiles = Directory.GetFiles(changesDir, "*.sql");
+            Assert.True(Directory.Exists(outputDir), "Output directory should exist");
             
-            // Should have separate files for view, function, and table
-            Assert.Equal(3, segmentFiles.Length);
+            // Files are now placed directly in outputDir, not in a changes subdirectory
+            var segmentFiles = Directory.GetFiles(outputDir, "*.sql");
+            _output.WriteLine($"Found {segmentFiles.Length} segment files");
             
-            // Check for specific object type files
-            Assert.True(segmentFiles.Any(f => f.Contains("_view_")), "Should have a view file");
-            Assert.True(segmentFiles.Any(f => f.Contains("_function_")), "Should have a function file");
-            Assert.True(segmentFiles.Any(f => f.Contains("_table_")), "Should have a table file");
+            // Should have separate files for each object
+            Assert.Equal(4, segmentFiles.Length);
             
-            // Verify file naming follows the pattern
-            foreach (var file in segmentFiles)
-            {
-                var filename = Path.GetFileName(file);
-                Assert.Matches(@"^\d{3}_\w+_\w+_\w+\.sql$", filename);
-            }
+            // Check for each object type
+            Assert.Contains(segmentFiles, f => f.Contains("_table_dbo_Products"));
+            Assert.Contains(segmentFiles, f => f.Contains("_view_dbo_vw_ProductList"));
+            Assert.Contains(segmentFiles, f => f.Contains("_procedure_dbo_sp_GetProducts"));
+            Assert.Contains(segmentFiles, f => f.Contains("_function_dbo_fn_ProductCount"));
+            
+            // Check manifest
+            var manifestPath = Path.Combine(outputDir, "manifest.json");
+            Assert.True(File.Exists(manifestPath), "Manifest file should exist");
+            
+            var manifestJson = await File.ReadAllTextAsync(manifestPath);
+            var manifest = JsonDocument.Parse(manifestJson);
+            
+            var executionOrder = manifest.RootElement.GetProperty("executionOrder");
+            Assert.Equal(4, executionOrder.GetArrayLength());
+            
+            // Verify execution order (tables should come before views/procedures that depend on them)
+            var firstEntry = executionOrder[0];
+            Assert.Equal("table", firstEntry.GetProperty("objectType").GetString());
+            Assert.Equal("Products", firstEntry.GetProperty("objectName").GetString());
         }
         finally
         {

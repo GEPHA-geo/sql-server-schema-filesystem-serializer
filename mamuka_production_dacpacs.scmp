@@ -2,14 +2,16 @@
 <SchemaComparison>
   <Version>10</Version>
   <SourceModelProvider>
-    <ConnectionBasedModelProvider>
-      <ConnectionString>Data Source=10.188.49.19;Initial Catalog=abc_MAMUKA_20250728_1314;Persist Security Info=True;User ID=sa_abc_dev;Pooling=False;Multiple Active Result Sets=False;Connect Timeout=60;Encrypt=True;Trust Server Certificate=True;Command Timeout=0</ConnectionString>
-    </ConnectionBasedModelProvider>
+    <FileBasedModelProvider>
+      <Name></Name>
+      <DatabaseFileName>C:\Users\petre.chitashvili\repos\gepha\db_comparison\servers\pharm-n1.pharm.local\abc\10.188.49.19_abc_20250801_1804_filesystem.dacpac</DatabaseFileName>
+    </FileBasedModelProvider>
   </SourceModelProvider>
   <TargetModelProvider>
-    <ConnectionBasedModelProvider>
-      <ConnectionString>Data Source=pharm-n1.pharm.local;Initial Catalog=abc;Persist Security Info=True;User ID=sa_abc_ro;Pooling=False;Multiple Active Result Sets=False;Connect Timeout=60;Encrypt=True;Trust Server Certificate=True;Command Timeout=0</ConnectionString>
-    </ConnectionBasedModelProvider>
+    <FileBasedModelProvider>
+      <Name></Name>
+      <DatabaseFileName>C:\Users\petre.chitashvili\repos\gepha\db_comparison\servers\pharm-n1.pharm.local\abc\pharm-n1.pharm.local_abc_filesystem.dacpac</DatabaseFileName>
+    </FileBasedModelProvider>
   </TargetModelProvider>
   <SchemaCompareSettingsService>
     <SchemaCompareSettingsService>
@@ -161,7 +163,7 @@
       </PropertyElementName>
       <PropertyElementName>
         <Name>IgnoreWhitespace</Name>
-        <Value>True</Value>
+        <Value>False</Value>
       </PropertyElementName>
       <PropertyElementName>
         <Name>IgnoreKeywordCasing</Name>
@@ -345,7 +347,7 @@
       </PropertyElementName>
       <PropertyElementName>
         <Name>TargetDatabaseName</Name>
-        <Value>pharm-n1_pharm_local_abc_filesystem</Value>
+        <Value>pharm-n1.pharm.local_abc_filesystem</Value>
       </PropertyElementName>
       <PropertyElementName>
         <Name>TargetConnectionString</Name>
@@ -1077,10 +1079,6 @@
     <SelectedItem Type="Microsoft.Data.Tools.Schema.Sql.SchemaModel.SqlTable, Microsoft.Data.Tools.Schema.Sql, Version=162.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Name>dbo</Name>
       <Name>order_med</Name>
-    </SelectedItem>
-    <SelectedItem Type="Microsoft.Data.Tools.Schema.Sql.SchemaModel.SqlTable, Microsoft.Data.Tools.Schema.Sql, Version=162.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Name>dbo</Name>
-      <Name>test_migrations</Name>
     </SelectedItem>
     <SelectedItem Type="Microsoft.Data.Tools.Schema.Sql.SchemaModel.SqlProcedure, Microsoft.Data.Tools.Schema.Sql, Version=162.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Name>dbo</Name>

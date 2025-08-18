@@ -65,13 +65,40 @@ public class MigrationGenerator
         
         var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
         var actor = Environment.GetEnvironmentVariable("GITHUB_ACTOR") ?? Environment.UserName;
-        var migrationFileName = $"_{timestamp}_{actor}_migration.sql";
-        var migrationFilePath = Path.Combine(migrationsPath, migrationFileName);
         
-        await File.WriteAllTextAsync(migrationFilePath, migrationScript);
-        Console.WriteLine($"✓ Migration saved to: {migrationFileName}");
+        // Create migration directory structure with folder-based approach
+        var migrationDirName = $"_{timestamp}_{actor}_migration";
+        var migrationDir = Path.Combine(migrationsPath, migrationDirName);
+        Directory.CreateDirectory(migrationDir);
         
-        return migrationFilePath;
+        // Create a temporary file for the splitter to process
+        var tempMigrationPath = Path.Combine(context.TempDirectory, "temp_migration.sql");
+        await File.WriteAllTextAsync(tempMigrationPath, migrationScript);
+        
+        // Split the migration script into organized segments
+        Console.WriteLine("Splitting migration into organized segments...");
+        var splitter = new SqlServer.Schema.Migration.Generator.MigrationScriptSplitter();
+        await splitter.SplitMigrationScript(tempMigrationPath, migrationDir);
+        
+        // Count the number of segments created
+        var segmentFiles = Directory.GetFiles(migrationDir, "*.sql")
+            .Where(f => System.Text.RegularExpressions.Regex.IsMatch(Path.GetFileName(f), @"^\d{3}_"))
+            .ToArray();
+        
+        if (segmentFiles.Length > 0)
+        {
+            Console.WriteLine($"✓ Split migration into {segmentFiles.Length} segments");
+        }
+        
+        Console.WriteLine($"✓ Migration saved to: {migrationDirName}");
+        
+        // Clean up temporary file
+        if (File.Exists(tempMigrationPath))
+        {
+            File.Delete(tempMigrationPath);
+        }
+        
+        return migrationDir; // Return directory path instead of file path
     }
 }
 

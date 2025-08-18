@@ -77,6 +77,12 @@ public class DacpacExtractionService
                     extractTargetOriginalTask, 
                     extractSourceOriginalTask,
                     extractAndBuildSourceTask);
+
+                // var combinedResult = Result.Combine(await buildTargetFilesystemTask,
+                //     await extractTargetOriginalTask,
+                //     await extractSourceOriginalTask,
+                //     await extractAndBuildSourceTask);
+                // if (combinedResult.IsFailure) return combinedResult.ConvertFailure<ExtractionResult>();
                 
                 // Check results - Target filesystem can fail (expected initially)
                 var targetFilesystemResult = await buildTargetFilesystemTask;

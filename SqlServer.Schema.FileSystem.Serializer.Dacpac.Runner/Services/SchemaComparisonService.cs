@@ -23,7 +23,7 @@ public class SchemaComparisonService
         
         // Create a temporary SCMP file with filesystem DACPAC endpoints
         var tempScmpPath = await CreateTempScmpWithDacpacEndpoints(
-            context.ScmpModel!,
+            context.ScmpModel,
             context.DacpacPaths.SourceFilesystemDacpac,
             context.DacpacPaths.TargetFilesystemDacpac);
         

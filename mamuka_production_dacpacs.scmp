@@ -2,16 +2,14 @@
 <SchemaComparison>
   <Version>10</Version>
   <SourceModelProvider>
-    <FileBasedModelProvider>
-      <Name></Name>
-      <DatabaseFileName>C:\Users\petre.chitashvili\repos\gepha\db_comparison\servers\pharm-n1.pharm.local\abc\10_188_49_19_abc_MAMUKA_20250728_1314_filesystem.dacpac</DatabaseFileName>
-    </FileBasedModelProvider>
+    <ConnectionBasedModelProvider>
+      <ConnectionString>Data Source=10.188.49.19;Initial Catalog=abc_MAMUKA_20250728_1314;Persist Security Info=True;User ID=sa_abc_dev;Pooling=False;Multiple Active Result Sets=False;Connect Timeout=60;Encrypt=True;Trust Server Certificate=True;Command Timeout=0</ConnectionString>
+    </ConnectionBasedModelProvider>
   </SourceModelProvider>
   <TargetModelProvider>
-    <FileBasedModelProvider>
-      <Name></Name>
-      <DatabaseFileName>C:\Users\petre.chitashvili\repos\gepha\db_comparison\servers\pharm-n1.pharm.local\abc\pharm-n1_pharm_local_abc_filesystem.dacpac</DatabaseFileName>
-    </FileBasedModelProvider>
+    <ConnectionBasedModelProvider>
+      <ConnectionString>Data Source=pharm-n1.pharm.local;Initial Catalog=abc;Persist Security Info=True;User ID=sa_abc_ro;Pooling=False;Multiple Active Result Sets=False;Connect Timeout=60;Encrypt=True;Trust Server Certificate=True;Command Timeout=0</ConnectionString>
+    </ConnectionBasedModelProvider>
   </TargetModelProvider>
   <SchemaCompareSettingsService>
     <SchemaCompareSettingsService>

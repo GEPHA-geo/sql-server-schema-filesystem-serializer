@@ -392,7 +392,8 @@ internal static class Program
             // Parse and extract to filesystem (overwrites current schemas/ folder)
             Console.WriteLine("Extracting source schema to filesystem...");
             var parser = new DacpacScriptParser();
-            parser.ParseAndOrganizeScripts(script, outputPath, sanitizedTargetServer, targetDb ?? "unknown-db");
+            parser.ParseAndOrganizeScripts(script, outputPath, sanitizedTargetServer, targetDb ?? "unknown-db", 
+                sourceServerClean, sourceDbClean);
             
             // Apply line ending normalization
             var targetSchemaPath = Path.Combine(outputPath, "servers", sanitizedTargetServer, targetDb ?? "unknown-db");
@@ -452,6 +453,18 @@ internal static class Program
             
             Console.WriteLine($"Found {comparisonResult.Differences.Count()} total differences");
             Console.WriteLine($"Included differences: {comparisonResult.Differences.Count(d => d.Included)}");
+            Console.WriteLine($"Excluded differences: {comparisonResult.Differences.Count(d => !d.Included)}");
+            
+            // List excluded objects
+            var excludedDifferences = comparisonResult.Differences.Where(d => !d.Included).ToList();
+            if (excludedDifferences.Any())
+            {
+                Console.WriteLine("\nExcluded objects:");
+                foreach (var diff in excludedDifferences)
+                {
+                    Console.WriteLine($"  - {diff.Name} ({diff.UpdateAction})");
+                }
+            }
             
             // Generate migration script
             var publishResult = comparisonResult.GenerateScript(targetDb);
@@ -526,9 +539,9 @@ internal static class Program
             
             foreach (var dir in directories)
             {
-                var process = new System.Diagnostics.Process
+                var process = new Process
                 {
-                    StartInfo = new System.Diagnostics.ProcessStartInfo
+                    StartInfo = new ProcessStartInfo
                     {
                         FileName = "git",
                         Arguments = $"config --global --add safe.directory {dir}",

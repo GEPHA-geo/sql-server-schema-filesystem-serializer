@@ -98,11 +98,11 @@ public class GitDiffAnalyzerTests : IDisposable
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                // Set user email
+                Arguments = "config user.email \"test@example.com\""
             };
-            
-            // Set user email
-            startInfo.Arguments = "config user.email \"test@example.com\"";
+
             using (var process = Process.Start(startInfo))
             {
                 process?.WaitForExit();

@@ -2,6 +2,8 @@ using System.Diagnostics;
 
 namespace SqlServer.Schema.Migration.Generator.GitIntegration;
 
+using System.Text;
+
 public class GitDiffAnalyzer
 {
     public bool IsGitRepository(string path)
@@ -9,11 +11,11 @@ public class GitDiffAnalyzer
         var gitDir = Path.Combine(path, ".git");
         return Directory.Exists(gitDir);
     }
-    
+
     public void InitializeRepository(string path)
     {
         RunGitCommand(path, "init");
-        
+
         // Create .gitignore
         var gitignorePath = Path.Combine(path, ".gitignore");
         if (!File.Exists(gitignorePath))
@@ -24,28 +26,28 @@ public class GitDiffAnalyzer
 generated_script.sql
 ");
         }
-        
+
         RunGitCommand(path, "add .");
     }
-    
+
     public List<DiffEntry> GetUncommittedChanges(string path, string databaseName)
     {
         var entries = new List<DiffEntry>();
-        
+
         // Get status of files (including untracked files)
         var statusOutput = RunGitCommand(path, "status --porcelain -u");
         var lines = statusOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        
+
         // Normalize databaseName to use forward slashes for comparison
         var normalizedDatabaseName = databaseName.Replace('\\', '/');
-        
+
         foreach (var line in lines)
         {
             if (line.Length < 3) continue;
-            
+
             var status = line.Substring(0, 2).Trim();
             var filePath = line.Substring(3).Trim();
-            
+
             // Only process SQL files from the database directory
             if (filePath.StartsWith(normalizedDatabaseName) && filePath.EndsWith(".sql"))
             {
@@ -62,7 +64,7 @@ generated_script.sql
                 }
             }
         }
-        
+
         return entries;
     }
 
@@ -72,7 +74,7 @@ generated_script.sql
         {
             Console.WriteLine("=== Starting Git Branch Setup for Migration Generation ===");
             Console.WriteLine($"Working directory: {path}");
-            
+
             // First check if this is a fresh repository without remotes
             bool hasRemotes = false;
             try
@@ -82,13 +84,13 @@ generated_script.sql
                 Console.WriteLine($"Target path: {path}");
                 Console.WriteLine($"Absolute target path: {Path.GetFullPath(path)}");
                 Console.WriteLine($".git directory exists: {Directory.Exists(Path.Combine(path, ".git"))}");
-                
+
                 // List top-level directory contents
                 try
                 {
                     var targetDir = Path.GetFullPath(path);
                     Console.WriteLine($"\nDirectory contents of {targetDir}:");
-                    
+
                     // List directories
                     var dirs = Directory.GetDirectories(targetDir).Select(Path.GetFileName).OrderBy(d => d);
                     Console.WriteLine($"Directories ({dirs.Count()}):");
@@ -96,7 +98,7 @@ generated_script.sql
                     {
                         Console.WriteLine($"  [DIR] {dir}");
                     }
-                    
+
                     // List files
                     var files = Directory.GetFiles(targetDir).Select(Path.GetFileName).OrderBy(f => f);
                     Console.WriteLine($"Files ({files.Count()}):");
@@ -104,6 +106,7 @@ generated_script.sql
                     {
                         Console.WriteLine($"  [FILE] {file}");
                     }
+
                     if (files.Count() > 20)
                     {
                         Console.WriteLine($"  ... and {files.Count() - 20} more files");
@@ -113,20 +116,21 @@ generated_script.sql
                 {
                     Console.WriteLine($"Could not list directory contents: {listEx.Message}");
                 }
-                
+
                 // Check common GitHub Actions paths
                 var githubWorkspace = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE");
                 if (!string.IsNullOrEmpty(githubWorkspace))
                 {
                     Console.WriteLine($"GitHub Workspace: {githubWorkspace}");
-                    Console.WriteLine($"GitHub Workspace .git exists: {Directory.Exists(Path.Combine(githubWorkspace, ".git"))}");
+                    Console.WriteLine(
+                        $"GitHub Workspace .git exists: {Directory.Exists(Path.Combine(githubWorkspace, ".git"))}");
                 }
-                
+
                 try
                 {
                     var gitRoot = RunGitCommand(path, "rev-parse --show-toplevel").Trim();
                     Console.WriteLine($"Git root directory: {gitRoot}");
-                    
+
                     // Check if we're in a subdirectory
                     var currentPath = Path.GetFullPath(path);
                     if (!currentPath.Equals(gitRoot, StringComparison.OrdinalIgnoreCase))
@@ -140,7 +144,7 @@ generated_script.sql
                 {
                     Console.WriteLine($"Could not determine git root: {ex.Message}");
                 }
-                
+
                 // Check git config to understand remote issues
                 try
                 {
@@ -163,7 +167,7 @@ generated_script.sql
                 {
                     Console.WriteLine($"Could not read git config: {configEx.Message}");
                 }
-                
+
                 var remotes = RunGitCommand(path, "remote").Trim();
                 hasRemotes = !string.IsNullOrWhiteSpace(remotes);
                 if (!hasRemotes)
@@ -173,7 +177,7 @@ generated_script.sql
                     Console.WriteLine("  - Repository ownership issues (common in Docker)");
                     Console.WriteLine("  - Working in a subdirectory with 'git init' instead of the main repo");
                     Console.WriteLine("  - Missing git configuration");
-                    
+
                     // Try to check git directory permissions
                     try
                     {
@@ -209,11 +213,11 @@ generated_script.sql
                 Console.WriteLine($"Error checking for remotes: {ex.Message}");
                 // Ignore - assume no remotes
             }
-            
+
             // First, log the current branch
             var currentBranch = RunGitCommand(path, "branch --show-current").Trim();
             Console.WriteLine($"Current branch: {currentBranch}");
-            
+
             // Check git status before any operations
             Console.WriteLine("\nChecking git status before operations:");
             try
@@ -233,19 +237,19 @@ generated_script.sql
             {
                 Console.WriteLine($"Could not get git status: {statusEx.Message}");
             }
-            
+
             // Check if we're already on main branch
             if (currentBranch == "main")
             {
                 Console.WriteLine("\nAlready on main branch, ensuring clean state...");
-                
+
                 // First perform hard reset to ensure clean state
                 try
                 {
                     Console.WriteLine("Performing hard reset to ensure clean state...");
                     RunGitCommand(path, "reset --hard HEAD");
                     Console.WriteLine("✓ Hard reset completed");
-                    
+
                     // Create migration branch after hard reset
                     var migrationBranch = $"migration/{DateTime.UtcNow:yyyyMMdd_HHmmss}";
                     Console.WriteLine($"\nCreating migration branch: {migrationBranch}");
@@ -257,17 +261,18 @@ generated_script.sql
                     Console.WriteLine($"❌ CRITICAL: Could not perform hard reset: {resetEx.Message}");
                     throw new InvalidOperationException($"Git hard reset failed: {resetEx.Message}", resetEx);
                 }
-                
+
                 // Only attempt remote operations if remotes exist
                 if (hasRemotes)
                 {
                     Console.WriteLine("\nUpdating from remote...");
-                    
+
                     // Check for available remotes before attempting to pull
                     string detectedRemote = null;
                     try
                     {
-                        var remotes = RunGitCommand(path, "remote").Trim().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                        var remotes = RunGitCommand(path, "remote").Trim()
+                            .Split('\n', StringSplitOptions.RemoveEmptyEntries);
                         if (remotes.Length > 0)
                         {
                             // Prefer 'origin' if it exists, otherwise use the first available remote
@@ -279,7 +284,7 @@ generated_script.sql
                     {
                         Console.WriteLine("No git remotes configured");
                     }
-                    
+
                     // Then try to pull --rebase from the detected remote/main
                     if (!string.IsNullOrEmpty(detectedRemote))
                     {
@@ -292,15 +297,17 @@ generated_script.sql
                             {
                                 Console.WriteLine(pullOutput);
                             }
-                            
+
                             // Log the commit we're on after reset
                             var commitAfterReset = RunGitCommand(path, "rev-parse HEAD").Trim();
                             var commitMsgAfterReset = RunGitCommand(path, "log -1 --pretty=%s").Trim();
-                            Console.WriteLine($"Now at commit: {commitAfterReset.Substring(0, Math.Min(8, commitAfterReset.Length))} - {commitMsgAfterReset}");
+                            Console.WriteLine(
+                                $"Now at commit: {commitAfterReset.Substring(0, Math.Min(8, commitAfterReset.Length))} - {commitMsgAfterReset}");
                         }
                         catch (Exception pullEx)
                         {
-                            Console.WriteLine($"⚠ Warning: Could not pull from {detectedRemote}/main: {pullEx.Message}");
+                            Console.WriteLine(
+                                $"⚠ Warning: Could not pull from {detectedRemote}/main: {pullEx.Message}");
                         }
                     }
                 }
@@ -311,12 +318,13 @@ generated_script.sql
                     Console.WriteLine("Possible causes:");
                     Console.WriteLine("  - The repository was initialized with 'git init' instead of being cloned");
                     Console.WriteLine("  - The working directory is not the actual repository root");
-                    throw new InvalidOperationException("No git remotes found. This indicates a misconfigured environment.");
+                    throw new InvalidOperationException(
+                        "No git remotes found. This indicates a misconfigured environment.");
                 }
-                
+
                 return (true, "Using current main branch state");
             }
-            
+
             // Check available remotes
             Console.WriteLine("\nChecking for git remotes...");
             string remoteList = "";
@@ -337,7 +345,7 @@ generated_script.sql
             {
                 Console.WriteLine("No git remotes configured");
             }
-            
+
             // Try to fetch if remotes are available
             if (!string.IsNullOrEmpty(remoteList))
             {
@@ -357,14 +365,14 @@ generated_script.sql
                     Console.WriteLine($"⚠ Warning: Could not fetch from remote: {fetchEx.Message}");
                 }
             }
-            
+
             // Perform hard reset to clean any uncommitted changes before switching branches
             Console.WriteLine("\nPerforming hard reset to ensure clean working directory...");
             try
             {
                 RunGitCommand(path, "reset --hard HEAD");
                 Console.WriteLine("✓ Hard reset completed");
-                
+
                 // Clean untracked files as well
                 try
                 {
@@ -381,20 +389,21 @@ generated_script.sql
                 Console.WriteLine($"❌ CRITICAL: Could not perform hard reset: {resetEx.Message}");
                 throw new InvalidOperationException($"Git hard reset failed: {resetEx.Message}", resetEx);
             }
-            
+
             // Create a new branch based on main (local or origin/main if available)
             var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
             var newBranchName = $"migration-{timestamp}";
             Console.WriteLine($"\nCreating new branch '{newBranchName}' for migration detection...");
-            
+
             // Check for available remotes
             if (!hasRemotes)
             {
                 Console.WriteLine("❌ CRITICAL: No remotes configured in repository");
                 Console.WriteLine("Cannot create migration branch without remotes.");
-                throw new InvalidOperationException("No git remotes found. Cannot proceed with migration branch creation.");
+                throw new InvalidOperationException(
+                    "No git remotes found. Cannot proceed with migration branch creation.");
             }
-            
+
             string remoteName = null;
             try
             {
@@ -410,7 +419,7 @@ generated_script.sql
             {
                 Console.WriteLine("Error checking remotes");
             }
-            
+
             try
             {
                 // First, check if remote/main exists
@@ -420,8 +429,9 @@ generated_script.sql
                     try
                     {
                         var remoteMainHash = RunGitCommand(path, $"rev-parse {remoteName}/main").Trim();
-                        Console.WriteLine($"✓ Found {remoteName}/main at commit: {remoteMainHash.Substring(0, Math.Min(8, remoteMainHash.Length))}");
-                        
+                        Console.WriteLine(
+                            $"✓ Found {remoteName}/main at commit: {remoteMainHash.Substring(0, Math.Min(8, remoteMainHash.Length))}");
+
                         // Try to create branch from remote/main
                         RunGitCommand(path, $"checkout -b {newBranchName} {remoteName}/main");
                         Console.WriteLine($"✓ Successfully created branch from {remoteName}/main");
@@ -443,12 +453,13 @@ generated_script.sql
                 try
                 {
                     var localMainHash = RunGitCommand(path, "rev-parse main").Trim();
-                    Console.WriteLine($"✓ Found local main at commit: {localMainHash.Substring(0, Math.Min(8, localMainHash.Length))}");
-                    
+                    Console.WriteLine(
+                        $"✓ Found local main at commit: {localMainHash.Substring(0, Math.Min(8, localMainHash.Length))}");
+
                     // First checkout main
                     Console.WriteLine("Checking out main branch...");
                     RunGitCommand(path, "checkout main");
-                    
+
                     // Hard reset to ensure clean state
                     try
                     {
@@ -461,7 +472,7 @@ generated_script.sql
                         Console.WriteLine($"❌ CRITICAL: Could not perform hard reset: {resetEx.Message}");
                         throw new InvalidOperationException($"Git hard reset failed: {resetEx.Message}", resetEx);
                     }
-                    
+
                     // Then pull latest changes if remote exists
                     if (!string.IsNullOrEmpty(remoteName))
                     {
@@ -480,7 +491,7 @@ generated_script.sql
                             Console.WriteLine($"⚠ Could not pull from {remoteName}: {pullEx.Message}");
                         }
                     }
-                    
+
                     // Now create new branch from updated main
                     RunGitCommand(path, $"checkout -b {newBranchName} main");
                     Console.WriteLine("✓ Successfully created branch from local main");
@@ -494,7 +505,7 @@ generated_script.sql
                     Console.WriteLine("✓ Created new branch from current HEAD");
                 }
             }
-            
+
             // Verify we're on the correct branch/commit
             Console.WriteLine("\nVerifying branch state:");
             var verifyBranch = RunGitCommand(path, "rev-parse --abbrev-ref HEAD").Trim();
@@ -502,7 +513,7 @@ generated_script.sql
             var commitMessage = RunGitCommand(path, "log -1 --pretty=%s").Trim();
             Console.WriteLine($"✓ Now on branch: {verifyBranch}");
             Console.WriteLine($"  Commit: {commitHash.Substring(0, Math.Min(8, commitHash.Length))} - {commitMessage}");
-            
+
             // Final status check
             Console.WriteLine("\nFinal git status:");
             try
@@ -522,7 +533,7 @@ generated_script.sql
             {
                 // Ignore status check errors
             }
-            
+
             Console.WriteLine("\n=== Git Branch Setup Completed ===");
             return (true, $"Successfully created branch {newBranchName}");
         }
@@ -532,81 +543,26 @@ generated_script.sql
             return (false, ex.Message);
         }
     }
-    
+
     public void CommitChanges(string path, string message)
     {
         Console.WriteLine($"\n📝 Committing changes with message: {message}");
         RunGitCommand(path, "add .");
         RunGitCommand(path, $"commit -m \"{message}\"");
     }
-    
-    public void CommitSpecificFiles(string path, string filePattern, string message)
-    {
-        RunGitCommand(path, $"add {filePattern}");
-        try
-        {
-            RunGitCommand(path, $"commit -m \"{message}\"");
-        }
-        catch (Exception ex)
-        {
-            // If there's nothing to commit, that's okay
-            if (!ex.Message.Contains("nothing to commit"))
-            {
-                throw;
-            }
-        }
-    }
-    
-    public void FetchRemote(string path, string remote = "origin")
-    {
-        Console.WriteLine($"Fetching latest changes from {remote}...");
-        RunGitCommand(path, $"fetch {remote}");
-    }
-    
-    public void CheckoutRemoteBranch(string path, string remote = "origin", string branch = "main")
-    {
-        Console.WriteLine($"Checking out {remote}/{branch}...");
-        RunGitCommand(path, $"checkout {remote}/{branch}");
-    }
-    
-    public void CreateAndCheckoutBranch(string path, string branchName)
-    {
-        Console.WriteLine($"Creating and checking out branch: {branchName}");
-        RunGitCommand(path, $"checkout -b {branchName}");
-    }
-    
-    public string GetCurrentBranch(string path)
-    {
-        var output = RunGitCommand(path, "branch --show-current").Trim();
-        return string.IsNullOrEmpty(output) ? "HEAD" : output;
-    }
-    
-    public bool HasRemote(string path, string remote = "origin")
-    {
-        try
-        {
-            RunGitCommand(path, $"remote get-url {remote}");
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
 
-    ChangeType MapGitStatus(string status)
+    static ChangeType MapGitStatus(string status)
     {
         return status switch
         {
             "A" => ChangeType.Added,
             "M" => ChangeType.Modified,
             "D" => ChangeType.Deleted,
-            "AM" => ChangeType.Modified,
-            "MM" => ChangeType.Modified,
-            "??" => ChangeType.Added,  // Untracked files are considered Added
-            _ => status.Contains("A") ? ChangeType.Added : 
-                 status.Contains("M") ? ChangeType.Modified :
-                 status.Contains("D") ? ChangeType.Deleted : ChangeType.Unknown
+            "AM" or "MM" => ChangeType.Modified,
+            "??" => ChangeType.Added, // Untracked files are considered Added
+            _ => status.Contains('A') ? ChangeType.Added :
+                status.Contains('M') ? ChangeType.Modified :
+                status.Contains('D') ? ChangeType.Deleted : ChangeType.Unknown
         };
     }
 
@@ -629,17 +585,22 @@ generated_script.sql
         {
             return File.ReadAllText(fullPath);
         }
+
         return string.Empty;
     }
 
-    static string RunGitCommand(string workingDirectory, string arguments)
+    static string RunGitCommand(string workingDirectory, string arguments, bool debug = false)
     {
         // Ensure the working directory exists
         if (!Directory.Exists(workingDirectory))
         {
             throw new InvalidOperationException($"Working directory does not exist: {workingDirectory}");
         }
-        
+
+        // Log the git command being executed
+        Console.WriteLine($"[Git] Executing: git {arguments}");
+        Console.WriteLine($"[Git] Working directory: {workingDirectory}");
+
         var startInfo = new ProcessStartInfo
         {
             FileName = "git",
@@ -649,9 +610,13 @@ generated_script.sql
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
-            Environment = { ["PATH"] = Environment.GetEnvironmentVariable("PATH") ?? "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" }
+            Environment =
+            {
+                ["PATH"] = Environment.GetEnvironmentVariable("PATH") ??
+                           "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            }
         };
-        
+
         try
         {
             using var process = Process.Start(startInfo);
@@ -659,22 +624,54 @@ generated_script.sql
             {
                 throw new InvalidOperationException("Failed to start git process");
             }
-        
-            var output = process.StandardOutput.ReadToEnd();
-            var error = process.StandardError.ReadToEnd();
-            
+
+            var outputBuilder = new StringBuilder();
+            var errorBuilder = new StringBuilder();
+
+            // Handle output data asynchronously to print it as it arrives
+            {
+                process.OutputDataReceived += (sender, e) =>
+                {
+                    if (e.Data == null) return;
+
+                    if (debug)
+                        Console.WriteLine($"[Git Output] {e.Data}");
+                    outputBuilder.AppendLine(e.Data);
+                };
+
+                // Handle error data asynchronously to print it as it arrives
+                process.ErrorDataReceived += (sender, e) =>
+                {
+                    if (e.Data == null) return;
+                    
+                    if (debug)
+                        Console.WriteLine($"[Git Error] {e.Data}");
+                    
+                    errorBuilder.AppendLine(e.Data);
+                };
+            }
+
+            // Start asynchronous read operations
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
             process.WaitForExit();
-            
+
+            // Log completion status
+            Console.WriteLine($"[Git] Command completed with exit code: {process.ExitCode}");
+
+            var error = errorBuilder.ToString();
             if (process.ExitCode != 0 && !string.IsNullOrWhiteSpace(error))
             {
                 throw new InvalidOperationException($"Git command failed: {error}");
             }
-            
-            return output;
+
+            return outputBuilder.ToString();
         }
         catch (System.ComponentModel.Win32Exception ex)
         {
-            throw new InvalidOperationException($"Failed to execute git command. Make sure git is installed and in PATH. Error: {ex.Message}", ex);
+            throw new InvalidOperationException(
+                $"Failed to execute git command. Make sure git is installed and in PATH. Error: {ex.Message}", ex);
         }
     }
 }

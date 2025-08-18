@@ -6,7 +6,8 @@ public class DacpacScriptParser
 {
     readonly FileSystemManager _fileSystemManager = new();
 
-    public void ParseAndOrganizeScripts(string script, string outputPath, string targetServer, string targetDatabase, HashSet<string>? excludedObjectNames = null)
+    public void ParseAndOrganizeScripts(string script, string outputPath, string targetServer, string targetDatabase, 
+        string? sourceServer = null, string? sourceDatabase = null, HashSet<string>? excludedObjectNames = null)
     {
         // Create base directory with new hierarchical structure
         var basePath = Path.Combine(outputPath, "servers", targetServer, targetDatabase);
@@ -43,10 +44,13 @@ public class DacpacScriptParser
             processedCount += objectGroup.Value.Count;
         }
         
-        // Save skipped statements to extra.sql if any exist
+        // Save skipped statements to source_server_database_extra.sql if any exist
         if (skippedStatements.Any())
         {
-            SaveSkippedStatements(skippedStatements, basePath);
+            // Use source server/database if provided, otherwise fall back to target
+            var extraFileServer = sourceServer ?? targetServer;
+            var extraFileDatabase = sourceDatabase ?? targetDatabase;
+            SaveSkippedStatements(skippedStatements, basePath, extraFileServer, extraFileDatabase);
         }
         
         // Create README for empty schemas if needed
@@ -518,10 +522,10 @@ public class DacpacScriptParser
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
     
-    void SaveSkippedStatements(List<string> skippedStatements, string basePath)
+    void SaveSkippedStatements(List<string> skippedStatements, string basePath, string targetServer, string targetDatabase)
     {
-        // Save all skipped statements to extra.sql
-        var filePath = Path.Combine(basePath, "extra.sql");
+        // Save all skipped statements to server_database_extra.sql
+        var filePath = Path.Combine(basePath, $"{targetServer}_{targetDatabase}_extra.sql");
         var content = string.Join("\nGO\n", skippedStatements);
         _fileSystemManager.WriteFile(filePath, content);
     }

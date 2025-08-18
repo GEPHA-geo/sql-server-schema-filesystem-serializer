@@ -716,20 +716,56 @@ public class DacpacMigrationGenerator
                         Console.WriteLine($"  Applying {existingExclusions.Exclusions.Count} exclusions from .dacpac-exclusions.json");
                         
                         // Apply existing exclusions
+                        var filesFound = 0;
+                        var filesNotFound = 0;
+                        var filesMoved = 0;
+                        
                         foreach (var exclusion in existingExclusions.Exclusions)
                         {
                             var fullPath = Path.Combine(projectDir, exclusion.File);
+                            Console.WriteLine($"    Checking exclusion: {exclusion.File}");
+                            Console.WriteLine($"      Full path: {fullPath}");
+                            
                             if (File.Exists(fullPath))
                             {
+                                filesFound++;
+                                Console.WriteLine($"      ✓ File exists");
+                                
                                 var tempPath = Path.Combine(tempExcludeDir, exclusion.File);
+                                Console.WriteLine($"      Temp path: {tempPath}");
+                                
                                 var tempFileDir = Path.GetDirectoryName(tempPath);
                                 if (!string.IsNullOrEmpty(tempFileDir))
+                                {
+                                    Console.WriteLine($"      Creating temp directory: {tempFileDir}");
                                     Directory.CreateDirectory(tempFileDir);
-                                    
-                                File.Move(fullPath, tempPath);
-                                appliedExclusions[exclusion.File] = tempPath;
+                                }
+                                
+                                try
+                                {
+                                    Console.WriteLine($"      Moving file from {fullPath} to {tempPath}");
+                                    File.Move(fullPath, tempPath);
+                                    appliedExclusions[exclusion.File] = tempPath;
+                                    filesMoved++;
+                                    Console.WriteLine($"      ✓ File moved successfully");
+                                }
+                                catch (Exception moveEx)
+                                {
+                                    Console.WriteLine($"      ✗ Failed to move file: {moveEx.Message}");
+                                }
+                            }
+                            else
+                            {
+                                filesNotFound++;
+                                Console.WriteLine($"      ✗ File does not exist");
                             }
                         }
+                        
+                        Console.WriteLine($"    Exclusion summary:");
+                        Console.WriteLine($"      Total exclusions: {existingExclusions.Exclusions.Count}");
+                        Console.WriteLine($"      Files found: {filesFound}");
+                        Console.WriteLine($"      Files not found: {filesNotFound}");
+                        Console.WriteLine($"      Files moved: {filesMoved}");
                         
                         if (appliedExclusions.Count > 0)
                         {
@@ -1530,53 +1566,29 @@ public class DacpacMigrationGenerator
     /// <summary>
     /// Copies schema files from source to destination, excluding migrations and change manifests
     /// </summary>
-    /// <summary>
-    /// Normalizes line endings in a SQL file to CRLF (Windows format)
-    /// This helps reduce false positives in DACPAC comparisons
-    /// </summary>
-    void NormalizeLineEndings(string filePath)
-    {
-        try
-        {
-            // Read the file content
-            var content = File.ReadAllText(filePath);
-            
-            // Normalize line endings to CRLF
-            // First convert all CRLF to LF, then all LF to CRLF
-            // This ensures consistent conversion regardless of source format
-            content = content.Replace("\r\n", "\n");  // CRLF -> LF
-            content = content.Replace("\r", "\n");    // CR -> LF (for old Mac files)
-            // content = content.Replace("\n", "\r\n");  // LF -> CRLF
-            
-            // Write back with normalized line endings
-            File.WriteAllText(filePath, content);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"      WARNING: Failed to normalize line endings for {Path.GetFileName(filePath)}: {ex.Message}");
-        }
-    }
-
     void CopySchemaFiles(string sourceDir, string destDir)
     {
         var filesToCopy = 0;
         var filesToSkip = 0;
         
-        // Now copy all SQL files
-        foreach (var file in Directory.GetFiles(sourceDir, "*.sql", SearchOption.AllDirectories))
+        // Get all SQL files and pre-filter them to avoid unnecessary processing
+        var sqlFiles = Directory.EnumerateFiles(sourceDir, "*.sql", SearchOption.AllDirectories)
+            .Where(file => {
+                var relativePath = Path.GetRelativePath(sourceDir, file);
+                // Skip migrations, change manifests, *_extra.sql, and other non-schema files
+                return !relativePath.Contains("z_migrations") && 
+                       !relativePath.Contains("z_migrations_reverse") &&
+                       !relativePath.Contains("_change-manifests") &&
+                       !relativePath.EndsWith("_extra.sql", StringComparison.OrdinalIgnoreCase);
+            }).ToList();
+        
+        // Track total files for skip counting
+        var totalFiles = Directory.GetFiles(sourceDir, "*.sql", SearchOption.AllDirectories).Length;
+        
+        // Process files in parallel for better performance
+        Parallel.ForEach(sqlFiles, file =>
         {
             var relativePath = Path.GetRelativePath(sourceDir, file);
-            
-            // Skip migrations, change manifests, extra.sql, and other non-schema files
-            if (relativePath.Contains("z_migrations") || 
-                relativePath.Contains("z_migrations_reverse") ||
-                relativePath.Contains("_change-manifests") ||
-                relativePath.Equals("extra.sql", StringComparison.OrdinalIgnoreCase))
-            {
-                filesToSkip++;
-                continue;
-            }
-            
             var destPath = Path.Combine(destDir, relativePath);
             var destFileDir = Path.GetDirectoryName(destPath);
             
@@ -1584,12 +1596,10 @@ public class DacpacMigrationGenerator
                 Directory.CreateDirectory(destFileDir);
             
             File.Copy(file, destPath, overwrite: true);
-            filesToCopy++;
-            
-            // Normalize line endings in the copied file
-            NormalizeLineEndings(destPath);
-        }
+            Interlocked.Increment(ref filesToCopy);
+        });
         
+        filesToSkip = totalFiles - filesToCopy;
         Console.WriteLine($"    Copied {filesToCopy} SQL files total (skipped {filesToSkip} non-schema files)");
     }
     

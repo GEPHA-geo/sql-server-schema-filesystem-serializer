@@ -60,8 +60,8 @@ public class DacpacRunnerValidationTests : IDisposable
             }
         }
     }
-    
-    void SetDirectoryWritable(string path)
+
+    static void SetDirectoryWritable(string path)
     {
         try
         {
@@ -111,11 +111,11 @@ public class DacpacRunnerValidationTests : IDisposable
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                // Set user email locally for the test repository
+                Arguments = "config --local user.email \"test@example.com\""
             };
-            
-            // Set user email locally for the test repository
-            startInfo.Arguments = "config --local user.email \"test@example.com\"";
+
             using (var process = System.Diagnostics.Process.Start(startInfo))
             {
                 process?.WaitForExit();

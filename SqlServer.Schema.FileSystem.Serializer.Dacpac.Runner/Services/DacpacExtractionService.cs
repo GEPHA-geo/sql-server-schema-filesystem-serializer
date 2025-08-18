@@ -61,28 +61,46 @@ public class DacpacExtractionService
                         return Result.Failure<ExtractionResult>(prepareResult.Error);
                 }
 
-                // Phase 1: Build Target Filesystem DACPAC from git worktree
-                await BuildTargetFilesystemDacpac(context);
-                // Note: We don't fail if target filesystem build fails - it's expected initially
-
-                // Phase 2-3: Extract Original DACPACs from databases in parallel
-                // Since source and target extractions are independent, run them simultaneously
-                var targetExtractTask = ExtractTargetOriginalDacpac(context);
-                var sourceExtractTask = ExtractSourceOriginalDacpac(context);
+                // Phases 1-4: Generate all DACPACs in parallel
+                // All four DACPAC generation operations are independent and can run simultaneously
+                Console.WriteLine("\n=== Generating all DACPACs in parallel ===");
                 
-                // Wait for both extractions to complete
-                var extractResults = await Task.WhenAll(targetExtractTask, sourceExtractTask);
+                // Start all DACPAC generation tasks
+                var buildTargetFilesystemTask = BuildTargetFilesystemDacpac(context);
+                var extractTargetOriginalTask = ExtractTargetOriginalDacpac(context);
+                var extractSourceOriginalTask = ExtractSourceOriginalDacpac(context);
+                var extractAndBuildSourceTask = ExtractAndBuildSourceFilesystem(context);
                 
-                // Check results
-                if (extractResults[0].IsFailure)
-                    return Result.Failure<ExtractionResult>(extractResults[0].Error);
-                if (extractResults[1].IsFailure)
-                    return Result.Failure<ExtractionResult>(extractResults[1].Error);
-
-                // Phase 4: Extract Source to Filesystem and Build DACPAC
-                var buildResult = await ExtractAndBuildSourceFilesystem(context);
-                if (buildResult.IsFailure)
-                    return Result.Failure<ExtractionResult>(buildResult.Error);
+                // Wait for all operations to complete
+                await Task.WhenAll(
+                    buildTargetFilesystemTask,
+                    extractTargetOriginalTask, 
+                    extractSourceOriginalTask,
+                    extractAndBuildSourceTask);
+                
+                // Check results - Target filesystem can fail (expected initially)
+                var targetFilesystemResult = await buildTargetFilesystemTask;
+                if (targetFilesystemResult.IsSuccess)
+                {
+                    context = targetFilesystemResult.Value; // Update context with worktree info
+                }
+                else
+                {
+                    Console.WriteLine($"⚠ Target filesystem DACPAC: {targetFilesystemResult.Error}");
+                }
+                
+                // Check required results
+                var targetOriginalResult = await extractTargetOriginalTask;
+                if (targetOriginalResult.IsFailure)
+                    return Result.Failure<ExtractionResult>(targetOriginalResult.Error);
+                    
+                var sourceOriginalResult = await extractSourceOriginalTask;
+                if (sourceOriginalResult.IsFailure)
+                    return Result.Failure<ExtractionResult>(sourceOriginalResult.Error);
+                    
+                var sourceFilesystemResult = await extractAndBuildSourceTask;
+                if (sourceFilesystemResult.IsFailure)
+                    return Result.Failure<ExtractionResult>(sourceFilesystemResult.Error);
 
                 // Phase 5: Schema Comparison using SCMP file
                 var comparisonResult = await _comparisonService.CompareWithScmpFile(context);
@@ -235,7 +253,7 @@ public class DacpacExtractionService
     /// </summary>
     async Task<Result<DacpacExtractionContext>> BuildTargetFilesystemDacpac(DacpacExtractionContext context)
     {
-        Console.WriteLine("\n=== Phase 1: Building Target Filesystem DACPAC ===");
+        Console.WriteLine("  • Building Target Filesystem DACPAC from git worktree...");
 
         var worktreeResult = await _gitManager.CreateWorktree(
             context.OutputPath,
@@ -274,7 +292,7 @@ public class DacpacExtractionService
     /// </summary>
     async Task<Result> ExtractTargetOriginalDacpac(DacpacExtractionContext context)
     {
-        Console.WriteLine("\n=== Phase 2: Extracting Target Original DACPAC ===");
+        Console.WriteLine("  • Extracting Target Original DACPAC from database...");
 
         var result = await _schemaExtractor.ExtractFromDatabase(
             context.TargetConnection.ConnectionString,
@@ -289,7 +307,7 @@ public class DacpacExtractionService
     /// </summary>
     async Task<Result> ExtractSourceOriginalDacpac(DacpacExtractionContext context)
     {
-        Console.WriteLine("\n=== Phase 3: Extracting Source Original DACPAC ===");
+        Console.WriteLine("  • Extracting Source Original DACPAC from database...");
 
         var result = await _schemaExtractor.ExtractFromDatabase(
             context.SourceConnection.ConnectionString,
@@ -304,7 +322,7 @@ public class DacpacExtractionService
     /// </summary>
     async Task<Result> ExtractAndBuildSourceFilesystem(DacpacExtractionContext context)
     {
-        Console.WriteLine("\n=== Phase 4: Extracting Source Schema and Building Filesystem DACPAC ===");
+        Console.WriteLine("  • Extracting Source Schema and Building Filesystem DACPAC...");
 
         // Extract source schema to filesystem (this will also handle staging for line ending normalization)
         var extractResult = await _schemaExtractor.ExtractToFileSystem(

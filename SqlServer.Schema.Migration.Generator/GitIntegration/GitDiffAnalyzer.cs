@@ -34,38 +34,162 @@ generated_script.sql
     {
         var entries = new List<DiffEntry>();
 
-        // Get status of files (including untracked files)
-        var statusOutput = RunGitCommand(path, "status --porcelain -u");
-        var lines = statusOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-
         // Normalize databaseName to use forward slashes for comparison
         var normalizedDatabaseName = databaseName.Replace('\\', '/');
 
-        foreach (var line in lines)
+        // Get all changes in a single command with full diff information
+        // This combines status and diff content in one git operation
+        var diffOutput = RunGitCommand(path, $"diff HEAD --name-status -- \"{normalizedDatabaseName}/*.sql\"");
+        var untrackedOutput = RunGitCommand(path, $"ls-files --others --exclude-standard -- \"{normalizedDatabaseName}/*.sql\"");
+        
+        // Process modified/deleted files from diff
+        if (!string.IsNullOrWhiteSpace(diffOutput))
         {
-            if (line.Length < 3) continue;
-
-            var status = line.Substring(0, 2).Trim();
-            var filePath = line.Substring(3).Trim();
-
-            // Only process SQL files from the database directory
-            if (filePath.StartsWith(normalizedDatabaseName) && filePath.EndsWith(".sql"))
+            var diffLines = diffOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            
+            // Get full diff content for all files at once
+            var fullDiffOutput = RunGitCommand(path, $"diff HEAD -- \"{normalizedDatabaseName}/*.sql\"");
+            var diffContents = ParseFullDiff(fullDiffOutput);
+            
+            foreach (var line in diffLines)
             {
-                var changeType = MapGitStatus(status);
-                if (changeType != ChangeType.Unknown)
+                var parts = line.Split('\t');
+                if (parts.Length >= 2)
                 {
-                    entries.Add(new DiffEntry
+                    var status = parts[0];
+                    var filePath = parts[1];
+                    
+                    var changeType = status switch
                     {
-                        Path = filePath,
-                        ChangeType = changeType,
-                        OldContent = GetFileContentFromGit(path, filePath),
-                        NewContent = GetFileContent(Path.Combine(path, filePath))
-                    });
+                        "M" => ChangeType.Modified,
+                        "A" => ChangeType.Added,
+                        "D" => ChangeType.Deleted,
+                        _ => ChangeType.Unknown
+                    };
+                    
+                    if (changeType != ChangeType.Unknown)
+                    {
+                        var oldContent = string.Empty;
+                        var newContent = string.Empty;
+                        
+                        if (changeType == ChangeType.Modified || changeType == ChangeType.Deleted)
+                        {
+                            // Get old content from the diff
+                            oldContent = diffContents.ContainsKey(filePath) 
+                                ? diffContents[filePath].oldContent 
+                                : GetFileContentFromGit(path, filePath);
+                        }
+                        
+                        if (changeType == ChangeType.Modified || changeType == ChangeType.Added)
+                        {
+                            newContent = GetFileContent(Path.Combine(path, filePath));
+                        }
+                        
+                        entries.Add(new DiffEntry
+                        {
+                            Path = filePath,
+                            ChangeType = changeType,
+                            OldContent = oldContent,
+                            NewContent = newContent
+                        });
+                    }
                 }
+            }
+        }
+        
+        // Process untracked (new) files
+        if (!string.IsNullOrWhiteSpace(untrackedOutput))
+        {
+            var untrackedFiles = untrackedOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var filePath in untrackedFiles)
+            {
+                entries.Add(new DiffEntry
+                {
+                    Path = filePath,
+                    ChangeType = ChangeType.Added,
+                    OldContent = string.Empty,
+                    NewContent = GetFileContent(Path.Combine(path, filePath))
+                });
             }
         }
 
         return entries;
+    }
+
+    
+    /// <summary>
+    /// Parses the output of git show with multiple files
+    /// </summary>
+    /// <summary>
+    /// Parses the full diff output to extract old and new content for each file
+    /// </summary>
+    Dictionary<string, (string oldContent, string newContent)> ParseFullDiff(string diffOutput)
+    {
+        var result = new Dictionary<string, (string oldContent, string newContent)>();
+        
+        if (string.IsNullOrWhiteSpace(diffOutput))
+            return result;
+        
+        // Parse unified diff format
+        // This is a simplified parser - for production, consider using a proper diff parser library
+        var lines = diffOutput.Split('\n');
+        string currentFile = null;
+        var oldLines = new List<string>();
+        var newLines = new List<string>();
+        
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var line = lines[i];
+            
+            // Detect file header
+            if (line.StartsWith("diff --git"))
+            {
+                // Save previous file if any
+                if (currentFile != null)
+                {
+                    result[currentFile] = (string.Join("\n", oldLines), string.Join("\n", newLines));
+                }
+                
+                // Extract filename from diff header
+                var parts = line.Split(' ');
+                if (parts.Length >= 4)
+                {
+                    currentFile = parts[3].TrimStart('b', '/');
+                    oldLines.Clear();
+                    newLines.Clear();
+                }
+            }
+            else if (currentFile != null)
+            {
+                // Skip header lines
+                if (line.StartsWith("---") || line.StartsWith("+++") || line.StartsWith("@@"))
+                    continue;
+                
+                // Process diff lines
+                if (line.StartsWith("-") && !line.StartsWith("---"))
+                {
+                    oldLines.Add(line.Substring(1));
+                }
+                else if (line.StartsWith("+") && !line.StartsWith("+++"))
+                {
+                    newLines.Add(line.Substring(1));
+                }
+                else if (line.StartsWith(" "))
+                {
+                    // Context line - appears in both
+                    oldLines.Add(line.Substring(1));
+                    newLines.Add(line.Substring(1));
+                }
+            }
+        }
+        
+        // Save last file
+        if (currentFile != null)
+        {
+            result[currentFile] = (string.Join("\n", oldLines), string.Join("\n", newLines));
+        }
+        
+        return result;
     }
 
     public (bool success, string message) CheckoutBranch(string path, string branch)

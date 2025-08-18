@@ -34,13 +34,29 @@ generated_script.sql
     {
         var entries = new List<DiffEntry>();
 
-        // Normalize databaseName to use forward slashes for comparison
-        var normalizedDatabaseName = databaseName.Replace('\\', '/');
+        // Build the path pattern for git commands
+        string pathPattern;
+        if (string.IsNullOrWhiteSpace(databaseName))
+        {
+            // If no database name is provided, check all SQL files
+            pathPattern = "*.sql";
+        }
+        else
+        {
+            // Normalize databaseName to use forward slashes for comparison
+            var normalizedDatabaseName = databaseName.Replace('\\', '/');
+            
+            // Remove leading slash if present to make it a relative path
+            if (normalizedDatabaseName.StartsWith("/"))
+                normalizedDatabaseName = normalizedDatabaseName.Substring(1);
+            
+            pathPattern = $"{normalizedDatabaseName}/*.sql";
+        }
 
         // Get all changes in a single command with full diff information
         // This combines status and diff content in one git operation
-        var diffOutput = RunGitCommand(path, $"diff HEAD --name-status -- \"{normalizedDatabaseName}/*.sql\"");
-        var untrackedOutput = RunGitCommand(path, $"ls-files --others --exclude-standard -- \"{normalizedDatabaseName}/*.sql\"");
+        var diffOutput = RunGitCommand(path, $"diff HEAD --name-status -- \"{pathPattern}\"");
+        var untrackedOutput = RunGitCommand(path, $"ls-files --others --exclude-standard -- \"{pathPattern}\"");
         
         // Process modified/deleted files from diff
         if (!string.IsNullOrWhiteSpace(diffOutput))
@@ -48,7 +64,7 @@ generated_script.sql
             var diffLines = diffOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             
             // Get full diff content for all files at once
-            var fullDiffOutput = RunGitCommand(path, $"diff HEAD -- \"{normalizedDatabaseName}/*.sql\"");
+            var fullDiffOutput = RunGitCommand(path, $"diff HEAD -- \"{pathPattern}\"");
             var diffContents = ParseFullDiff(fullDiffOutput);
             
             foreach (var line in diffLines)

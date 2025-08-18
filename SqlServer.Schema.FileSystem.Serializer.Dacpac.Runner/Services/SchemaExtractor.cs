@@ -98,7 +98,7 @@ public class SchemaExtractor
             context.SourceConnection.SanitizedServer,
             context.SourceConnection.SanitizedDatabase);
 
-        // Verify files were created and stage them for line ending normalization
+        // Verify files were created and normalize them
         var targetSchemaPath = Path.Combine(
             context.OutputPath,
             DacpacConstants.Directories.Servers,
@@ -111,10 +111,25 @@ public class SchemaExtractor
             var sqlFiles = Directory.GetFiles(targetSchemaPath, "*.sql", SearchOption.AllDirectories);
             Console.WriteLine($"  ✓ Found {sqlFiles.Length} SQL files after extraction");
             
+            // Normalize all SQL files to remove BOM and fix line endings
+            // This prevents false positive sp_updateextendedproperty differences
+            Console.WriteLine("  Normalizing SQL files (removing BOM, converting to LF line endings)...");
+            var normalizedCount = 0;
+            foreach (var sqlFile in sqlFiles)
+            {
+                _fileSystemManager.NormalizeFile(sqlFile);
+                normalizedCount++;
+                if (normalizedCount % 100 == 0)
+                {
+                    Console.WriteLine($"    Normalized {normalizedCount}/{sqlFiles.Length} files...");
+                }
+            }
+            Console.WriteLine($"  ✓ Normalized all {normalizedCount} SQL files");
+            
             // Stage the extracted files to normalize line endings through Git
             if (_gitAnalyzer.IsGitRepository(context.OutputPath) && sqlFiles.Length > 0)
             {
-                Console.WriteLine("  Staging extracted source files to normalize line endings...");
+                Console.WriteLine("  Staging extracted source files for Git...");
                 var relativePath = Path.GetRelativePath(context.OutputPath, targetSchemaPath);
                 Console.WriteLine($"    Relative path for staging: {relativePath}");
                 
@@ -122,11 +137,11 @@ public class SchemaExtractor
                 if (stageResult.IsFailure)
                 {
                     Console.WriteLine($"  ⚠ Warning: Could not stage files: {stageResult.Error}");
-                    // Continue anyway - staging is optional for line ending normalization
+                    // Continue anyway - staging is optional
                 }
                 else
                 {
-                    Console.WriteLine("  ✓ Files staged for line ending normalization");
+                    Console.WriteLine("  ✓ Files staged for Git");
                 }
             }
         }

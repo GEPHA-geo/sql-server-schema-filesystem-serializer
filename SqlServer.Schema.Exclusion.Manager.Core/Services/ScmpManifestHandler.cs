@@ -1,3 +1,4 @@
+using System.Text;
 using System.Xml.Serialization;
 using SqlServer.Schema.Exclusion.Manager.Core.Models;
 
@@ -40,15 +41,30 @@ public class ScmpManifestHandler
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             Directory.CreateDirectory(directory);
 
+        // Use UTF-8 encoding with BOM for compatibility with Microsoft.SqlServer.Dac.Compare
+        var encoding = new UTF8Encoding(true); // true = include BOM
+        
         using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
-        using var writer = new StreamWriter(stream);
+        using var writer = new StreamWriter(stream, encoding);
+        
+        // Write XML declaration explicitly
+        await writer.WriteLineAsync("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         
         var namespaces = new XmlSerializerNamespaces();
         namespaces.Add(string.Empty, string.Empty);
         
         using var stringWriter = new StringWriter();
         _serializer.Serialize(stringWriter, comparison, namespaces);
-        await writer.WriteAsync(stringWriter.ToString());
+        
+        // Get the XML content and skip the declaration line if present
+        var xmlContent = stringWriter.ToString();
+        var lines = xmlContent.Split('\n');
+        var startIndex = lines[0].StartsWith("<?xml") ? 1 : 0;
+        
+        for (var i = startIndex; i < lines.Length; i++)
+        {
+            await writer.WriteLineAsync(lines[i].TrimEnd('\r'));
+        }
     }
 
     /// <summary>
@@ -177,7 +193,7 @@ public class ScmpManifestHandler
         else if (provider?.FileBasedModelProvider != null)
         {
             // Extract database name from DACPAC file path
-            var filePath = provider.FileBasedModelProvider.FilePath;
+            var filePath = provider.FileBasedModelProvider.DatabaseFileName;
             var fileName = Path.GetFileNameWithoutExtension(filePath);
             return fileName;
         }

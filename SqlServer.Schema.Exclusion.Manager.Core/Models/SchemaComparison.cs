@@ -81,10 +81,16 @@ public class ConnectionBasedModelProvider
 public class FileBasedModelProvider
 {
     /// <summary>
+    /// Name of the provider (usually empty)
+    /// </summary>
+    [XmlElement("Name", IsNullable = false)]
+    public string Name { get; set; } = string.Empty;
+    
+    /// <summary>
     /// Path to the DACPAC file
     /// </summary>
-    [XmlElement("FilePath")]
-    public string FilePath { get; set; } = string.Empty;
+    [XmlElement("DatabaseFileName", IsNullable = false)]
+    public string DatabaseFileName { get; set; } = string.Empty;
 }
 
 /// <summary>

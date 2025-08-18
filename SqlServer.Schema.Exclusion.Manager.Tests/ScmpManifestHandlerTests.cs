@@ -106,15 +106,15 @@ public class ScmpManifestHandlerTests : IDisposable
         {
             SelectedItems = new List<SelectedItem>
             {
-                new() { Name = "dbo.Table1", Type = "SqlTable" },
-                new() { Name = "dbo.View1", Type = "SqlView" }
+                new() { NameParts = new List<string> { "dbo", "Table1" }, Type = "SqlTable" },
+                new() { NameParts = new List<string> { "dbo", "View1" }, Type = "SqlView" }
             }
         };
         comparison.ExcludedTargetElements = new ExcludedElements
         {
             SelectedItems = new List<SelectedItem>
             {
-                new() { Name = "dbo.Proc1", Type = "SqlProcedure" }
+                new() { NameParts = new List<string> { "dbo", "Proc1" }, Type = "SqlProcedure" }
             }
         };
 
@@ -238,7 +238,7 @@ public class ScmpManifestHandlerTests : IDisposable
         Assert.NotNull(loaded.SourceModelProvider?.ConnectionBasedModelProvider);
         Assert.Contains("TestServer", loaded.SourceModelProvider.ConnectionBasedModelProvider.ConnectionString);
         Assert.NotNull(loaded.TargetModelProvider?.FileBasedModelProvider);
-        Assert.Equal(@"C:\Test\Database.dacpac", loaded.TargetModelProvider.FileBasedModelProvider.FilePath);
+        Assert.Equal(@"C:\Test\Database.dacpac", loaded.TargetModelProvider.FileBasedModelProvider.DatabaseFileName);
         Assert.NotNull(loaded.ExcludedSourceElements);
         Assert.Single(loaded.ExcludedSourceElements.SelectedItems);
         Assert.Equal("dbo.ExcludedTable", loaded.ExcludedSourceElements.SelectedItems[0].Name);
@@ -254,7 +254,7 @@ public class ScmpManifestHandlerTests : IDisposable
             {
                 FileBasedModelProvider = new FileBasedModelProvider
                 {
-                    FilePath = Path.Combine("C:", "Test", "MyDatabase.dacpac")
+                    DatabaseFileName = Path.Combine("C:", "Test", "MyDatabase.dacpac")
                 }
             }
         };

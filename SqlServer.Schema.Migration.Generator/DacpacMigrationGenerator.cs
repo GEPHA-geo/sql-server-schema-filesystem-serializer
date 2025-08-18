@@ -1366,12 +1366,10 @@ public class DacpacMigrationGenerator
                 }
             }
         }
-        else
-        {
-            // Already relative, just normalize the separators
-            // Replace both types of separators with the current OS separator
-            filePath = filePath.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
-        }
+        
+        // Always normalize the separators to the current OS
+        // This ensures the exclusion file paths will match when read back
+        filePath = filePath.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
         
         return filePath;
     }
@@ -2028,6 +2026,15 @@ public class DacpacMigrationGenerator
             {
                 Console.WriteLine($"  Loaded exclusion file with {exclusionFile.Exclusions.Count} exclusions");
                 Console.WriteLine($"  Last successful build: {exclusionFile.LastSuccessfulBuild:yyyy-MM-dd HH:mm:ss}");
+                
+                // Normalize the file paths to the current OS format
+                // This handles exclusion files created on Windows being used on Linux and vice versa
+                foreach (var exclusion in exclusionFile.Exclusions)
+                {
+                    // Replace both Windows and Unix path separators with the current OS separator
+                    exclusion.File = exclusion.File.Replace('\\', Path.DirectorySeparatorChar)
+                                                   .Replace('/', Path.DirectorySeparatorChar);
+                }
             }
             
             return exclusionFile;

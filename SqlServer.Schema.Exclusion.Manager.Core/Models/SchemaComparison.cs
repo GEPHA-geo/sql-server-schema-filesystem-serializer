@@ -80,11 +80,33 @@ public class ConnectionBasedModelProvider
 /// </summary>
 public class FileBasedModelProvider
 {
+    string _databaseFileName = string.Empty;
+
     /// <summary>
-    /// Path to the DACPAC file
+    /// Name of the provider (usually empty)
     /// </summary>
-    [XmlElement("FilePath")]
-    public string FilePath { get; set; } = string.Empty;
+    [XmlElement("Name", IsNullable = false)]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Path to the DACPAC file (for DatabaseFileName compatibility)
+    /// </summary>
+    [XmlElement("DatabaseFileName", IsNullable = false)]
+    public string DatabaseFileName
+    {
+        get => _databaseFileName;
+        set => _databaseFileName = value;
+    }
+
+    /// <summary>
+    /// Path to the DACPAC file (for FilePath XML element compatibility)
+    /// </summary>
+    [XmlElement("FilePath", IsNullable = false)]
+    public string FilePath
+    {
+        get => _databaseFileName;
+        set => _databaseFileName = value;
+    }
 }
 
 /// <summary>
@@ -146,15 +168,14 @@ public class ExcludedElements
 /// </summary>
 public class SelectedItem
 {
-    /// <summary>
-    /// Type of the SQL object (e.g., Microsoft.Data.Tools.Schema.Sql.SchemaModel.SqlTable)
-    /// </summary>
     [XmlAttribute("Type")]
     public string Type { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Fully qualified name of the database object (e.g., dbo.TableName)
-    /// </summary>
+    // Changed to handle multiple Name elements that form the object path
     [XmlElement("Name")]
-    public string Name { get; set; } = string.Empty;
+    public List<string> NameParts { get; set; } = new List<string>();
+
+    // Computed property to get the full qualified name
+    [XmlIgnore]
+    public string Name => string.Join(".", NameParts);
 }

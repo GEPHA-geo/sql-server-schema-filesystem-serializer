@@ -110,7 +110,9 @@ internal static class Program
             // Parse and organize the script into separate files
             Console.WriteLine("Parsing and organizing scripts...");
             var parser = new DacpacScriptParser();
-            parser.ParseAndOrganizeScripts(script, outputPath, targetServer, targetDatabase);
+            // In this case, source and target are from the same source database
+            var sourceServer = sourceBuilder.DataSource.Replace('\\', '-').Replace(':', '-');
+            parser.ParseAndOrganizeScripts(script, outputPath, targetServer, targetDatabase, sourceServer, sourceDatabaseName);
             
             // Clean up temp DACPAC file
             if (File.Exists(dacpacPath))

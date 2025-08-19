@@ -11,7 +11,7 @@ public class MigrationFile
     public string MigrationId { get; }
     public string Content { get; }
     public string Checksum { get; }
-    
+
     public MigrationFile(string filePath)
     {
         FilePath = filePath;

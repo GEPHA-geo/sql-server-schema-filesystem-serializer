@@ -15,12 +15,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SqlServer.Schema.Common\SqlServer.Schema.Common.csproj" />
     <ProjectReference Include="..\SqlServer.Schema.FileSystem.Serializer.Dacpac.Core\SqlServer.Schema.FileSystem.Serializer.Dacpac.Core.csproj" />
     <ProjectReference Include="..\SqlServer.Schema.Migration.Generator\SqlServer.Schema.Migration.Generator.csproj" />
     <ProjectReference Include="..\SqlServer.Schema.Exclusion.Manager.Core\SqlServer.Schema.Exclusion.Manager.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CSharpFunctionalExtensions" Version="2.41.0" />
     <PackageReference Include="Microsoft.SqlServer.DacFx" Version="*" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="*" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />

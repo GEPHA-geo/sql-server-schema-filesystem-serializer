@@ -16,17 +16,17 @@ public class ScmpToDeployOptions
     public DacDeployOptions MapOptions(SchemaComparison comparison)
     {
         var options = new DacDeployOptions();
-        
+
         if (comparison.SchemaCompareSettingsService?.ConfigurationOptionsElement?.PropertyElements == null)
             return options;
 
         var properties = comparison.SchemaCompareSettingsService.ConfigurationOptionsElement.PropertyElements;
-        
+
         foreach (var property in properties)
         {
             SetDeployOption(options, property.Name, property.Value);
         }
-        
+
         return options;
     }
 
@@ -37,7 +37,7 @@ public class ScmpToDeployOptions
     {
         // Parse boolean values
         var boolValue = ParseBool(value);
-        
+
         // Map SCMP option names to DacDeployOptions properties
         // This mapping covers the most common options used in schema comparisons
         switch (name)
@@ -67,7 +67,7 @@ public class ScmpToDeployOptions
             case "DropConstraintsNotInSource":
                 options.DropConstraintsNotInSource = boolValue;
                 break;
-                
+
             // Data handling options
             case "BlockOnPossibleDataLoss":
                 options.BlockOnPossibleDataLoss = boolValue;
@@ -81,7 +81,7 @@ public class ScmpToDeployOptions
             case "VerifyDeployment":
                 options.VerifyDeployment = boolValue;
                 break;
-                
+
             // Ignore options
             case "IgnorePermissions":
                 options.IgnorePermissions = boolValue;
@@ -188,13 +188,13 @@ public class ScmpToDeployOptions
             case "IgnoreTableOptions":
                 options.IgnoreTableOptions = boolValue;
                 break;
-                
+
             // Schema handling
             case "DoNotDropObjectTypes":
                 // This would need special handling as it's a collection
                 // For now, we'll skip it
                 break;
-                
+
             // Script generation options
             case "GenerateSmartDefaults":
                 options.GenerateSmartDefaults = boolValue;
@@ -239,7 +239,7 @@ public class ScmpToDeployOptions
             case "AllowIncompatiblePlatform":
                 options.AllowIncompatiblePlatform = boolValue;
                 break;
-                
+
             // Validation options
             case "UnmodifiableObjectWarnings":
                 options.UnmodifiableObjectWarnings = boolValue;
@@ -253,19 +253,19 @@ public class ScmpToDeployOptions
             case "DeployDatabaseInSingleUserMode":
                 options.DeployDatabaseInSingleUserMode = boolValue;
                 break;
-                
+
             // Command timeout (integer value)
             case "CommandTimeout":
                 if (int.TryParse(value, out var timeout))
                     options.CommandTimeout = timeout;
                 break;
-                
+
             // Database specification - requires DacAzureDatabaseSpecification object
             // case "DatabaseSpecification":
             //     // This requires a complex object, not a string
             //     // Would need special handling to create DacAzureDatabaseSpecification
             //     break;
-                
+
             default:
                 // Log unknown option for debugging
                 // Could add logging here if needed
@@ -276,8 +276,8 @@ public class ScmpToDeployOptions
     /// <summary>
     /// Parses a string value to boolean
     /// </summary>
-    bool ParseBool(string value) => 
-        value.Equals("True", StringComparison.OrdinalIgnoreCase) || 
+    bool ParseBool(string value) =>
+        value.Equals("True", StringComparison.OrdinalIgnoreCase) ||
         value.Equals("1", StringComparison.Ordinal);
 
     /// <summary>
@@ -290,13 +290,13 @@ public class ScmpToDeployOptions
             // Data protection
             BlockOnPossibleDataLoss = true,
             BackupDatabaseBeforeChanges = false,
-            
+
             // Drop operations - conservative by default
             DropObjectsNotInSource = false,
             DropPermissionsNotInSource = false,
             DropRoleMembersNotInSource = false,
             DropExtendedPropertiesNotInSource = false,
-            
+
             // Commonly ignored items for migrations
             IgnorePermissions = true,
             IgnoreRoleMembership = true,
@@ -308,12 +308,12 @@ public class ScmpToDeployOptions
             IgnoreWhitespace = true,
             IgnoreKeywordCasing = true,
             IgnoreSemicolonBetweenStatements = true,
-            
+
             // Script generation
             IncludeCompositeObjects = true,
             IncludeTransactionalScripts = true,
             GenerateSmartDefaults = true,
-            
+
             // Validation
             VerifyDeployment = true,
             VerifyCollationCompatibility = true

@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SqlServer.Schema.Common\SqlServer.Schema.Common.csproj" />
     <ProjectReference Include="..\SqlServer.Schema.Exclusion.Manager.Core\SqlServer.Schema.Exclusion.Manager.Core.csproj" />
   </ItemGroup>
 

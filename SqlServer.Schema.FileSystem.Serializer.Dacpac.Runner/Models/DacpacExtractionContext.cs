@@ -1,3 +1,5 @@
+using CommonDacpacFilePaths = SqlServer.Schema.Common.PathManagement.DacpacFilePaths;
+
 namespace SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Models;
 
 /// <summary>
@@ -33,7 +35,7 @@ public class DacpacExtractionContext : IDisposable
     /// <summary>
     /// Centralized file path manager
     /// </summary>
-    public DacpacFilePaths? FilePaths { get; init; }
+    public CommonDacpacFilePaths? FilePaths { get; init; }
 
     /// <summary>
     /// Source database connection information

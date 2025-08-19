@@ -503,7 +503,9 @@ public class DacpacScriptParser
         var usersPath = Path.Combine(basePath, "users");
         FileSystemManager.CreateDirectory(usersPath);
         
-        var filePath = Path.Combine(usersPath, $"{statement.Name}.sql");
+        // Sanitize the username for filesystem - handle domain users like PHARM\username
+        var sanitizedName = statement.Name.Replace("\\", "_");  // Replace backslash with underscore
+        var filePath = Path.Combine(usersPath, $"{sanitizedName}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
     
@@ -513,7 +515,9 @@ public class DacpacScriptParser
         var loginsPath = Path.Combine(basePath, "logins");
         FileSystemManager.CreateDirectory(loginsPath);
         
-        var filePath = Path.Combine(loginsPath, $"{statement.Name}.sql");
+        // Sanitize the login name for filesystem - handle domain logins like PHARM\username
+        var sanitizedName = statement.Name.Replace("\\", "_");  // Replace backslash with underscore
+        var filePath = Path.Combine(loginsPath, $"{sanitizedName}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
     

@@ -2,10 +2,13 @@ using System.Diagnostics;
 using CSharpFunctionalExtensions;
 using Microsoft.Data.SqlClient;
 using SqlServer.Schema.Exclusion.Manager.Core.Services;
-using SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Constants;
+using SqlServer.Schema.Common.Constants;
+using SqlServer.Schema.Common.PathManagement;
 using SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Models;
-using static SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Constants.DacpacConstants.DacpacNames;
-using static SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Constants.DacpacConstants.Files;
+using CommonDacpacPaths = SqlServer.Schema.Common.PathManagement.DacpacPaths;
+using static SqlServer.Schema.Common.Constants.SharedConstants.DacpacNames;
+using static SqlServer.Schema.Common.Constants.SharedConstants.Files;
+using DacpacConstants = SqlServer.Schema.Common.Constants.SharedConstants;
 
 namespace SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Services;
 
@@ -257,7 +260,13 @@ public class DacpacExtractionService
             TargetConnection = targetConnection,
             TargetOutputPath = filePaths.TargetOutputPath,
             ScmpOutputPath = filePaths.ScmpDirectoryPath,
-            DacpacPaths = filePaths.GetLegacyDacpacPaths(),
+            DacpacPaths = new Models.DacpacPaths
+            {
+                TargetFilesystemDacpac = filePaths.TargetFilesystemDacpacPath,
+                TargetOriginalDacpac = filePaths.TargetOriginalDacpacPath,
+                SourceFilesystemDacpac = filePaths.SourceFilesystemDacpacPath,
+                SourceOriginalDacpac = filePaths.SourceOriginalDacpacPath
+            },
             FilePaths = filePaths
         };
 
@@ -286,6 +295,7 @@ public class DacpacExtractionService
             ScmpOutputPath = context.ScmpOutputPath,
             WorktreePath = worktreePath,
             DacpacPaths = context.DacpacPaths,
+            FilePaths = context.FilePaths,  // IMPORTANT: Copy FilePaths to preserve original SCMP path
             SourceConnection = context.SourceConnection,
             TargetConnection = context.TargetConnection,
             TempDirectory = context.TempDirectory,

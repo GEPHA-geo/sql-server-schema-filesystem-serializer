@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using CSharpFunctionalExtensions;
-using SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Constants;
+using SqlServer.Schema.Common.Constants;
+using DacpacConstants = SqlServer.Schema.Common.Constants.SharedConstants;
 using SqlServer.Schema.Migration.Generator.GitIntegration;
 
 namespace SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Services;

@@ -6,6 +6,8 @@ using Microsoft.SqlServer.Dac.Model;
 using Microsoft.SqlServer.Dac.Compare;
 using SqlServer.Schema.Exclusion.Manager.Core.Models;
 using SqlServer.Schema.Exclusion.Manager.Core.Services;
+using SqlServer.Schema.Common.Constants;
+using SqlServer.Schema.Common.PathManagement;
 
 namespace SqlServer.Schema.Migration.Generator;
 
@@ -695,11 +697,9 @@ public class DacpacMigrationGenerator
             var projectDir = Path.GetDirectoryName(projectPath)!;
             var projectName = Path.GetFileNameWithoutExtension(projectPath);
             
-            // Check for exclusion file in SCMP directory first, then fall back to schema directory
-            var scmpPath = Path.Combine(schemaPath, "scmp");
-            var scmpExclusionPath = Path.Combine(scmpPath, ".dacpac-exclusions.json");
-            var schemaExclusionPath = Path.Combine(schemaPath, ".dacpac-exclusions.json");
-            var exclusionFilePath = File.Exists(scmpExclusionPath) ? scmpExclusionPath : schemaExclusionPath;
+            // Use the static helper from DacpacFilePaths to get the exclusion file path
+            // This encapsulates the logic of checking SCMP directory first, then falling back to schema directory
+            var exclusionFilePath = DacpacFilePaths.GetExclusionFilePath(schemaPath);
             
             // Create a temporary directory for excluded files
             var tempExcludeDir = Path.Combine(Path.GetTempPath(), $"DacpacExcluded_{Guid.NewGuid():N}");
@@ -844,7 +844,7 @@ public class DacpacMigrationGenerator
                 };
                 
                 var iteration = 0;
-                var maxIterations = 10;
+                var maxIterations = 5;  // Limit to 5 iterations: 1 for SQL71561 errors, up to 4 for cascading dependencies
                 var allExcludedFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 
                 while (iteration < maxIterations)
@@ -949,7 +949,10 @@ public class DacpacMigrationGenerator
                             Console.WriteLine($"  ✓ Build succeeded after {iteration} iterations");
                             Console.WriteLine($"  ✓ Total files excluded: {newExclusionFile.Exclusions.Count}");
                             
-                            // Save the new exclusion file to SCMP directory if it exists, otherwise schema directory
+                            // Save the new exclusion file using the same logic as GetExclusionFilePath
+                            var scmpPath = DacpacFilePaths.GetScmpPath(schemaPath);
+                            var scmpExclusionPath = Path.Combine(scmpPath, SharedConstants.Files.ExclusionsFile);
+                            var schemaExclusionPath = Path.Combine(schemaPath, SharedConstants.Files.ExclusionsFile);
                             var saveExclusionPath = Directory.Exists(scmpPath) ? scmpExclusionPath : schemaExclusionPath;
                             // Ensure SCMP directory exists if we're saving there
                             if (saveExclusionPath == scmpExclusionPath && !Directory.Exists(scmpPath))
@@ -970,7 +973,8 @@ public class DacpacMigrationGenerator
                 
                 if (iteration >= maxIterations)
                 {
-                    Console.WriteLine($"  ERROR: Reached maximum iterations ({maxIterations}), giving up");
+                    Console.WriteLine($"  ERROR: Reached maximum iterations ({maxIterations}). This typically means there are very complex circular dependencies.");
+                    Console.WriteLine($"  Consider manually reviewing and resolving the dependencies in the excluded files.");
                 }
                 else
                 {
@@ -1709,22 +1713,40 @@ public class DacpacMigrationGenerator
             }
         }
         
-        Console.WriteLine($"      Looking for cascading dependencies from {excludedFiles.Count} excluded files...");
+        Console.WriteLine($"      Looking for cascading dependencies from {excludedFiles.Count} excluded files ({excludedObjects.Count} object variations)...");
         
         var combinedOutput = output + "\n" + errors;
         var lines = combinedOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         
+        Console.WriteLine($"      Processing {lines.Length} lines of build output...");
+        
         // Also look for any SQL71561 errors that weren't caught in first iteration
         var newSQL71561Files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        
+        // Pre-compile regex for better performance
+        var filePathRegex = new Regex(@"([^:\s]+\.sql)(?:\(\d+,\d+\))?", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        
+        // Process lines in batches to show progress
+        var processedLines = 0;
+        var lastProgressReport = DateTime.Now;
         
         // Process each line looking for references to excluded objects
         foreach (var line in lines)
         {
+            processedLines++;
+            
+            // Report progress every 1000 lines or every 2 seconds
+            if (processedLines % 1000 == 0 || (DateTime.Now - lastProgressReport).TotalSeconds > 2)
+            {
+                Console.WriteLine($"        Processed {processedLines}/{lines.Length} lines...");
+                lastProgressReport = DateTime.Now;
+            }
+            
             // Check if this is a NEW SQL71561 error (not caught in iteration 1)
             if (line.Contains(SQL_UNRESOLVED_REFERENCE_ERROR, StringComparison.OrdinalIgnoreCase))
             {
                 // Extract file path from this error
-                var fileMatch = Regex.Match(line, @"([^:\s]+\.sql)(?:\(\d+,\d+\))?", RegexOptions.IgnoreCase);
+                var fileMatch = filePathRegex.Match(line);
                 if (fileMatch.Success)
                 {
                     var filePath = ProcessFilePath(fileMatch.Groups[1].Value.Trim());
@@ -1735,17 +1757,38 @@ public class DacpacMigrationGenerator
                 }
             }
             
+            // Skip lines that are too short to contain meaningful references
+            if (line.Length < 10)
+                continue;
+            
             // Check if line mentions an excluded object
             bool mentionsExcludedObject = false;
             string? referencedExcludedObject = null;
             
-            foreach (var excludedObject in excludedObjects)
+            // Use parallel search for better performance with many excluded objects
+            if (excludedObjects.Count > 50)
             {
-                if (line.Contains(excludedObject, StringComparison.OrdinalIgnoreCase))
+                // For large sets, use parallel search
+                var found = excludedObjects.AsParallel().FirstOrDefault(excludedObject => 
+                    line.Contains(excludedObject, StringComparison.OrdinalIgnoreCase));
+                
+                if (found != null)
                 {
                     mentionsExcludedObject = true;
-                    referencedExcludedObject = excludedObject;
-                    break;
+                    referencedExcludedObject = found;
+                }
+            }
+            else
+            {
+                // For small sets, use sequential search
+                foreach (var excludedObject in excludedObjects)
+                {
+                    if (line.Contains(excludedObject, StringComparison.OrdinalIgnoreCase))
+                    {
+                        mentionsExcludedObject = true;
+                        referencedExcludedObject = excludedObject;
+                        break;
+                    }
                 }
             }
             
@@ -1756,8 +1799,8 @@ public class DacpacMigrationGenerator
             string? filePath2 = null;
             string reason = "";
             
-            // Look for file paths in the error line
-            var fileMatch2 = Regex.Match(line, @"([^:\s]+\.sql)(?:\(\d+,\d+\))?", RegexOptions.IgnoreCase);
+            // Look for file paths in the error line (use pre-compiled regex)
+            var fileMatch2 = filePathRegex.Match(line);
             if (fileMatch2.Success)
             {
                 filePath2 = ProcessFilePath(fileMatch2.Groups[1].Value.Trim());
@@ -1837,6 +1880,9 @@ public class DacpacMigrationGenerator
                 }
             }
         }
+        
+        // Report completion
+        Console.WriteLine($"      Completed processing {processedLines} lines");
         
         // Log summary of what we found
         if (newSQL71561Files.Any())

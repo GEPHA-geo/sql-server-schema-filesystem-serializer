@@ -15,6 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SqlServer.Schema.Common\SqlServer.Schema.Common.csproj" />
     <ProjectReference Include="..\SqlServer.Schema.FileSystem.Serializer.Dacpac.Core\SqlServer.Schema.FileSystem.Serializer.Dacpac.Core.csproj" />
     <ProjectReference Include="..\SqlServer.Schema.Migration.Generator\SqlServer.Schema.Migration.Generator.csproj" />
     <ProjectReference Include="..\SqlServer.Schema.Exclusion.Manager.Core\SqlServer.Schema.Exclusion.Manager.Core.csproj" />

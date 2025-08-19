@@ -1,5 +1,6 @@
 using CSharpFunctionalExtensions;
-using SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Constants;
+using SqlServer.Schema.Common.Constants;
+using DacpacConstants = SqlServer.Schema.Common.Constants.SharedConstants;
 using SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Models;
 
 namespace SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Services;

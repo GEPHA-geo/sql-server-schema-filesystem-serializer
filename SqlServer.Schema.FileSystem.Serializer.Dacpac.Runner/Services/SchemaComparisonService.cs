@@ -1,5 +1,6 @@
 using CSharpFunctionalExtensions;
 using Microsoft.SqlServer.Dac.Compare;
+using SqlServer.Schema.Common.Constants;
 using SqlServer.Schema.Exclusion.Manager.Core.Models;
 using SqlServer.Schema.Exclusion.Manager.Core.Services;
 using SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Models;
@@ -121,25 +122,49 @@ public class SchemaComparisonService
             }
         };
 
-        // Save to temporary location
+        // Save the original SCMP file FIRST (with connection strings) - before any other operations
+        if (context.FilePaths != null)
+        {
+            try
+            {
+                Console.WriteLine($"Saving original SCMP file to: {context.FilePaths.OriginalScmpPath}");
+                await _scmpHandler.SaveManifestAsync(originalScmp, context.FilePaths.OriginalScmpPath);
+                
+                // Validate the file was actually written
+                if (File.Exists(context.FilePaths.OriginalScmpPath))
+                {
+                    var fileInfo = new FileInfo(context.FilePaths.OriginalScmpPath);
+                    Console.WriteLine($"✓ Saved original SCMP file: {Path.GetFileName(context.FilePaths.OriginalScmpPath)} ({fileInfo.Length} bytes)");
+                }
+                else
+                {
+                    Console.WriteLine($"⚠️ WARNING: Original SCMP file was not created at: {context.FilePaths.OriginalScmpPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ ERROR: Failed to save original SCMP file: {ex.Message}");
+                Console.WriteLine($"   Path: {context.FilePaths.OriginalScmpPath}");
+                // Don't fail the entire operation, but log the error
+            }
+        }
+        else
+        {
+            Console.WriteLine("⚠️ WARNING: context.FilePaths is null, cannot save original SCMP file");
+        }
+        
+        // Now save to temporary location for comparison
         var tempPath = Path.Combine(
             Path.GetTempPath(),
             $"temp_comparison_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}.scmp");
         
         await _scmpHandler.SaveManifestAsync(updatedScmp, tempPath);
         
-        // Save the original SCMP file first (with connection strings)
-        if (context.FilePaths != null)
-        {
-            await _scmpHandler.SaveManifestAsync(originalScmp, context.FilePaths.OriginalScmpPath);
-            Console.WriteLine($"Saved original SCMP file: {Path.GetFileName(context.FilePaths.OriginalScmpPath)}");
-        }
-        
         // Also save a permanent copy with relative paths in the source subdirectory
         var permanentScmpPath = context.FilePaths?.DacpacsScmpPath ?? 
             Path.Combine(context.ScmpOutputPath, 
                 $"{context.SourceConnection.SanitizedServer}_{context.SourceConnection.SanitizedDatabase}",
-                $"{context.SourceConnection.SanitizedServer}_{context.SourceConnection.SanitizedDatabase}_dacpacs{Constants.DacpacConstants.Files.ScmpExtension}");
+                $"{context.SourceConnection.SanitizedServer}_{context.SourceConnection.SanitizedDatabase}_dacpacs{SharedConstants.Files.ScmpExtension}");
         
         // Create a version with relative paths for the permanent file
         var permanentScmp = new Exclusion.Manager.Core.Models.SchemaComparison

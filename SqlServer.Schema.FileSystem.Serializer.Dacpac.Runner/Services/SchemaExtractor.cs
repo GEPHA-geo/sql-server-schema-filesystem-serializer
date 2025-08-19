@@ -2,7 +2,8 @@ using System.Text.RegularExpressions;
 using CSharpFunctionalExtensions;
 using Microsoft.SqlServer.Dac;
 using SqlServer.Schema.FileSystem.Serializer.Dacpac.Core;
-using SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Constants;
+using SqlServer.Schema.Common.Constants;
+using DacpacConstants = SqlServer.Schema.Common.Constants.SharedConstants;
 using SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Models;
 using SqlServer.Schema.Migration.Generator.GitIntegration;
 

@@ -98,7 +98,7 @@ public class SchemaExtractor
         Console.WriteLine($"    Output path: {context.OutputPath}");
         Console.WriteLine($"    Target server: {context.TargetConnection.SanitizedServer}");
         Console.WriteLine($"    Target database: {context.TargetConnection.Database}");
-        
+
         _parser.ParseAndOrganizeScripts(
             script,
             context.OutputPath,
@@ -113,24 +113,24 @@ public class SchemaExtractor
             DacpacConstants.Directories.Servers,
             context.TargetConnection.SanitizedServer,
             context.TargetConnection.Database);
-        
+
         Console.WriteLine($"  Checking for extracted files in: {targetSchemaPath}");
         if (Directory.Exists(targetSchemaPath))
         {
             var sqlFiles = Directory.GetFiles(targetSchemaPath, "*.sql", SearchOption.AllDirectories);
             Console.WriteLine($"  ✓ Found {sqlFiles.Length} SQL files after extraction");
-            
+
             // Normalize all SQL files to remove BOM and fix line endings
             // This prevents false positive sp_updateextendedproperty differences
             Console.WriteLine("  Normalizing SQL files (removing BOM, converting to LF line endings)...");
-            
+
             // Use parallel processing for better performance with large numbers of files
             var normalizedCount = 0;
-            var parallelOptions = new ParallelOptions 
-            { 
-                MaxDegreeOfParallelism = Environment.ProcessorCount 
+            var parallelOptions = new ParallelOptions
+            {
+                MaxDegreeOfParallelism = Environment.ProcessorCount
             };
-            
+
             Parallel.ForEach(sqlFiles, parallelOptions, sqlFile =>
             {
                 _fileSystemManager.NormalizeFile(sqlFile);
@@ -140,9 +140,9 @@ public class SchemaExtractor
                     Console.WriteLine($"    Normalized {count}/{sqlFiles.Length} files...");
                 }
             });
-            
+
             Console.WriteLine($"  ✓ Normalized all {normalizedCount} SQL files");
-            
+
             // Move the extra.sql file to the parent directory if it exists (outside SCMP)
             if (context.FilePaths != null)
             {
@@ -154,14 +154,14 @@ public class SchemaExtractor
                     Console.WriteLine($"  ✓ Moved {extraSqlFileName} to parent directory");
                 }
             }
-            
+
             // Stage the extracted files to normalize line endings through Git
             if (_gitAnalyzer.IsGitRepository(context.OutputPath) && sqlFiles.Length > 0)
             {
                 Console.WriteLine("  Staging extracted source files for Git...");
                 var relativePath = Path.GetRelativePath(context.OutputPath, targetSchemaPath);
                 Console.WriteLine($"    Relative path for staging: {relativePath}");
-                
+
                 var stageResult = await _gitManager.StageFilesForLineEndingNormalization(context.OutputPath, relativePath);
                 if (stageResult.IsFailure)
                 {

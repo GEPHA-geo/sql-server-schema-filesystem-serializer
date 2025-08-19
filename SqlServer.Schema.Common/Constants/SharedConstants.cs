@@ -56,7 +56,7 @@ public static class SharedConstants
         public const string SourceOriginal = "SourceOriginal";
         public const string DatabasePrefix = "Database";
     }
-    
+
     /// <summary>
     /// SQL Server versions
     /// </summary>

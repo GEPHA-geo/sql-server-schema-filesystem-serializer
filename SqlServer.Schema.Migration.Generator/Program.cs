@@ -7,38 +7,43 @@ internal class Program
     static async Task<int> Main(string[] args)
     {
         var rootCommand = new RootCommand("SQL Server Schema Migration Generator");
-        
+
         var outputPathOption = new Option<string>(
             "--output-path",
             "The path where database schema was serialized"
-        ) { IsRequired = true };
-        
+        )
+        { IsRequired = true };
+
         var targetServerOption = new Option<string>(
             "--target-server",
             "The target server name or IP address"
-        ) { IsRequired = true };
-        
+        )
+        { IsRequired = true };
+
         var targetDatabaseOption = new Option<string>(
             "--target-database",
             "The target database name"
-        ) { IsRequired = true };
-        
+        )
+        { IsRequired = true };
+
         var actorOption = new Option<string?>(
             "--actor",
             "The actor/user creating the migration (defaults to GITHUB_ACTOR env var or current user)"
-        ) { IsRequired = false };
-        
+        )
+        { IsRequired = false };
+
         var referenceDacpacOption = new Option<string?>(
             "--reference-dacpac",
             "Path to a reference DACPAC file to resolve external references (optional)"
-        ) { IsRequired = false };
-        
+        )
+        { IsRequired = false };
+
         rootCommand.AddOption(outputPathOption);
         rootCommand.AddOption(targetServerOption);
         rootCommand.AddOption(targetDatabaseOption);
         rootCommand.AddOption(actorOption);
         rootCommand.AddOption(referenceDacpacOption);
-        
+
         rootCommand.SetHandler((string outputPath, string targetServer, string targetDatabase, string? actor, string? referenceDacpac) =>
         {
             try
@@ -48,14 +53,14 @@ internal class Program
                 {
                     // Try GitHub Actions environment variable
                     actor = Environment.GetEnvironmentVariable("GITHUB_ACTOR");
-                    
+
                     // Fall back to current user
                     if (string.IsNullOrEmpty(actor))
                     {
                         actor = Environment.UserName;
                     }
                 }
-                
+
                 // If no reference DACPAC specified, look for it in conventional locations
                 if (string.IsNullOrEmpty(referenceDacpac))
                 {
@@ -96,13 +101,13 @@ internal class Program
                     Console.WriteLine($"Warning: Specified reference DACPAC not found: {referenceDacpac}");
                     referenceDacpac = null;
                 }
-                
+
                 var generator = new DacpacMigrationGenerator();
                 var migrationsPath = Path.Combine(outputPath, "servers", targetServer, targetDatabase, "z_migrations");
-                
+
                 var result = generator.GenerateMigrationAsync(outputPath, targetServer, targetDatabase, migrationsPath, null, actor, referenceDacpac).Result;
                 var changesDetected = result.Success && result.HasChanges;
-                
+
                 if (changesDetected)
                 {
                     Console.WriteLine($"Migration files generated in: {migrationsPath}");
@@ -118,7 +123,7 @@ internal class Program
                 Environment.Exit(1);
             }
         }, outputPathOption, targetServerOption, targetDatabaseOption, actorOption, referenceDacpacOption);
-        
+
         return await rootCommand.InvokeAsync(args);
     }
 }

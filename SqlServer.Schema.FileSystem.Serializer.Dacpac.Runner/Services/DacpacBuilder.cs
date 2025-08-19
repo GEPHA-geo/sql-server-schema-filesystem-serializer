@@ -17,35 +17,35 @@ public class DacpacBuilder
 {
     readonly FileSystemManager _fileSystemManager = new();
     readonly DacpacMigrationGenerator _migrationGenerator = new();
-    
+
     /// <summary>
     /// Builds a DACPAC from filesystem state in a worktree
     /// </summary>
     public async Task<Result<string>> BuildFromWorktree(DacpacExtractionContext context)
     {
         Console.WriteLine("Building DACPAC from committed filesystem state...");
-        
+
         var worktreeTargetPath = Path.Combine(
             context.WorktreePath!,
             DacpacConstants.Directories.Servers,
             context.TargetConnection.SanitizedServer,
             context.TargetConnection.Database);
-        
-        if (!Directory.Exists(worktreeTargetPath) || 
+
+        if (!Directory.Exists(worktreeTargetPath) ||
             !Directory.GetFiles(worktreeTargetPath, "*.sql", SearchOption.AllDirectories).Any())
         {
             // Schema didn't exist in committed state - this is expected for initial setup
             Console.WriteLine("Schema didn't exist in committed state");
             return Result.Failure<string>("No schema found in committed state - expected for initial setup");
         }
-        
+
         // Normalize line endings before building
         // _fileSystemManager.NormalizeDirectoryLineEndings(worktreeTargetPath);
-        
+
         var tempBuildPath = Path.Combine(
             context.TempDirectory,
             $"target-filesystem-build_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}");
-        
+
         var builtDacpac = await _migrationGenerator.BuildDacpacFromFileSystem(
             worktreeTargetPath,
             tempBuildPath,
@@ -54,16 +54,16 @@ public class DacpacBuilder
 
         if (string.IsNullOrEmpty(builtDacpac) || !File.Exists(builtDacpac))
             return Result.Failure<string>("Failed to build DACPAC from worktree state");
-        
+
         File.Copy(builtDacpac, context.DacpacPaths.TargetFilesystemDacpac, overwrite: true);
         Console.WriteLine($"✓ Target filesystem DACPAC created: {Path.GetFileName(context.DacpacPaths.TargetFilesystemDacpac)}");
-             
+
         // Clean up temp directory unless debugging
         CleanupTempDirectory(tempBuildPath, context.KeepTempFiles);
-            
+
         return Result.Success(context.DacpacPaths.TargetFilesystemDacpac);
     }
-    
+
     /// <summary>
     /// Builds a DACPAC from the current filesystem state
     /// </summary>
@@ -74,34 +74,34 @@ public class DacpacBuilder
         string projectName)
     {
         Console.WriteLine($"Building {dacpacName} DACPAC from filesystem...");
-        
+
         // Normalize line endings before building
         // _fileSystemManager.NormalizeDirectoryLineEndings(schemaPath);
-        
+
         var tempBuildPath = Path.Combine(
             Path.GetTempPath(),
             $"{projectName}-build_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}");
-        
+
         var builtDacpac = await _migrationGenerator.BuildDacpacFromFileSystem(
             schemaPath,
             tempBuildPath,
             projectName,
             null);
-        
+
         if (!string.IsNullOrEmpty(builtDacpac) && File.Exists(builtDacpac))
         {
             File.Copy(builtDacpac, outputPath, overwrite: true);
             Console.WriteLine($"✓ {dacpacName} created: {Path.GetFileName(outputPath)}");
-            
+
             // Clean up temp directory unless debugging
             CleanupTempDirectory(tempBuildPath, Debugger.IsAttached);
-            
+
             return Result.Success(outputPath);
         }
-        
+
         return Result.Failure<string>($"Failed to build DACPAC from filesystem: {schemaPath}");
     }
-    
+
     /// <summary>
     /// Cleans up temporary build directory
     /// </summary>
@@ -109,13 +109,13 @@ public class DacpacBuilder
     {
         if (!Directory.Exists(tempPath))
             return;
-        
+
         if (keepFiles)
         {
             Console.WriteLine($"  Debug mode: Temp directory preserved at {tempPath}");
             return;
         }
-        
+
         try
         {
             Directory.Delete(tempPath, recursive: true);

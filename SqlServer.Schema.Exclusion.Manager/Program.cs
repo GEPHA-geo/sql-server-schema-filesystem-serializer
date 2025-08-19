@@ -8,7 +8,8 @@ var rootCommand = new RootCommand("SQL Server Schema Exclusion Manager - SCMP Fo
 var scmpFileOption = new Option<string>(
     "--scmp",
     "Path to the SCMP XML file containing source and target database configurations"
-) { IsRequired = true };
+)
+{ IsRequired = true };
 
 var outputPathOption = new Option<string>(
     "--output-path",
@@ -31,27 +32,27 @@ rootCommand.SetHandler(async (string scmpPath, string? outputPath, bool verbose)
         var handler = new ScmpManifestHandler();
         Console.WriteLine($"Loading SCMP file: {scmpPath}");
         var comparison = await handler.LoadManifestAsync(scmpPath);
-        
+
         if (comparison == null)
         {
             Console.WriteLine($"Error: Could not load SCMP file from {scmpPath}");
             Console.WriteLine("Please ensure the file exists and is a valid SCMP XML file.");
             Environment.Exit(1);
         }
-        
+
         // Extract database information
         var (sourceDb, targetDb) = handler.GetDatabaseInfo(comparison);
         var (sourceServer, targetServer) = handler.GetServerInfo(comparison);
-        
+
         Console.WriteLine($"✓ SCMP file loaded successfully");
         Console.WriteLine($"  Source: {sourceServer}/{sourceDb}");
         Console.WriteLine($"  Target: {targetServer}/{targetDb}");
-        
+
         if (verbose)
         {
             Console.WriteLine("\nSCMP Details:");
             Console.WriteLine($"  Version: {comparison.Version}");
-            
+
             // Show configuration options
             var options = comparison.SchemaCompareSettingsService?.ConfigurationOptionsElement?.PropertyElements;
             if (options != null && options.Any())
@@ -64,7 +65,7 @@ rootCommand.SetHandler(async (string scmpPath, string? outputPath, bool verbose)
                 if (options.Count > 10)
                     Console.WriteLine($"    ... and {options.Count - 10} more options");
             }
-            
+
             // Show excluded objects
             var excluded = handler.GetExcludedObjects(comparison);
             if (excluded.Any())
@@ -78,16 +79,16 @@ rootCommand.SetHandler(async (string scmpPath, string? outputPath, bool verbose)
                     Console.WriteLine($"    ... and {excluded.Count - 10} more exclusions");
             }
         }
-        
+
         // Map to DacDeployOptions for use with SqlPackage
         var mapper = new ScmpToDeployOptions();
         var deployOptions = mapper.MapOptions(comparison);
-        
+
         Console.WriteLine("\n✓ Deployment options mapped successfully");
         Console.WriteLine($"  Block on data loss: {deployOptions.BlockOnPossibleDataLoss}");
         Console.WriteLine($"  Drop objects not in source: {deployOptions.DropObjectsNotInSource}");
         Console.WriteLine($"  Ignore permissions: {deployOptions.IgnorePermissions}");
-        
+
         // If output path is specified, could save analysis results there
         if (!string.IsNullOrEmpty(outputPath))
         {
@@ -99,11 +100,11 @@ rootCommand.SetHandler(async (string scmpPath, string? outputPath, bool verbose)
                          $"Version: {comparison.Version}\n" +
                          $"Excluded Objects: {handler.GetExcludedObjects(comparison).Count}\n" +
                          $"Configuration Options: {comparison.SchemaCompareSettingsService?.ConfigurationOptionsElement?.PropertyElements?.Count ?? 0}\n";
-            
+
             await File.WriteAllTextAsync(analysisFile, content);
             Console.WriteLine($"\n✓ Analysis report written to: {analysisFile}");
         }
-        
+
         Console.WriteLine("\n✓ SCMP processing completed successfully");
         Environment.Exit(0);
     }
@@ -132,7 +133,7 @@ createCommand.SetHandler(async (string sourceConn, string targetConn, string out
     {
         var handler = new ScmpManifestHandler();
         var mapper = new ScmpToDeployOptions();
-        
+
         // Create comparison with default conservative options
         var comparison = new SchemaComparison
         {
@@ -185,7 +186,7 @@ createCommand.SetHandler(async (string sourceConn, string targetConn, string out
                 }
             }
         };
-        
+
         await handler.SaveManifestAsync(comparison, outputPath);
         Console.WriteLine($"✓ SCMP file created successfully: {outputPath}");
         Console.WriteLine($"  You can now use this file with: --scmp {outputPath}");
@@ -211,16 +212,16 @@ infoCommand.SetHandler(async (string filePath) =>
     {
         var handler = new ScmpManifestHandler();
         var comparison = await handler.LoadManifestAsync(filePath);
-        
+
         if (comparison == null)
         {
             Console.WriteLine($"Error: Could not load SCMP file from {filePath}");
             Environment.Exit(1);
         }
-        
+
         var (sourceDb, targetDb) = handler.GetDatabaseInfo(comparison);
         var (sourceServer, targetServer) = handler.GetServerInfo(comparison);
-        
+
         Console.WriteLine($"SCMP File Information");
         Console.WriteLine($"=====================");
         Console.WriteLine($"File: {filePath}");
@@ -233,7 +234,7 @@ infoCommand.SetHandler(async (string filePath) =>
         Console.WriteLine($"Target Database:");
         Console.WriteLine($"  Server: {targetServer ?? "N/A"}");
         Console.WriteLine($"  Database: {targetDb ?? "N/A"}");
-        
+
         var options = comparison.SchemaCompareSettingsService?.ConfigurationOptionsElement?.PropertyElements;
         if (options != null && options.Any())
         {
@@ -244,7 +245,7 @@ infoCommand.SetHandler(async (string filePath) =>
                 Console.WriteLine($"  {option.Name}: {option.Value}");
             }
         }
-        
+
         var excluded = handler.GetExcludedObjects(comparison);
         if (excluded.Any())
         {
@@ -255,7 +256,7 @@ infoCommand.SetHandler(async (string filePath) =>
                 Console.WriteLine($"  {obj}");
             }
         }
-        
+
         Environment.Exit(0);
     }
     catch (Exception ex)

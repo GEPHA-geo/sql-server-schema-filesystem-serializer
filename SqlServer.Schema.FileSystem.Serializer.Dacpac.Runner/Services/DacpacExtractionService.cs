@@ -67,17 +67,17 @@ public class DacpacExtractionService
                 // Phases 1-4: Generate all DACPACs in parallel
                 // All four DACPAC generation operations are independent and can run simultaneously
                 Console.WriteLine("\n=== Generating all DACPACs in parallel ===");
-                
+
                 // Start all DACPAC generation tasks
                 var buildTargetFilesystemTask = BuildTargetFilesystemDacpac(context);
                 var extractTargetOriginalTask = ExtractTargetOriginalDacpac(context);
                 var extractSourceOriginalTask = ExtractSourceOriginalDacpac(context);
                 var extractAndBuildSourceTask = ExtractAndBuildSourceFilesystem(context);
-                
+
                 // Wait for all operations to complete
                 await Task.WhenAll(
                     buildTargetFilesystemTask,
-                    extractTargetOriginalTask, 
+                    extractTargetOriginalTask,
                     extractSourceOriginalTask,
                     extractAndBuildSourceTask);
 
@@ -86,7 +86,7 @@ public class DacpacExtractionService
                 //     await extractSourceOriginalTask,
                 //     await extractAndBuildSourceTask);
                 // if (combinedResult.IsFailure) return combinedResult.ConvertFailure<ExtractionResult>();
-                
+
                 // Check results - Target filesystem can fail (expected initially)
                 var targetFilesystemResult = await buildTargetFilesystemTask;
                 if (targetFilesystemResult.IsSuccess)
@@ -97,16 +97,16 @@ public class DacpacExtractionService
                 {
                     Console.WriteLine($"⚠ Target filesystem DACPAC: {targetFilesystemResult.Error}");
                 }
-                
+
                 // Check required results
                 var targetOriginalResult = await extractTargetOriginalTask;
                 if (targetOriginalResult.IsFailure)
                     return Result.Failure<ExtractionResult>(targetOriginalResult.Error);
-                    
+
                 var sourceOriginalResult = await extractSourceOriginalTask;
                 if (sourceOriginalResult.IsFailure)
                     return Result.Failure<ExtractionResult>(sourceOriginalResult.Error);
-                    
+
                 var sourceFilesystemResult = await extractAndBuildSourceTask;
                 if (sourceFilesystemResult.IsFailure)
                     return Result.Failure<ExtractionResult>(sourceFilesystemResult.Error);
@@ -233,10 +233,10 @@ public class DacpacExtractionService
             targetConnection.Database,
             sourceConnection.SanitizedServer,
             sourceConnection.SanitizedDatabase);
-        
+
         // Create all necessary directories
         filePaths.CreateDirectories();
-        
+
         // Create temp directory
         var tempDirectory =
             Path.Combine(Path.GetTempPath(), $"dacpac_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}");
@@ -245,7 +245,7 @@ public class DacpacExtractionService
         Console.WriteLine($"Output path: {filePaths.TargetOutputPath}");
         Console.WriteLine($"SCMP path: {filePaths.ScmpDirectoryPath}");
         Console.WriteLine($"Source files path: {filePaths.SourceSubdirectoryPath}");
-        
+
         // Original SCMP file will be saved later in SchemaComparisonService
         // along with the dacpacs SCMP file to avoid race conditions
 

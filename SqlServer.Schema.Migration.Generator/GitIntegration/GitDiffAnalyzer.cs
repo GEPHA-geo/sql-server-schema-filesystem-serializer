@@ -45,11 +45,11 @@ generated_script.sql
         {
             // Normalize databaseName to use forward slashes for comparison
             var normalizedDatabaseName = databaseName.Replace('\\', '/');
-            
+
             // Remove leading slash if present to make it a relative path
             if (normalizedDatabaseName.StartsWith("/"))
                 normalizedDatabaseName = normalizedDatabaseName.Substring(1);
-            
+
             pathPattern = $"{normalizedDatabaseName}/*.sql";
         }
 
@@ -57,16 +57,16 @@ generated_script.sql
         // This combines status and diff content in one git operation
         var diffOutput = RunGitCommand(path, $"diff HEAD --name-status -- \"{pathPattern}\"");
         var untrackedOutput = RunGitCommand(path, $"ls-files --others --exclude-standard -- \"{pathPattern}\"");
-        
+
         // Process modified/deleted files from diff
         if (!string.IsNullOrWhiteSpace(diffOutput))
         {
             var diffLines = diffOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            
+
             // Get full diff content for all files at once
             var fullDiffOutput = RunGitCommand(path, $"diff HEAD -- \"{pathPattern}\"");
             var diffContents = ParseFullDiff(fullDiffOutput);
-            
+
             foreach (var line in diffLines)
             {
                 var parts = line.Split('\t');
@@ -74,7 +74,7 @@ generated_script.sql
                 {
                     var status = parts[0];
                     var filePath = parts[1];
-                    
+
                     var changeType = status switch
                     {
                         "M" => ChangeType.Modified,
@@ -82,25 +82,25 @@ generated_script.sql
                         "D" => ChangeType.Deleted,
                         _ => ChangeType.Unknown
                     };
-                    
+
                     if (changeType != ChangeType.Unknown)
                     {
                         var oldContent = string.Empty;
                         var newContent = string.Empty;
-                        
+
                         if (changeType == ChangeType.Modified || changeType == ChangeType.Deleted)
                         {
                             // Get old content from the diff
-                            oldContent = diffContents.ContainsKey(filePath) 
-                                ? diffContents[filePath].oldContent 
+                            oldContent = diffContents.ContainsKey(filePath)
+                                ? diffContents[filePath].oldContent
                                 : GetFileContentFromGit(path, filePath);
                         }
-                        
+
                         if (changeType == ChangeType.Modified || changeType == ChangeType.Added)
                         {
                             newContent = GetFileContent(Path.Combine(path, filePath));
                         }
-                        
+
                         entries.Add(new DiffEntry
                         {
                             Path = filePath,
@@ -112,7 +112,7 @@ generated_script.sql
                 }
             }
         }
-        
+
         // Process untracked (new) files
         if (!string.IsNullOrWhiteSpace(untrackedOutput))
         {
@@ -132,7 +132,7 @@ generated_script.sql
         return entries;
     }
 
-    
+
     /// <summary>
     /// Parses the output of git show with multiple files
     /// </summary>
@@ -142,21 +142,21 @@ generated_script.sql
     Dictionary<string, (string oldContent, string newContent)> ParseFullDiff(string diffOutput)
     {
         var result = new Dictionary<string, (string oldContent, string newContent)>();
-        
+
         if (string.IsNullOrWhiteSpace(diffOutput))
             return result;
-        
+
         // Parse unified diff format
         // This is a simplified parser - for production, consider using a proper diff parser library
         var lines = diffOutput.Split('\n');
         string currentFile = null;
         var oldLines = new List<string>();
         var newLines = new List<string>();
-        
+
         for (int i = 0; i < lines.Length; i++)
         {
             var line = lines[i];
-            
+
             // Detect file header
             if (line.StartsWith("diff --git"))
             {
@@ -165,7 +165,7 @@ generated_script.sql
                 {
                     result[currentFile] = (string.Join("\n", oldLines), string.Join("\n", newLines));
                 }
-                
+
                 // Extract filename from diff header
                 var parts = line.Split(' ');
                 if (parts.Length >= 4)
@@ -180,7 +180,7 @@ generated_script.sql
                 // Skip header lines
                 if (line.StartsWith("---") || line.StartsWith("+++") || line.StartsWith("@@"))
                     continue;
-                
+
                 // Process diff lines
                 if (line.StartsWith("-") && !line.StartsWith("---"))
                 {
@@ -198,13 +198,13 @@ generated_script.sql
                 }
             }
         }
-        
+
         // Save last file
         if (currentFile != null)
         {
             result[currentFile] = (string.Join("\n", oldLines), string.Join("\n", newLines));
         }
-        
+
         return result;
     }
 
@@ -783,10 +783,10 @@ generated_script.sql
                 process.ErrorDataReceived += (sender, e) =>
                 {
                     if (e.Data == null) return;
-                    
+
                     if (debug)
                         Console.WriteLine($"[Git Error] {e.Data}");
-                    
+
                     errorBuilder.AppendLine(e.Data);
                 };
             }

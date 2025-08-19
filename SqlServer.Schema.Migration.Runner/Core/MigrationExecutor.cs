@@ -14,80 +14,80 @@ public class MigrationExecutor(string connectionString)
         {
             throw new DirectoryNotFoundException($"Migrations directory not found: {migrationsPath}");
         }
-        
+
         // Ensure migration history table exists
         await EnsureMigrationHistoryTable();
-        
+
         // Get all migration files
         var migrationFiles = Directory.GetFiles(migrationsPath, "*.sql")
             .OrderBy(f => f)
             .Select(f => new MigrationFile(f))
             .ToList();
-        
+
         if (!migrationFiles.Any())
         {
             Console.WriteLine("No migration files found.");
             return;
         }
-        
+
         // Get applied migrations
         var appliedMigrations = await GetAppliedMigrations();
-        
+
         // Find pending migrations
         var pendingMigrations = migrationFiles
             .Where(m => !appliedMigrations.Contains(m.MigrationId))
             .ToList();
-        
+
         if (!pendingMigrations.Any())
         {
             Console.WriteLine("All migrations are up to date.");
             return;
         }
-        
+
         Console.WriteLine($"Found {pendingMigrations.Count} pending migration(s):");
         foreach (var migration in pendingMigrations)
         {
             Console.WriteLine($"  - {migration.FileName}");
         }
-        
+
         if (dryRun)
         {
             Console.WriteLine("\nDry run mode - no changes will be made.");
             return;
         }
-        
+
         Console.WriteLine("\nApplying migrations...");
-        
+
         foreach (var migration in pendingMigrations)
         {
             await ExecuteMigration(migration);
         }
-        
+
         Console.WriteLine("\nAll migrations completed successfully.");
     }
-    
+
     public async Task ShowStatus(string migrationsPath)
     {
         if (!Directory.Exists(migrationsPath))
         {
             throw new DirectoryNotFoundException($"Migrations directory not found: {migrationsPath}");
         }
-        
+
         // Ensure migration history table exists
         await EnsureMigrationHistoryTable();
-        
+
         // Get all migration files
         var migrationFiles = Directory.GetFiles(migrationsPath, "*.sql")
             .OrderBy(f => f)
             .Select(f => new MigrationFile(f))
             .ToList();
-        
+
         // Get applied migrations with details
         var appliedMigrations = await GetAppliedMigrationDetails();
-        
+
         Console.WriteLine("Migration Status:");
         Console.WriteLine("=================");
-        
+
         foreach (var file in migrationFiles)
         {
             var applied = appliedMigrations.FirstOrDefault(m => m.MigrationId == file.MigrationId);
@@ -116,9 +116,9 @@ public class MigrationExecutor(string connectionString)
             SELECT COUNT(*) 
             FROM sys.tables 
             WHERE name = 'DatabaseMigrationHistory' AND schema_id = SCHEMA_ID('dbo')";
-        
+
         var exists = await _db.ExecuteScalarAsync<int>(checkTableSql) > 0;
-        
+
         if (!exists)
         {
             Console.WriteLine("Creating migration history table...");
@@ -135,7 +135,7 @@ public class MigrationExecutor(string connectionString)
         {
             return await File.ReadAllTextAsync(scriptsPath);
         }
-        
+
         // Fallback to embedded script
         return @"
 CREATE TABLE [dbo].[DatabaseMigrationHistory] (
@@ -166,17 +166,17 @@ CREATE TABLE [dbo].[DatabaseMigrationHistory] (
     async Task ExecuteMigration(MigrationFile migration)
     {
         Console.Write($"Applying {migration.FileName}... ");
-        
+
         var stopwatch = Stopwatch.StartNew();
-        
+
         try
         {
             await _db.ExecuteMigrationAsync(migration.Content);
             stopwatch.Stop();
-            
+
             // Record success
             await RecordMigration(migration, "Success", (int)stopwatch.ElapsedMilliseconds, null);
-            
+
             Console.WriteLine($"Done ({stopwatch.ElapsedMilliseconds}ms)");
         }
         catch (Exception ex)
@@ -184,10 +184,10 @@ CREATE TABLE [dbo].[DatabaseMigrationHistory] (
             stopwatch.Stop();
             Console.WriteLine("Failed!");
             Console.WriteLine($"  Error: {ex.Message}");
-            
+
             // Record failure
             await RecordMigration(migration, "Failed", (int)stopwatch.ElapsedMilliseconds, ex.Message);
-            
+
             throw;
         }
     }
@@ -199,7 +199,7 @@ CREATE TABLE [dbo].[DatabaseMigrationHistory] (
                 ([MigrationId], [Filename], [Checksum], [Status], [ExecutionTime], [ErrorMessage])
             VALUES 
                 (@MigrationId, @Filename, @Checksum, @Status, @ExecutionTime, @ErrorMessage)";
-        
+
         await _db.ExecuteNonQueryAsync(sql, new
         {
             migration.MigrationId,

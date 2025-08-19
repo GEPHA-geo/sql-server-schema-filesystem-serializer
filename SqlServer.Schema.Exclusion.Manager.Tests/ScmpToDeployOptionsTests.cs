@@ -215,13 +215,13 @@ public class ScmpToDeployOptionsTests
         // Data protection defaults
         Assert.True(options.BlockOnPossibleDataLoss);
         Assert.False(options.BackupDatabaseBeforeChanges);
-        
+
         // Conservative drop defaults
         Assert.False(options.DropObjectsNotInSource);
         Assert.False(options.DropPermissionsNotInSource);
         Assert.False(options.DropRoleMembersNotInSource);
         Assert.False(options.DropExtendedPropertiesNotInSource);
-        
+
         // Common ignore defaults
         Assert.True(options.IgnorePermissions);
         Assert.True(options.IgnoreRoleMembership);
@@ -233,12 +233,12 @@ public class ScmpToDeployOptionsTests
         Assert.True(options.IgnoreWhitespace);
         Assert.True(options.IgnoreKeywordCasing);
         Assert.True(options.IgnoreSemicolonBetweenStatements);
-        
+
         // Script generation defaults
         Assert.True(options.IncludeCompositeObjects);
         Assert.True(options.IncludeTransactionalScripts);
         Assert.True(options.GenerateSmartDefaults);
-        
+
         // Validation defaults
         Assert.True(options.VerifyDeployment);
         Assert.True(options.VerifyCollationCompatibility);

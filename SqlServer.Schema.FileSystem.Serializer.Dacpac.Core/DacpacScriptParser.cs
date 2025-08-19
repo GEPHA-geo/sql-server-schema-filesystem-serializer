@@ -6,35 +6,35 @@ public class DacpacScriptParser
 {
     readonly FileSystemManager _fileSystemManager = new();
 
-    public void ParseAndOrganizeScripts(string script, string outputPath, string targetServer, string targetDatabase, 
+    public void ParseAndOrganizeScripts(string script, string outputPath, string targetServer, string targetDatabase,
         string? sourceServer = null, string? sourceDatabase = null, HashSet<string>? excludedObjectNames = null)
     {
         // Create base directory with new hierarchical structure
         var basePath = Path.Combine(outputPath, "servers", targetServer, targetDatabase);
         FileSystemManager.CreateDirectory(basePath);
-        
+
         // Count total GO statements in original script
         var totalGoStatements = CountGoStatements(script);
-        
+
         // Split script into individual statements, tracking skipped ones
         var (statements, skippedStatements) = SplitIntoStatementsWithSkipped(script);
-        
+
         // Verify parsing completeness - only show errors
         VerifyParsingCompleteness(script, statements, totalGoStatements);
-        
+
         // Group statements by object
         var objectGroups = GroupStatementsByObject(statements);
-        
+
         // Track processed statements (thread-safe counters for parallel processing)
         var processedCount = 0;
         var excludedCount = 0;
-        
+
         // Process each object group in parallel for better performance
-        var parallelOptions = new ParallelOptions 
-        { 
-            MaxDegreeOfParallelism = Environment.ProcessorCount 
+        var parallelOptions = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = Environment.ProcessorCount
         };
-        
+
         Parallel.ForEach(objectGroups, parallelOptions, objectGroup =>
         {
             // Check if this object should be excluded
@@ -44,11 +44,11 @@ public class DacpacScriptParser
                 System.Threading.Interlocked.Add(ref processedCount, objectGroup.Value.Count);
                 return; // Skip generating files for excluded objects
             }
-            
+
             ProcessObjectGroup(objectGroup, basePath);
             System.Threading.Interlocked.Add(ref processedCount, objectGroup.Value.Count);
         });
-        
+
         // Save skipped statements to source_server_database_extra.sql if any exist
         if (skippedStatements.Any())
         {
@@ -57,16 +57,16 @@ public class DacpacScriptParser
             var extraFileDatabase = sourceDatabase ?? targetDatabase;
             SaveSkippedStatements(skippedStatements, basePath, extraFileServer, extraFileDatabase);
         }
-        
+
         // Create README for empty schemas if needed
         CreateEmptySchemaReadmes(basePath);
-        
+
         // Report exclusions
         if (excludedCount > 0)
         {
             Console.WriteLine($"Excluded {excludedCount} objects based on SCMP configuration");
         }
-        
+
         // Only show errors/warnings
         if (processedCount < statements.Count)
         {
@@ -79,8 +79,8 @@ public class DacpacScriptParser
         // Check if the object name matches any excluded object
         // Handle different formats: [schema].[object] vs schema.object
         var normalizedObjectName = objectName.Replace("[", "").Replace("]", "");
-        
-        return excludedObjectNames.Contains(objectName) || 
+
+        return excludedObjectNames.Contains(objectName) ||
                excludedObjectNames.Contains(normalizedObjectName);
     }
 
@@ -90,7 +90,7 @@ public class DacpacScriptParser
         var skippedStatements = new List<string>();
         var lines = script.Split(["\r\n", "\r", "\n"], StringSplitOptions.None);
         var currentStatement = new List<string>();
-        
+
         foreach (var line in lines)
         {
             if (line.Trim().Equals("GO", StringComparison.OrdinalIgnoreCase))
@@ -116,7 +116,7 @@ public class DacpacScriptParser
                 currentStatement.Add(line);
             }
         }
-        
+
         // Handle last statement if no final GO
         if (currentStatement.Any())
         {
@@ -131,10 +131,10 @@ public class DacpacScriptParser
                 skippedStatements.Add(statementText);
             }
         }
-        
+
         return (statements, skippedStatements);
     }
-    
+
     // Keep the old method for backward compatibility, but have it call the new one
     List<SqlStatement> SplitIntoStatements(string script)
     {
@@ -146,9 +146,9 @@ public class DacpacScriptParser
     {
         if (string.IsNullOrWhiteSpace(statementText))
             return null;
-        
+
         var statement = new SqlStatement { Text = statementText };
-        
+
         // Determine statement type and extract metadata
         if (Regex.IsMatch(statementText, @"CREATE\s+TABLE", RegexOptions.IgnoreCase))
         {
@@ -236,14 +236,14 @@ public class DacpacScriptParser
         {
             statement.Type = ObjectType.ExtendedProperty;
             // Extract table and schema from the sp_addextendedproperty call
-            var match = Regex.Match(statementText, 
-                @"@level0name\s*=\s*N?'([^']+)'.*?@level1name\s*=\s*N?'([^']+)'", 
+            var match = Regex.Match(statementText,
+                @"@level0name\s*=\s*N?'([^']+)'.*?@level1name\s*=\s*N?'([^']+)'",
                 RegexOptions.IgnoreCase | RegexOptions.Singleline);
             if (match.Success)
             {
                 statement.Schema = match.Groups[1].Value;
                 statement.ParentTable = match.Groups[2].Value;
-                
+
                 // Extract property name
                 var nameMatch = Regex.Match(statementText, @"@name\s*=\s*N?'([^']+)'", RegexOptions.IgnoreCase);
                 if (nameMatch.Success)
@@ -316,7 +316,7 @@ public class DacpacScriptParser
             // Skip statements we don't handle
             return null;
         }
-        
+
         return statement;
     }
 
@@ -334,11 +334,11 @@ public class DacpacScriptParser
     Dictionary<string, List<SqlStatement>> GroupStatementsByObject(List<SqlStatement> statements)
     {
         var groups = new Dictionary<string, List<SqlStatement>>();
-        
+
         foreach (var statement in statements)
         {
             string key;
-            
+
             if (statement.Type == ObjectType.Table)
             {
                 key = $"{statement.Schema}.{statement.Name}";
@@ -351,15 +351,15 @@ public class DacpacScriptParser
             {
                 key = $"{statement.Schema}.{statement.Name}.{statement.Type}";
             }
-            
+
             if (!groups.ContainsKey(key))
             {
                 groups[key] = [];
             }
-            
+
             groups[key].Add(statement);
         }
-        
+
         return groups;
     }
 
@@ -376,7 +376,7 @@ public class DacpacScriptParser
     {
         var statements = objectGroup.Value;
         var firstStatement = statements.First();
-        
+
         if (firstStatement.Type == ObjectType.Table)
         {
             ProcessTableGroup(statements, basePath);
@@ -419,23 +419,23 @@ public class DacpacScriptParser
     {
         var tableStatement = statements.FirstOrDefault(s => s.Type == ObjectType.Table);
         if (tableStatement == null) return;
-        
+
         var schemaPath = Path.Combine(basePath, "schemas", tableStatement.Schema);
         var tablesPath = Path.Combine(schemaPath, "Tables");
         var tablePath = Path.Combine(tablesPath, tableStatement.Name);
-        
+
         FileSystemManager.CreateDirectory(tablePath);
-        
+
         // Write table definition
         var tableFile = Path.Combine(tablePath, $"TBL_{tableStatement.Name}.sql");
         _fileSystemManager.WriteFile(tableFile, tableStatement.Text);
-        
+
         // Write constraints and indexes
         foreach (var statement in statements.Where(s => s.Type != ObjectType.Table))
         {
             var prefix = GetFilePrefix(statement.Type);
-            var fileName = statement.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) 
-                ? $"{statement.Name}.sql" 
+            var fileName = statement.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                ? $"{statement.Name}.sql"
                 : $"{prefix}_{statement.Name}.sql";
             var filePath = Path.Combine(tablePath, fileName);
             _fileSystemManager.WriteFile(filePath, statement.Text);
@@ -447,7 +447,7 @@ public class DacpacScriptParser
         var schemaPath = Path.Combine(basePath, "schemas", statement.Schema);
         var viewsPath = Path.Combine(schemaPath, "Views");
         FileSystemManager.CreateDirectory(viewsPath);
-        
+
         var filePath = Path.Combine(viewsPath, $"{statement.Name}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
@@ -457,7 +457,7 @@ public class DacpacScriptParser
         var schemaPath = Path.Combine(basePath, "schemas", statement.Schema);
         var procsPath = Path.Combine(schemaPath, "StoredProcedures");
         FileSystemManager.CreateDirectory(procsPath);
-        
+
         var filePath = Path.Combine(procsPath, $"{statement.Name}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
@@ -467,70 +467,70 @@ public class DacpacScriptParser
         var schemaPath = Path.Combine(basePath, "schemas", statement.Schema);
         var functionsPath = Path.Combine(schemaPath, "Functions");
         FileSystemManager.CreateDirectory(functionsPath);
-        
+
         var filePath = Path.Combine(functionsPath, $"{statement.Name}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
-    
+
     void ProcessFilegroup(SqlStatement statement, string basePath)
     {
         // Filegroups are stored at the root level, not under schemas
         var filegroupsPath = Path.Combine(basePath, "filegroups");
         FileSystemManager.CreateDirectory(filegroupsPath);
-        
+
         var filePath = Path.Combine(filegroupsPath, $"{statement.Name}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
-    
+
     void ProcessSchema(SqlStatement statement, string basePath)
     {
         // Create schemas directory at the root level
         var schemasPath = Path.Combine(basePath, "schemas");
         FileSystemManager.CreateDirectory(schemasPath);
-        
+
         // Create the schema directory structure for organizing objects
         var schemaDir = Path.Combine(schemasPath, statement.Name);
         FileSystemManager.CreateDirectory(schemaDir);
-        
+
         // Store the schema CREATE statement inside the schema directory
         var filePath = Path.Combine(schemaDir, $"{statement.Name}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
-    
+
     void ProcessUser(SqlStatement statement, string basePath)
     {
         // Users are stored at the root level in a users directory
         var usersPath = Path.Combine(basePath, "users");
         FileSystemManager.CreateDirectory(usersPath);
-        
+
         // Sanitize the username for filesystem - handle domain users like PHARM\username
         var sanitizedName = statement.Name.Replace("\\", "_");  // Replace backslash with underscore
         var filePath = Path.Combine(usersPath, $"{sanitizedName}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
-    
+
     void ProcessLogin(SqlStatement statement, string basePath)
     {
         // Logins are stored at the root level in a logins directory
         var loginsPath = Path.Combine(basePath, "logins");
         FileSystemManager.CreateDirectory(loginsPath);
-        
+
         // Sanitize the login name for filesystem - handle domain logins like PHARM\username
         var sanitizedName = statement.Name.Replace("\\", "_");  // Replace backslash with underscore
         var filePath = Path.Combine(loginsPath, $"{sanitizedName}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
-    
+
     void ProcessRole(SqlStatement statement, string basePath)
     {
         // Roles are stored at the root level in a roles directory
         var rolesPath = Path.Combine(basePath, "roles");
         FileSystemManager.CreateDirectory(rolesPath);
-        
+
         var filePath = Path.Combine(rolesPath, $"{statement.Name}.sql");
         _fileSystemManager.WriteFile(filePath, statement.Text);
     }
-    
+
     void SaveSkippedStatements(List<string> skippedStatements, string basePath, string targetServer, string targetDatabase)
     {
         // Save all skipped statements to server_database_extra.sql
@@ -556,14 +556,14 @@ public class DacpacScriptParser
         // Get all schema directories
         var schemasPath = Path.Combine(basePath, "schemas");
         if (!Directory.Exists(schemasPath)) return;
-        
+
         var schemaDirs = Directory.GetDirectories(schemasPath);
-        
+
         foreach (var schemaDir in schemaDirs)
         {
-            var hasContent = Directory.GetDirectories(schemaDir).Any() || 
+            var hasContent = Directory.GetDirectories(schemaDir).Any() ||
                            Directory.GetFiles(schemaDir, "*.sql").Any();
-            
+
             if (!hasContent)
             {
                 var readmePath = Path.Combine(schemaDir, "README.md");
@@ -589,7 +589,7 @@ public class DacpacScriptParser
         // Calculate totals
         var totalStatements = statements.Count;
         var skippedStatements = totalGoStatements - totalStatements;
-        
+
         // Final accounting - only show errors
         var totalAccountedFor = totalStatements + skippedStatements;
         if (totalAccountedFor != totalGoStatements)
@@ -611,7 +611,7 @@ public class DacpacScriptParser
     {
         var status = original == parsed ? "OK" : "MISMATCH";
         var color = original == parsed ? ConsoleColor.Green : ConsoleColor.Yellow;
-        
+
         Console.ForegroundColor = color;
         Console.WriteLine($"{type,-20} {original,-10} {parsed,-10} {status,-10}");
         Console.ResetColor();

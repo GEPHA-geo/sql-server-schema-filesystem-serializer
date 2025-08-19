@@ -13,7 +13,7 @@ namespace SqlServer.Schema.FileSystem.Serializer.Dacpac.Runner.Services;
 public class SchemaComparisonService
 {
     readonly ScmpManifestHandler _scmpHandler = new();
-    
+
     /// <summary>
     /// Performs schema comparison using the SCMP file with updated DACPAC endpoints
     /// </summary>
@@ -21,32 +21,32 @@ public class SchemaComparisonService
         DacpacExtractionContext context)
     {
         Console.WriteLine("\n=== Phase 5: Running Schema Comparison ===");
-        
+
         // Create a temporary SCMP file with filesystem DACPAC endpoints
         var tempScmpPath = await CreateTempScmpWithDacpacEndpoints(
             context,
             context.DacpacPaths.SourceFilesystemDacpac,
             context.DacpacPaths.TargetFilesystemDacpac);
-        
+
         try
         {
             // Use the SchemaComparison constructor that accepts an SCMP file path
             // This ensures all settings from the SCMP file are properly applied
             Console.WriteLine("Loading schema comparison from SCMP file...");
             var comparison = new Microsoft.SqlServer.Dac.Compare.SchemaComparison(tempScmpPath);
-            
+
             Console.WriteLine("Comparing schemas...");
             var comparisonResult = comparison.Compare();
-            
+
             // Log comparison statistics
             var totalDifferences = comparisonResult.Differences.Count();
             var includedDifferences = comparisonResult.Differences.Count(d => d.Included);
             var excludedDifferences = comparisonResult.Differences.Count(d => !d.Included);
-            
+
             Console.WriteLine($"Found {totalDifferences} total differences");
             Console.WriteLine($"Included differences: {includedDifferences}");
             Console.WriteLine($"Excluded differences: {excludedDifferences}");
-            
+
             // List excluded objects if any
             if (excludedDifferences > 0)
             {
@@ -56,7 +56,7 @@ public class SchemaComparisonService
                     Console.WriteLine($"  - {diff.Name} ({diff.UpdateAction})");
                 }
             }
-            
+
             return Result.Success(new SchemaComparisonResult
             {
                 ComparisonResult = comparisonResult,
@@ -85,7 +85,7 @@ public class SchemaComparisonService
             }
         }
     }
-    
+
     /// <summary>
     /// Creates a temporary SCMP file with updated DACPAC endpoints and saves a permanent copy
     /// </summary>
@@ -129,7 +129,7 @@ public class SchemaComparisonService
             {
                 Console.WriteLine($"Saving original SCMP file to: {context.FilePaths.OriginalScmpPath}");
                 await _scmpHandler.SaveManifestAsync(originalScmp, context.FilePaths.OriginalScmpPath);
-                
+
                 // Validate the file was actually written
                 if (File.Exists(context.FilePaths.OriginalScmpPath))
                 {
@@ -152,20 +152,20 @@ public class SchemaComparisonService
         {
             Console.WriteLine("⚠️ WARNING: context.FilePaths is null, cannot save original SCMP file");
         }
-        
+
         // Now save to temporary location for comparison
         var tempPath = Path.Combine(
             Path.GetTempPath(),
             $"temp_comparison_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}.scmp");
-        
+
         await _scmpHandler.SaveManifestAsync(updatedScmp, tempPath);
-        
+
         // Also save a permanent copy with relative paths in the source subdirectory
-        var permanentScmpPath = context.FilePaths?.DacpacsScmpPath ?? 
-            Path.Combine(context.ScmpOutputPath, 
+        var permanentScmpPath = context.FilePaths?.DacpacsScmpPath ??
+            Path.Combine(context.ScmpOutputPath,
                 $"{context.SourceConnection.SanitizedServer}_{context.SourceConnection.SanitizedDatabase}",
                 $"{context.SourceConnection.SanitizedServer}_{context.SourceConnection.SanitizedDatabase}_dacpacs{SharedConstants.Files.ScmpExtension}");
-        
+
         // Create a version with relative paths for the permanent file
         var permanentScmp = new Exclusion.Manager.Core.Models.SchemaComparison
         {
@@ -191,13 +191,13 @@ public class SchemaComparisonService
                 }
             }
         };
-        
+
         await _scmpHandler.SaveManifestAsync(permanentScmp, permanentScmpPath);
         Console.WriteLine($"Saved DACPAC SCMP file: {Path.GetFileName(permanentScmpPath)}");
-        
+
         Console.WriteLine($"Created temporary SCMP file with filesystem DACPAC endpoints");
         Console.WriteLine($"  Temp SCMP path: {tempPath}");
-        
+
         // Debug: Log the content for troubleshooting
         if (File.Exists(tempPath))
         {
@@ -211,7 +211,7 @@ public class SchemaComparisonService
                 Console.WriteLine($"    {line.TrimEnd()}");
             }
         }
-        
+
         return tempPath;
     }
 }
@@ -225,17 +225,17 @@ public class SchemaComparisonResult
     /// The actual comparison result from Microsoft's API
     /// </summary>
     public Microsoft.SqlServer.Dac.Compare.SchemaComparisonResult? ComparisonResult { get; set; }
-    
+
     /// <summary>
     /// Total number of differences found
     /// </summary>
     public int TotalDifferences { get; set; }
-    
+
     /// <summary>
     /// Number of included differences
     /// </summary>
     public int IncludedDifferences { get; set; }
-    
+
     /// <summary>
     /// Number of excluded differences
     /// </summary>

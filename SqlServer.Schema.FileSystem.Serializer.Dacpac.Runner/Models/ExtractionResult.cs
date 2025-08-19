@@ -9,12 +9,12 @@ public record ExtractionResult
     /// Path to generated migration file
     /// </summary>
     public string? MigrationPath { get; init; }
-    
+
     /// <summary>
     /// Number of differences found
     /// </summary>
     public int DifferenceCount { get; init; }
-    
+
     /// <summary>
     /// Number of excluded differences
     /// </summary>

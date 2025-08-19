@@ -34,7 +34,7 @@ public class DacpacMigrationGeneratorTests : IDisposable
         var targetServer = "test-server";
         var targetDatabase = "test-db";
         var migrationsPath = Path.Combine(_testDirectory, "migrations");
-        
+
         Directory.CreateDirectory(outputPath);
         Directory.CreateDirectory(migrationsPath);
 
@@ -58,7 +58,7 @@ public class DacpacMigrationGeneratorTests : IDisposable
         var targetServer = "test-server";
         var targetDatabase = "test-db";
         var migrationsPath = Path.Combine(_testDirectory, "migrations");
-        
+
         // Create a test SCMP comparison
         var scmpComparison = new Exclusion.Manager.Core.Models.SchemaComparison
         {
@@ -101,7 +101,7 @@ public class DacpacMigrationGeneratorTests : IDisposable
         var targetDatabase = "test-db";
         var migrationsPath = Path.Combine(_testDirectory, "migrations");
         var actor = "test_user";
-        
+
         Directory.CreateDirectory(migrationsPath);
 
         // Act
@@ -130,7 +130,7 @@ public class DacpacMigrationGeneratorTests : IDisposable
         var targetServer = "test-server";
         var targetDatabase = "test-db";
         var migrationsPath = Path.Combine(_testDirectory, "migrations");
-        
+
         Directory.CreateDirectory(migrationsPath);
 
         // Act

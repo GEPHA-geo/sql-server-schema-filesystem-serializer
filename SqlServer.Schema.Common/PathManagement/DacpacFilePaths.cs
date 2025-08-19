@@ -12,22 +12,22 @@ public class DacpacFilePaths
     /// Root output path for the extraction
     /// </summary>
     public string OutputPath { get; }
-    
+
     /// <summary>
     /// Target server name (sanitized)
     /// </summary>
     public string TargetServer { get; }
-    
+
     /// <summary>
     /// Target database name
     /// </summary>
     public string TargetDatabase { get; }
-    
+
     /// <summary>
     /// Source server name (sanitized)
     /// </summary>
     public string SourceServer { get; }
-    
+
     /// <summary>
     /// Source database name (sanitized)
     /// </summary>
@@ -50,21 +50,21 @@ public class DacpacFilePaths
     // ============================================
     // Directory paths (full paths)
     // ============================================
-    
+
     /// <summary>
     /// Servers root directory: {output}/servers/
     /// </summary>
     public string ServersPath => Path.Combine(
         OutputPath,
         SharedConstants.Directories.Servers);
-    
+
     /// <summary>
     /// Target server directory: {output}/servers/{target_server}/
     /// </summary>
     public string TargetServerPath => Path.Combine(
         ServersPath,
         TargetServer);
-    
+
     /// <summary>
     /// Target database directory: {output}/servers/{target_server}/{target_db}/
     /// </summary>
@@ -104,7 +104,7 @@ public class DacpacFilePaths
     public string MigrationsPath => Path.Combine(
         TargetDatabasePath,
         SharedConstants.Directories.Migrations);
-    
+
     /// <summary>
     /// Change manifests directory: {output}/servers/{target_server}/{target_db}/_change-manifests/
     /// </summary>
@@ -113,7 +113,7 @@ public class DacpacFilePaths
         SharedConstants.Directories.ChangeManifests);
 
     // Schema subdirectories
-    
+
     /// <summary>
     /// Tables directory: {output}/servers/{target_server}/{target_db}/schemas/dbo/Tables/
     /// </summary>
@@ -149,7 +149,7 @@ public class DacpacFilePaths
     // ============================================
     // DACPAC file paths (full paths)
     // ============================================
-    
+
     /// <summary>
     /// Target filesystem DACPAC: {scmp}/{target_server}_{target_db}_filesystem.dacpac
     /// </summary>
@@ -181,7 +181,7 @@ public class DacpacFilePaths
     // ============================================
     // SCMP file paths (full paths)
     // ============================================
-    
+
     /// <summary>
     /// Original SCMP file: {scmp}/{source_server}_{source_db}/{source_server}_{source_db}_original.scmp
     /// </summary>
@@ -199,7 +199,7 @@ public class DacpacFilePaths
     // ============================================
     // Config and special file paths (full paths)
     // ============================================
-    
+
     /// <summary>
     /// Extra SQL file: {output}/servers/{target_server}/{target_db}/{source_server}_{source_db}_extra.sql
     /// </summary>
@@ -268,7 +268,7 @@ public class DacpacFilePaths
 
         return Path.Combine(directory, $"{objectName}{SharedConstants.Files.SqlExtension}");
     }
-    
+
     /// <summary>
     /// Static helper to get exclusion file path from a schema directory
     /// Checks SCMP directory first, then falls back to schema directory
@@ -280,11 +280,11 @@ public class DacpacFilePaths
         var schemaExclusionPath = Path.Combine(schemaPath, SharedConstants.Files.ExclusionsFile);
         return File.Exists(scmpExclusionPath) ? scmpExclusionPath : schemaExclusionPath;
     }
-    
+
     /// <summary>
     /// Static helper to get the SCMP directory path from a schema directory
     /// </summary>
-    public static string GetScmpPath(string schemaPath) => 
+    public static string GetScmpPath(string schemaPath) =>
         Path.Combine(schemaPath, SharedConstants.Directories.Scmp);
 }
 

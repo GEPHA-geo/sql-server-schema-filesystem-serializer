@@ -28,7 +28,7 @@ public class MigrationScriptSplitter
     private static readonly Regex RenamePattern = new(@"sp_rename\s+'(?:\[?(\w+)\]?\.)?\[?(\w+)\]?'\s*,\s*'(\w+)'", RegexOptions.IgnoreCase);
     private static readonly Regex SchemaPattern = new(@"CREATE\s+SCHEMA\s+\[?(\w+)\]?", RegexOptions.IgnoreCase);
     private static readonly Regex FilegroupPattern = new(@"(?:ALTER\s+DATABASE.*?(?:ADD|MODIFY)\s+FILEGROUP)\s+\[?(\w+)\]?", RegexOptions.IgnoreCase);
-    
+
     /// <summary>
     /// Splits a migration script into organized segments by database object
     /// </summary>
@@ -39,26 +39,26 @@ public class MigrationScriptSplitter
 
         // Read the migration script
         var script = await File.ReadAllTextAsync(migrationScriptPath);
-        
+
         // Parse and group operations by object
         var objectGroups = ParseAndGroupByObject(script);
-        
+
         // Create output directory structure
         Directory.CreateDirectory(outputDirectory);
-        
+
         // Write each object group to its own file
         var manifestEntries = new List<ManifestEntry>();
         var sequence = 1;
-        
+
         foreach (var group in objectGroups)
         {
             var filename = $"{sequence:D3}_{group.ObjectType}_{group.Schema}_{group.ObjectName}.sql";
             var filePath = Path.Combine(outputDirectory, filename);
-            
+
             // Add header comment to the file
             var fileContent = GenerateFileHeader(group) + group.Script;
             await File.WriteAllTextAsync(filePath, fileContent);
-            
+
             // Create manifest entry
             manifestEntries.Add(new ManifestEntry
             {
@@ -71,32 +71,32 @@ public class MigrationScriptSplitter
                 LineCount = group.Script.Split('\n').Length,
                 HasDataModification = ContainsDataModification(group.Script)
             });
-            
+
             sequence++;
         }
-        
+
         // Don't copy the original migration script - we only want the split files
-        
+
         // Generate and save manifest
         await GenerateManifest(outputDirectory, manifestEntries, migrationScriptPath);
     }
-    
+
     private List<ObjectScriptGroup> ParseAndGroupByObject(string script)
     {
         var groups = new Dictionary<string, ObjectScriptGroup>();
         var statements = SplitIntoStatements(script);
-        
+
         foreach (var statement in statements)
         {
             if (string.IsNullOrWhiteSpace(statement))
                 continue;
-                
+
             var objectInfo = IdentifyObject(statement);
             if (objectInfo == null)
                 continue;
-                
+
             var key = $"{objectInfo.Schema}.{objectInfo.Name}";
-            
+
             if (!groups.ContainsKey(key))
             {
                 groups[key] = new ObjectScriptGroup
@@ -108,10 +108,10 @@ public class MigrationScriptSplitter
                     Operations = new List<string>()
                 };
             }
-            
+
             // Add statement to the appropriate group
             groups[key].Statements.Add(statement);
-            
+
             // Track the operation type
             var operation = ExtractOperation(statement);
             if (!string.IsNullOrEmpty(operation) && !groups[key].Operations.Contains(operation))
@@ -119,28 +119,28 @@ public class MigrationScriptSplitter
                 groups[key].Operations.Add(operation);
             }
         }
-        
+
         // Combine statements for each group
         foreach (var group in groups.Values)
         {
             group.Script = string.Join("\nGO\n", group.Statements);
         }
-        
+
         // Sort groups by dependency order
         return SortByDependencies(groups.Values.ToList());
     }
-    
+
     private List<string> SplitIntoStatements(string script)
     {
         // Split on GO statements, but preserve the statement content
         var statements = new List<string>();
         var lines = script.Split('\n');
         var currentStatement = new StringBuilder();
-        
+
         foreach (var line in lines)
         {
             var trimmedLine = line.Trim();
-            
+
             // Check if this is a GO statement
             if (trimmedLine.Equals("GO", StringComparison.OrdinalIgnoreCase) ||
                 trimmedLine.StartsWith("GO ", StringComparison.OrdinalIgnoreCase) ||
@@ -157,16 +157,16 @@ public class MigrationScriptSplitter
                 currentStatement.AppendLine(line);
             }
         }
-        
+
         // Add any remaining statement
         if (currentStatement.Length > 0)
         {
             statements.Add(currentStatement.ToString().Trim());
         }
-        
+
         return statements;
     }
-    
+
     private ObjectInfo? IdentifyObject(string statement)
     {
         // Handle filegroup operations first
@@ -180,7 +180,7 @@ public class MigrationScriptSplitter
                 Type = "filegroup"
             };
         }
-        
+
         // Handle schema operations
         var schemaMatch = SchemaPattern.Match(statement);
         if (schemaMatch.Success)
@@ -192,14 +192,14 @@ public class MigrationScriptSplitter
                 Type = "schema"
             };
         }
-        
+
         // Handle tmp_ms_xx pattern - map to actual table name
         var tempTableMatch = TempTablePattern.Match(statement);
         if (tempTableMatch.Success)
         {
             var actualTableName = tempTableMatch.Groups[1].Value;
             var schema = ExtractSchemaFromStatement(statement) ?? "dbo";
-            
+
             return new ObjectInfo
             {
                 Name = actualTableName,
@@ -207,7 +207,7 @@ public class MigrationScriptSplitter
                 Type = "table"
             };
         }
-        
+
         // Handle sp_rename operations
         var renameMatch = RenamePattern.Match(statement);
         if (renameMatch.Success)
@@ -215,7 +215,7 @@ public class MigrationScriptSplitter
             var oldName = renameMatch.Groups[2].Value;
             var newName = renameMatch.Groups[3].Value;
             var schema = renameMatch.Groups[1].Value;
-            
+
             // If renaming from tmp_ms_xx, use the final table name
             if (oldName.StartsWith("tmp_ms_xx_", StringComparison.OrdinalIgnoreCase))
             {
@@ -227,7 +227,7 @@ public class MigrationScriptSplitter
                 };
             }
         }
-        
+
         // Handle foreign key operations - group with the parent table
         var fkMatch = ForeignKeyPattern.Match(statement);
         if (fkMatch.Success && fkMatch.Groups[3].Success)
@@ -235,7 +235,7 @@ public class MigrationScriptSplitter
             // Get the referenced table (parent table)
             var referencedTable = fkMatch.Groups[3].Value;
             var schema = fkMatch.Groups[2].Success ? fkMatch.Groups[2].Value : "dbo";
-            
+
             // For foreign keys, we need to determine if this should be grouped with source or target table
             // We'll group it with the table being modified (found in ALTER TABLE part)
             var alterTableMatch = Regex.Match(statement, @"ALTER\s+TABLE\s+(?:\[?(\w+)\]?\.)?\[?(\w+)\]?", RegexOptions.IgnoreCase);
@@ -249,14 +249,14 @@ public class MigrationScriptSplitter
                 };
             }
         }
-        
+
         // Handle index operations
         var indexMatch = IndexPattern.Match(statement);
         if (indexMatch.Success)
         {
             var tableName = indexMatch.Groups[3].Value;
             var schema = indexMatch.Groups[2].Success ? indexMatch.Groups[2].Value : "dbo";
-            
+
             return new ObjectInfo
             {
                 Name = tableName,
@@ -264,13 +264,13 @@ public class MigrationScriptSplitter
                 Type = "table"
             };
         }
-        
+
         var dropIndexMatch = DropIndexPattern.Match(statement);
         if (dropIndexMatch.Success)
         {
             var tableName = dropIndexMatch.Groups[3].Value;
             var schema = dropIndexMatch.Groups[2].Success ? dropIndexMatch.Groups[2].Value : "dbo";
-            
+
             return new ObjectInfo
             {
                 Name = tableName,
@@ -278,7 +278,7 @@ public class MigrationScriptSplitter
                 Type = "table"
             };
         }
-        
+
         // Handle primary key operations
         if (PrimaryKeyPattern.IsMatch(statement))
         {
@@ -293,7 +293,7 @@ public class MigrationScriptSplitter
                 };
             }
         }
-        
+
         // Handle table operations
         var tableMatch = TablePattern.Match(statement);
         if (tableMatch.Success)
@@ -305,7 +305,7 @@ public class MigrationScriptSplitter
                 Type = "table"
             };
         }
-        
+
         // Handle view operations
         var viewMatch = ViewPattern.Match(statement);
         if (viewMatch.Success)
@@ -317,7 +317,7 @@ public class MigrationScriptSplitter
                 Type = "view"
             };
         }
-        
+
         // Handle stored procedure operations
         var procMatch = ProcedurePattern.Match(statement);
         if (procMatch.Success)
@@ -329,7 +329,7 @@ public class MigrationScriptSplitter
                 Type = "procedure"
             };
         }
-        
+
         // Handle function operations
         var funcMatch = FunctionPattern.Match(statement);
         if (funcMatch.Success)
@@ -341,7 +341,7 @@ public class MigrationScriptSplitter
                 Type = "function"
             };
         }
-        
+
         // Handle trigger operations
         var triggerMatch = TriggerPattern.Match(statement);
         if (triggerMatch.Success)
@@ -353,11 +353,11 @@ public class MigrationScriptSplitter
                 Type = "trigger"
             };
         }
-        
+
         // If we can't identify the object, return null
         return null;
     }
-    
+
     private string? ExtractSchemaFromStatement(string statement)
     {
         // Try to extract schema from various patterns like [schema].[object] or schema.object
@@ -368,11 +368,11 @@ public class MigrationScriptSplitter
         }
         return null;
     }
-    
+
     private string ExtractOperation(string statement)
     {
         var trimmed = statement.TrimStart();
-        
+
         if (trimmed.StartsWith("CREATE TABLE", StringComparison.OrdinalIgnoreCase))
         {
             if (TempTablePattern.IsMatch(trimmed))
@@ -423,40 +423,40 @@ public class MigrationScriptSplitter
             return "DROP FUNCTION";
         if (trimmed.StartsWith("CREATE SCHEMA", StringComparison.OrdinalIgnoreCase))
             return "CREATE SCHEMA";
-            
+
         return "OTHER";
     }
-    
+
     private List<ObjectScriptGroup> SortByDependencies(List<ObjectScriptGroup> groups)
     {
         // Sort objects by type and dependencies
         // Order: schemas, tables, views, functions, procedures, triggers
         var sorted = new List<ObjectScriptGroup>();
-        
+
         // Add schemas first
         sorted.AddRange(groups.Where(g => g.ObjectType == "schema").OrderBy(g => g.ObjectName));
-        
+
         // Add tables (already in dependency order from the original script)
         sorted.AddRange(groups.Where(g => g.ObjectType == "table").OrderBy(g => g.ObjectName));
-        
+
         // Add views
         sorted.AddRange(groups.Where(g => g.ObjectType == "view").OrderBy(g => g.ObjectName));
-        
+
         // Add functions
         sorted.AddRange(groups.Where(g => g.ObjectType == "function").OrderBy(g => g.ObjectName));
-        
+
         // Add procedures
         sorted.AddRange(groups.Where(g => g.ObjectType == "procedure").OrderBy(g => g.ObjectName));
-        
+
         // Add triggers
         sorted.AddRange(groups.Where(g => g.ObjectType == "trigger").OrderBy(g => g.ObjectName));
-        
+
         // Add any remaining object types
         sorted.AddRange(groups.Where(g => !sorted.Contains(g)).OrderBy(g => g.ObjectType).ThenBy(g => g.ObjectName));
-        
+
         return sorted;
     }
-    
+
     private string GenerateFileHeader(ObjectScriptGroup group)
     {
         var header = new StringBuilder();
@@ -470,7 +470,7 @@ public class MigrationScriptSplitter
         header.AppendLine();
         return header.ToString();
     }
-    
+
     private bool ContainsDataModification(string script)
     {
         var dataModificationPatterns = new[]
@@ -482,22 +482,22 @@ public class MigrationScriptSplitter
             @"\bMERGE\s+\w+\s+",
             @"\bSET\s+IDENTITY_INSERT\b"
         };
-        
-        return dataModificationPatterns.Any(pattern => 
+
+        return dataModificationPatterns.Any(pattern =>
             Regex.IsMatch(script, pattern, RegexOptions.IgnoreCase));
     }
-    
+
     private async Task GenerateManifest(string outputDirectory, List<ManifestEntry> entries, string originalScriptPath)
     {
         var filename = Path.GetFileNameWithoutExtension(originalScriptPath);
-        
+
         // Extract timestamp, actor, and description from filename
         // Format: _20250812_123456_actor_description.sql
         var parts = filename.Split('_').Where(p => !string.IsNullOrEmpty(p)).ToArray();
         var timestamp = parts.Length > 1 ? $"{parts[0]}_{parts[1]}" : "";
         var actor = parts.Length > 2 ? parts[2] : "system";
         var description = parts.Length > 3 ? string.Join("_", parts.Skip(3)) : "migration";
-        
+
         var manifest = new MigrationManifest
         {
             Version = "1.0",
@@ -516,16 +516,16 @@ public class MigrationScriptSplitter
                 TotalOperations = entries.Sum(e => e.Operations.Count)
             }
         };
-        
+
         var manifestPath = Path.Combine(outputDirectory, "manifest.json");
-        var json = JsonSerializer.Serialize(manifest, new JsonSerializerOptions 
-        { 
+        var json = JsonSerializer.Serialize(manifest, new JsonSerializerOptions
+        {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
         await File.WriteAllTextAsync(manifestPath, json);
     }
-    
+
     /// <summary>
     /// Reconstructs the original migration script from segmented files
     /// </summary>
@@ -534,20 +534,20 @@ public class MigrationScriptSplitter
         var manifestPath = Path.Combine(segmentsDirectory, "manifest.json");
         if (!File.Exists(manifestPath))
             throw new FileNotFoundException($"Manifest file not found: {manifestPath}");
-            
+
         var manifestJson = await File.ReadAllTextAsync(manifestPath);
-        var manifest = JsonSerializer.Deserialize<MigrationManifest>(manifestJson, 
+        var manifest = JsonSerializer.Deserialize<MigrationManifest>(manifestJson,
             new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-        
+
         if (manifest == null)
             throw new InvalidOperationException("Failed to deserialize manifest");
-            
+
         var scriptBuilder = new StringBuilder();
         scriptBuilder.AppendLine("-- Reconstructed migration script");
         scriptBuilder.AppendLine($"-- Reconstructed at: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
         scriptBuilder.AppendLine($"-- From {manifest.TotalSegments} segments");
         scriptBuilder.AppendLine();
-        
+
         foreach (var segment in manifest.ExecutionOrder)
         {
             var segmentPath = Path.Combine(segmentsDirectory, segment.Filename);
@@ -555,15 +555,15 @@ public class MigrationScriptSplitter
             {
                 throw new FileNotFoundException($"Segment file not found: {segmentPath}");
             }
-            
+
             var segmentContent = await File.ReadAllTextAsync(segmentPath);
             scriptBuilder.AppendLine(segmentContent);
             scriptBuilder.AppendLine(); // Add spacing between segments
         }
-        
+
         return scriptBuilder.ToString();
     }
-    
+
     // Internal classes for organizing data
     private class ObjectInfo
     {
@@ -571,7 +571,7 @@ public class MigrationScriptSplitter
         public string Schema { get; set; } = "dbo";
         public string Type { get; set; } = "";
     }
-    
+
     private class ObjectScriptGroup
     {
         public string Schema { get; set; } = "dbo";
@@ -581,7 +581,7 @@ public class MigrationScriptSplitter
         public List<string> Operations { get; set; } = new();
         public string Script { get; set; } = "";
     }
-    
+
     private class ManifestEntry
     {
         public int Sequence { get; set; }
@@ -593,7 +593,7 @@ public class MigrationScriptSplitter
         public int LineCount { get; set; }
         public bool HasDataModification { get; set; }
     }
-    
+
     private class MigrationManifest
     {
         public string Version { get; set; } = "1.0";
@@ -605,7 +605,7 @@ public class MigrationScriptSplitter
         public List<ManifestEntry> ExecutionOrder { get; set; } = new();
         public MigrationSummary Summary { get; set; } = new();
     }
-    
+
     private class MigrationSummary
     {
         public int TablesModified { get; set; }

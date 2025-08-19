@@ -8,7 +8,7 @@ public class FileSystemManager
     {
         if (!Directory.Exists(path)) Directory.CreateDirectory(path);
     }
-    
+
     public void WriteFile(string path, string content)
     {
         try
@@ -16,7 +16,7 @@ public class FileSystemManager
             // Ensure directory exists
             var directory = Path.GetDirectoryName(path);
             if (!string.IsNullOrEmpty(directory)) CreateDirectory(directory);
-            
+
             // Normalize line endings to LF for SQL files to match .gitattributes configuration
             // This prevents false positives when comparing DACPACs
             if (path.EndsWith(".sql", StringComparison.OrdinalIgnoreCase))
@@ -27,7 +27,7 @@ public class FileSystemManager
                 content = content.Replace("\r", "\n");    // CR -> LF (for old Mac files)
                 // Do NOT convert back to CRLF - keep as LF to match .gitattributes
             }
-            
+
             // Write file with UTF-8 encoding (without BOM to avoid comparison issues)
             File.WriteAllText(path, content, new UTF8Encoding(false));
         }
@@ -44,11 +44,11 @@ public class FileSystemManager
     {
         if (!File.Exists(path))
             return string.Empty;
-        
+
         // Read file as bytes to detect and remove BOM
         var bytes = File.ReadAllBytes(path);
         var content = string.Empty;
-        
+
         // Check for UTF-8 BOM (EF BB BF)
         if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
         {
@@ -72,17 +72,17 @@ public class FileSystemManager
             // No BOM, read as UTF-8
             content = Encoding.UTF8.GetString(bytes);
         }
-        
+
         // Normalize line endings to LF for SQL files
         if (path.EndsWith(".sql", StringComparison.OrdinalIgnoreCase))
         {
             content = content.Replace("\r\n", "\n");  // CRLF -> LF
             content = content.Replace("\r", "\n");    // CR -> LF
         }
-        
+
         return content;
     }
-    
+
     /// <summary>
     /// Normalizes an existing file by removing BOM and fixing line endings
     /// </summary>
@@ -90,7 +90,7 @@ public class FileSystemManager
     {
         if (!File.Exists(path))
             return;
-        
+
         var content = ReadFileNormalized(path);
         WriteFile(path, content);
     }

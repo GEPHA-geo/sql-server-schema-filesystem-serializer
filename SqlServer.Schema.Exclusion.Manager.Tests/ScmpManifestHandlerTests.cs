@@ -225,7 +225,7 @@ public class ScmpManifestHandlerTests : IDisposable
     </SelectedItem>
   </ExcludedSourceElements>
 </SchemaComparison>";
-        
+
         var filePath = Path.Combine(_testDirectory, "valid.scmp.xml");
         await File.WriteAllTextAsync(filePath, xmlContent);
 

@@ -695,8 +695,11 @@ public class DacpacMigrationGenerator
             var projectDir = Path.GetDirectoryName(projectPath)!;
             var projectName = Path.GetFileNameWithoutExtension(projectPath);
             
-            // Exclusion file path in the original schema directory
-            var exclusionFilePath = Path.Combine(schemaPath, ".dacpac-exclusions.json");
+            // Check for exclusion file in SCMP directory first, then fall back to schema directory
+            var scmpPath = Path.Combine(schemaPath, "scmp");
+            var scmpExclusionPath = Path.Combine(scmpPath, ".dacpac-exclusions.json");
+            var schemaExclusionPath = Path.Combine(schemaPath, ".dacpac-exclusions.json");
+            var exclusionFilePath = File.Exists(scmpExclusionPath) ? scmpExclusionPath : schemaExclusionPath;
             
             // Create a temporary directory for excluded files
             var tempExcludeDir = Path.Combine(Path.GetTempPath(), $"DacpacExcluded_{Guid.NewGuid():N}");
@@ -946,8 +949,14 @@ public class DacpacMigrationGenerator
                             Console.WriteLine($"  ✓ Build succeeded after {iteration} iterations");
                             Console.WriteLine($"  ✓ Total files excluded: {newExclusionFile.Exclusions.Count}");
                             
-                            // Save the new exclusion file
-                            SaveExclusionFile(exclusionFilePath, newExclusionFile);
+                            // Save the new exclusion file to SCMP directory if it exists, otherwise schema directory
+                            var saveExclusionPath = Directory.Exists(scmpPath) ? scmpExclusionPath : schemaExclusionPath;
+                            // Ensure SCMP directory exists if we're saving there
+                            if (saveExclusionPath == scmpExclusionPath && !Directory.Exists(scmpPath))
+                            {
+                                Directory.CreateDirectory(scmpPath);
+                            }
+                            SaveExclusionFile(saveExclusionPath, newExclusionFile);
                             
                             return dacpacPath;
                         }

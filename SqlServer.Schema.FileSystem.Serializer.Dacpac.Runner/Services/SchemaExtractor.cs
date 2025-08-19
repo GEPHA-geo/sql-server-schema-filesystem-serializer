@@ -29,6 +29,14 @@ public class SchemaExtractor
     {
         Console.WriteLine($"Extracting {dacpacName} DACPAC from database...");
 
+        // Ensure the parent directory exists
+        var parentDir = Path.GetDirectoryName(outputPath);
+        if (!string.IsNullOrEmpty(parentDir) && !Directory.Exists(parentDir))
+        {
+            Directory.CreateDirectory(parentDir);
+            Console.WriteLine($"  Created directory: {parentDir}");
+        }
+
         var dacServices = new DacServices(connectionString);
         var extractOptions = new DacExtractOptions
         {
@@ -134,6 +142,18 @@ public class SchemaExtractor
             
             Console.WriteLine($"  ✓ Normalized all {normalizedCount} SQL files");
             
+            // Move the extra.sql file to the parent directory if it exists (outside SCMP)
+            if (context.FilePaths != null)
+            {
+                var extraSqlFileName = $"{context.SourceConnection.SanitizedServer}_{context.SourceConnection.SanitizedDatabase}_extra.sql";
+                var tempExtraSqlPath = Path.Combine(targetSchemaPath, extraSqlFileName);
+                if (File.Exists(tempExtraSqlPath))
+                {
+                    File.Move(tempExtraSqlPath, context.FilePaths.ExtraSqlPath, overwrite: true);
+                    Console.WriteLine($"  ✓ Moved {extraSqlFileName} to parent directory");
+                }
+            }
+            
             // Stage the extracted files to normalize line endings through Git
             if (_gitAnalyzer.IsGitRepository(context.OutputPath) && sqlFiles.Length > 0)
             {
@@ -171,7 +191,7 @@ public class SchemaExtractor
         if (!Directory.Exists(targetPath))
             return;
 
-        // Get all subdirectories except migrations and special directories
+        // Get all subdirectories except migrations, scmp, and special directories
         var subdirs = Directory.GetDirectories(targetPath)
             .Where(d =>
             {
@@ -179,7 +199,8 @@ public class SchemaExtractor
                 return !dirName.Equals(DacpacConstants.Directories.Migrations, StringComparison.OrdinalIgnoreCase) &&
                        !dirName.Equals(DacpacConstants.Directories.ReverseMigrations,
                            StringComparison.OrdinalIgnoreCase) &&
-                       !dirName.Equals(DacpacConstants.Directories.ChangeManifests, StringComparison.OrdinalIgnoreCase);
+                       !dirName.Equals(DacpacConstants.Directories.ChangeManifests, StringComparison.OrdinalIgnoreCase) &&
+                       !dirName.Equals(DacpacConstants.Directories.Scmp, StringComparison.OrdinalIgnoreCase);
             })
             .ToList();
 
@@ -197,12 +218,12 @@ public class SchemaExtractor
             }
         }
 
-        // Delete all files in the root except .dacpac-exclusions.json and DACPAC files
+        // Delete all files in the root except DACPAC files
+        // Note: .dacpac-exclusions.json will be moved to SCMP directory if it exists
         foreach (var file in Directory.GetFiles(targetPath))
         {
             var fileName = Path.GetFileName(file);
-            if (!fileName.Equals(DacpacConstants.Files.ExclusionsFile, StringComparison.OrdinalIgnoreCase) &&
-                !fileName.EndsWith(DacpacConstants.Files.DacpacExtension, StringComparison.OrdinalIgnoreCase))
+            if (!fileName.EndsWith(DacpacConstants.Files.DacpacExtension, StringComparison.OrdinalIgnoreCase))
             {
                 try
                 {

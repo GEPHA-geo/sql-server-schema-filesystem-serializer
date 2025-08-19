@@ -128,6 +128,18 @@ public class DacpacExtractionService
                         options.CommitMessage);
                 }
 
+                // Move .dacpac-exclusions.json to SCMP directory if it exists in parent (final cleanup)
+                if (context.FilePaths != null && File.Exists(context.FilePaths.TempExclusionsJsonPath))
+                {
+                    // Delete any existing file in SCMP directory first
+                    if (File.Exists(context.FilePaths.ExclusionsJsonPath))
+                    {
+                        File.Delete(context.FilePaths.ExclusionsJsonPath);
+                    }
+                    File.Move(context.FilePaths.TempExclusionsJsonPath, context.FilePaths.ExclusionsJsonPath);
+                    Console.WriteLine($"✓ Moved {DacpacConstants.Files.ExclusionsFile} to SCMP directory");
+                }
+
                 // Prepare successful result
                 var result = new ExtractionResult
                 {
@@ -137,7 +149,8 @@ public class DacpacExtractionService
                 };
 
                 Console.WriteLine("\n✓ SCMP-based extraction completed successfully");
-                Console.WriteLine($"  - 4 DACPACs generated in: {context.TargetOutputPath}");
+                Console.WriteLine($"  - 4 DACPACs generated in: {context.ScmpOutputPath}");
+                Console.WriteLine($"  - SCMP files saved in: {context.ScmpOutputPath}");
                 Console.WriteLine($"  - Migration script generated in: {DacpacConstants.Directories.Migrations}/");
                 Console.WriteLine($"  - Source schema extracted to: {DacpacConstants.Directories.Schemas}/");
 
@@ -210,33 +223,28 @@ public class DacpacExtractionService
             ConnectionString = targetConnectionString
         };
 
-        // Calculate paths
+        // Create centralized path manager
+        var filePaths = new DacpacFilePaths(
+            options.OutputPath,
+            targetConnection.SanitizedServer,
+            targetConnection.Database,
+            sourceConnection.SanitizedServer,
+            sourceConnection.SanitizedDatabase);
+        
+        // Create all necessary directories
+        filePaths.CreateDirectories();
+        
+        // Create temp directory
         var tempDirectory =
             Path.Combine(Path.GetTempPath(), $"dacpac_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}");
-        var targetOutputPath = Path.Combine(
-            options.OutputPath,
-            DacpacConstants.Directories.Servers,
-            targetConnection.SanitizedServer,
-            targetConnection.Database);
-
-        // Create directories
-        Directory.CreateDirectory(targetOutputPath);
         Directory.CreateDirectory(tempDirectory);
 
-        Console.WriteLine($"Output path: {targetOutputPath}");
-
-        // Create DACPAC paths
-        var dacpacPaths = new DacpacPaths
-        {
-            TargetFilesystemDacpac = Path.Combine(targetOutputPath,
-                $"{targetConnection.SanitizedServer}_{targetConnection.SanitizedDatabase}{FilesystemSuffix}{DacpacExtension}"),
-            TargetOriginalDacpac = Path.Combine(targetOutputPath,
-                $"{targetConnection.SanitizedServer}_{targetConnection.SanitizedDatabase}{OriginalSuffix}{DacpacExtension}"),
-            SourceOriginalDacpac = Path.Combine(targetOutputPath,
-                $"{sourceConnection.SanitizedServer}_{sourceConnection.SanitizedDatabase}{OriginalSuffix}{DacpacExtension}"),
-            SourceFilesystemDacpac = Path.Combine(targetOutputPath,
-                $"{sourceConnection.SanitizedServer}_{sourceConnection.SanitizedDatabase}{FilesystemSuffix}{DacpacExtension}")
-        };
+        Console.WriteLine($"Output path: {filePaths.TargetOutputPath}");
+        Console.WriteLine($"SCMP path: {filePaths.ScmpDirectoryPath}");
+        Console.WriteLine($"Source files path: {filePaths.SourceSubdirectoryPath}");
+        
+        // Original SCMP file will be saved later in SchemaComparisonService
+        // along with the dacpacs SCMP file to avoid race conditions
 
         // Create context with all values initialized
         var context = new DacpacExtractionContext
@@ -247,8 +255,10 @@ public class DacpacExtractionService
             TempDirectory = tempDirectory,
             SourceConnection = sourceConnection,
             TargetConnection = targetConnection,
-            TargetOutputPath = targetOutputPath,
-            DacpacPaths = dacpacPaths
+            TargetOutputPath = filePaths.TargetOutputPath,
+            ScmpOutputPath = filePaths.ScmpDirectoryPath,
+            DacpacPaths = filePaths.GetLegacyDacpacPaths(),
+            FilePaths = filePaths
         };
 
         return Result.Success(context);
@@ -273,6 +283,7 @@ public class DacpacExtractionService
         {
             OutputPath = context.OutputPath,
             TargetOutputPath = context.TargetOutputPath,
+            ScmpOutputPath = context.ScmpOutputPath,
             WorktreePath = worktreePath,
             DacpacPaths = context.DacpacPaths,
             SourceConnection = context.SourceConnection,

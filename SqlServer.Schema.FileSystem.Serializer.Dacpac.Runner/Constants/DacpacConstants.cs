@@ -15,6 +15,7 @@ public static class DacpacConstants
         public const string ChangeManifests = "_change-manifests";
         public const string Servers = "servers";
         public const string Schemas = "schemas";
+        public const string Scmp = "scmp";
     }
     
     /// <summary>

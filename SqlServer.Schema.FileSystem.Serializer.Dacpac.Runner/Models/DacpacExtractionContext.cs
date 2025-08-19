@@ -16,6 +16,11 @@ public class DacpacExtractionContext : IDisposable
     public required string TargetOutputPath { get; init; }
 
     /// <summary>
+    /// Path to the SCMP subdirectory where DACPACs and SCMP files are stored
+    /// </summary>
+    public required string ScmpOutputPath { get; init; }
+
+    /// <summary>
     /// Path to the git worktree (if created)
     /// </summary>
     public string? WorktreePath { get; init; }
@@ -24,6 +29,11 @@ public class DacpacExtractionContext : IDisposable
     /// All DACPAC file paths
     /// </summary>
     public required DacpacPaths DacpacPaths { get; init; }
+
+    /// <summary>
+    /// Centralized file path manager
+    /// </summary>
+    public DacpacFilePaths? FilePaths { get; init; }
 
     /// <summary>
     /// Source database connection information
